@@ -8,6 +8,7 @@
 import crypto from "crypto";
 import { getServiceClient } from "../supabase";
 import { smsChannel } from "./sms";
+import { env } from "../env";
 
 export interface OtpChannel {
   readonly name: "whatsapp" | "sms";
@@ -56,6 +57,13 @@ export async function requestOtp(phone: string): Promise<{ sent: true; channel: 
     expires_at: new Date(Date.now() + CODE_TTL_MS).toISOString(),
   });
   if (error) throw new Error(`[otp] persist failed: ${error.message}`);
+
+  // Testing aid: in Africa's Talking SANDBOX the code never reaches a real
+  // phone, so surface it in the server logs to complete the flow end-to-end.
+  // This is gated to sandbox only and never runs against a live AT account.
+  if (env.at.username() === "sandbox") {
+    console.log(`[otp][sandbox] verification code for ${phone} is ${code} (sandbox — not a real SMS)`);
+  }
 
   await activeChannel.send(phone, code);
   return { sent: true, channel: activeChannel.name };
