@@ -152,6 +152,25 @@ export default function EmployeesPage() {
     }
   }
 
+  async function resendInvite(id: string) {
+    if (!token) return;
+    setError(null);
+    setNotice(null);
+    try {
+      const r = await api<{ inviteSent: boolean; inviteError?: string }>(
+        `/api/employees/${id}/resend-invite`,
+        { method: "POST", token }
+      );
+      setNotice(
+        r.inviteSent
+          ? "Invite resent on WhatsApp."
+          : `Could not resend the invite${r.inviteError ? `: ${r.inviteError}` : "."}`
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Resend failed");
+    }
+  }
+
   return (
     <main className="min-h-screen bg-kaunta-stone">
       <header className="border-b border-kaunta-mist bg-white">
@@ -264,6 +283,11 @@ export default function EmployeesPage() {
           </div>
         ) : (
           <div className={`${cardCls} overflow-hidden`}>
+            <p className="px-4 pt-3 text-xs text-kaunta-slate/60">
+              <span className="font-medium text-kaunta-amber">Invited</span> = added but hasn&apos;t signed in yet ·{" "}
+              <span className="font-medium text-kaunta-sage">Active</span> = has signed in. Use the{" "}
+              <MessageCircle className="inline h-3 w-3" /> button to resend an invite.
+            </p>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-kaunta-mist text-left text-xs text-kaunta-slate/60">
@@ -311,6 +335,16 @@ export default function EmployeesPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
+                        {e.status === "invited" && (
+                          <button
+                            onClick={() => resendInvite(e.id)}
+                            className="text-kaunta-slate/60 hover:text-kaunta-copper p-1"
+                            aria-label="Resend invite"
+                            title="Resend WhatsApp invite"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </button>
+                        )}
                         {e.status === "suspended" ? (
                           <button onClick={() => setStatus(e.id, "activate")} className="text-kaunta-sage/70 hover:text-kaunta-sage p-1" aria-label="Reactivate">
                             <RotateCcw className="h-4 w-4" />

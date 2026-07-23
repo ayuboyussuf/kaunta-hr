@@ -159,6 +159,38 @@ router.post("/", requireOwner, async (req, res) => {
   res.status(201).json({ employee: emp, inviteSent, ...(inviteError ? { inviteError } : {}) });
 });
 
+// ── Resend the WhatsApp invite ────────────────────────────────────────────────
+router.post("/:id/resend-invite", requireOwner, async (req, res) => {
+  const db = getServiceClient();
+  const orgId = req.owner!.orgId;
+
+  const { data: emp } = await db
+    .from("employees")
+    .select("id, name, phone, status")
+    .eq("id", req.params.id)
+    .eq("org_id", orgId)
+    .maybeSingle();
+  if (!emp) return res.status(404).json({ error: "employee not found" });
+  if (emp.status === "suspended") return res.status(400).json({ error: "employee is suspended" });
+
+  const { data: org } = await db.from("orgs").select("name").eq("id", orgId).maybeSingle();
+  const orgName = org?.name ?? "your workplace";
+  const loginUrl = `${env.appUrl}/me/login`;
+
+  try {
+    await sendText(
+      emp.phone,
+      `Hi ${emp.name}, here's your Kaunta HR invite for ${orgName} again.\n\n` +
+        `Open ${loginUrl} and sign in with this phone number (${emp.phone}) to clock in and view your pay.`
+    );
+    return res.json({ inviteSent: true });
+  } catch (err) {
+    const inviteError = err instanceof Error ? err.message : String(err);
+    console.warn(`[employees] resend invite to ${emp.phone} failed:`, inviteError);
+    return res.status(502).json({ inviteSent: false, inviteError });
+  }
+});
+
 // ── Update / reassign ─────────────────────────────────────────────────────────
 router.patch("/:id", requireOwner, async (req, res) => {
   const parsed = updateInput.safeParse(req.body);

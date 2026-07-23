@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,9 +23,18 @@ export default function EmployeeLoginPage() {
   const [code, setCode] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resendIn, setResendIn] = useState(0); // seconds until "Resend code" re-enables
 
   const fp = () => getDeviceFingerprint();
+
+  // Count down the resend cooldown.
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setInterval(() => setResendIn((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [resendIn]);
 
   async function tryPinFirst() {
     // If this device is trusted and a PIN is set, PIN alone works.
@@ -33,12 +42,15 @@ export default function EmployeeLoginPage() {
     setStep("pin");
   }
 
-  async function requestOtp() {
+  async function requestOtp(isResend = false) {
     setLoading(true);
     setError(null);
+    setNotice(null);
     try {
       await api("/api/auth/employee/request-otp", { method: "POST", body: { phone } });
       setStep("otp");
+      setResendIn(30); // throttle resends
+      if (isResend) setNotice("A new code is on its way to your WhatsApp.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -129,7 +141,7 @@ export default function EmployeeLoginPage() {
               />
             </div>
             {error && <p className="text-sm text-kaunta-red">{error}</p>}
-            <Button onClick={requestOtp} disabled={loading || !phone} className="w-full">
+            <Button onClick={() => requestOtp()} disabled={loading || !phone} className="w-full">
               {loading ? "Sending…" : "Send code on WhatsApp"}
             </Button>
             <button
@@ -144,7 +156,7 @@ export default function EmployeeLoginPage() {
         {step === "otp" && (
           <div className="space-y-4">
             <p className="text-sm text-kaunta-slate">
-              Enter the 6-digit code sent to your WhatsApp.
+              Enter the 6-digit code sent to your WhatsApp{phone ? ` (${phone})` : ""}.
             </p>
             <input
               inputMode="numeric"
@@ -153,10 +165,31 @@ export default function EmployeeLoginPage() {
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               className={`${input} tracking-[0.5em] text-center text-lg`}
             />
+            {notice && <p className="text-sm text-kaunta-sage">{notice}</p>}
             {error && <p className="text-sm text-kaunta-red">{error}</p>}
             <Button onClick={verifyOtp} disabled={loading || code.length !== 6} className="w-full">
               {loading ? "Verifying…" : "Verify"}
             </Button>
+            <div className="flex items-center justify-between text-sm">
+              <button
+                onClick={() => requestOtp(true)}
+                disabled={loading || resendIn > 0}
+                className="text-kaunta-copper hover:underline disabled:text-kaunta-slate/40 disabled:no-underline"
+              >
+                {resendIn > 0 ? `Resend code in ${resendIn}s` : "Didn't get it? Resend code"}
+              </button>
+              <button
+                onClick={() => {
+                  setStep("phone");
+                  setCode("");
+                  setError(null);
+                  setNotice(null);
+                }}
+                className="text-kaunta-slate/60 hover:underline"
+              >
+                Change number
+              </button>
+            </div>
           </div>
         )}
 
