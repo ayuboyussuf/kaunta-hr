@@ -57,8 +57,10 @@ function nairobiDayStartISO(now: Date): string {
 
 const scanInput = z.object({
   token: z.string().min(1),
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
+  // Location is best-effort: the QR scan is the primary gate. When present we run
+  // the geofence check (flag only, never block); when absent we still allow it.
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
   accuracy: z.number().nonnegative().nullable().optional(),
 });
 
@@ -85,9 +87,6 @@ router.post("/scan", requireEmployee, async (req, res) => {
   }
   if (workplace.qr_nonce !== payload.nonce) {
     return res.status(400).json({ error: "This QR code has been replaced. Ask for the new one." });
-  }
-  if (workplace.lat == null || workplace.lng == null) {
-    return res.status(400).json({ error: "Workplace location is not set. Contact your employer." });
   }
 
   // Employee + assigned shift.
@@ -131,16 +130,24 @@ router.post("/scan", requireEmployee, async (req, res) => {
     .maybeSingle();
   const direction: "in" | "out" = lastToday?.direction === "in" ? "out" : "in";
 
-  const geo = evaluateScan({
-    workplaceLat: workplace.lat,
-    workplaceLng: workplace.lng,
-    radiusM: workplace.geofence_radius_m,
-    lat,
-    lng,
-    accuracyM: accuracy ?? null,
-    now,
-    prior: prior && prior.lat != null && prior.lng != null ? { lat: prior.lat, lng: prior.lng, scanned_at: prior.scanned_at } : null,
-  });
+  // Geofence only when both the workplace and this scan have coordinates. If
+  // either is missing, the QR scan alone stands — no geofence flags, no block.
+  const hasCoords = workplace.lat != null && workplace.lng != null && lat != null && lng != null;
+  const geo = hasCoords
+    ? evaluateScan({
+        workplaceLat: workplace.lat,
+        workplaceLng: workplace.lng,
+        radiusM: workplace.geofence_radius_m,
+        lat: lat!,
+        lng: lng!,
+        accuracyM: accuracy ?? null,
+        now,
+        prior:
+          prior && prior.lat != null && prior.lng != null
+            ? { lat: prior.lat, lng: prior.lng, scanned_at: prior.scanned_at }
+            : null,
+      })
+    : { distanceM: null as number | null, flags: [] as string[], insideGeofence: true };
 
   // Roster comparison → auto-lateness. Only clock-INs can be "late".
   let rosterExpected: { shift_id: string; expected_start: string; late_by_min: number } | null = null;
@@ -166,8 +173,8 @@ router.post("/scan", requireEmployee, async (req, res) => {
     .insert({
       employee_id: req.employee!.employeeId,
       workplace_id: workplace.id,
-      lat,
-      lng,
+      lat: lat ?? null,
+      lng: lng ?? null,
       accuracy_m: accuracy ?? null,
       distance_m: geo.distanceM,
       status,
@@ -183,7 +190,7 @@ router.post("/scan", requireEmployee, async (req, res) => {
   res.status(201).json({
     entry,
     workplace: { id: workplace.id, name: workplace.name },
-    distance_m: Math.round(geo.distanceM),
+    distance_m: geo.distanceM == null ? null : Math.round(geo.distanceM),
     status,
     direction,
     flags: geo.flags,
