@@ -69,8 +69,12 @@ router.post("/request-otp", async (req, res) => {
         console.log(`[auth] request-otp: cooldown active for ${phone} (429)`);
         return res.status(429).json({ error: (err as Error).message });
       }
+      // A send failure (e.g. SMS provider 5xx) must NOT crash the server — report
+      // it to the caller and move on.
       console.error(`[auth] request-otp: send failed for ${phone}:`, (err as Error).message);
-      throw err;
+      return res.status(502).json({
+        error: "Couldn't send the code right now. Please try again in a moment.",
+      });
     }
   }
   res.json({ ok: true });

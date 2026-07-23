@@ -3,6 +3,15 @@ import express from "express";
 import cors from "cors";
 import { loadRoutes } from "./routes/registry";
 
+// Safety net: a rejected promise that escapes a handler (e.g. an SMS provider
+// 5xx in a fire-and-forget path) must never take the whole server down.
+process.on("unhandledRejection", (reason) => {
+  console.error("[unhandledRejection]", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[uncaughtException]", err);
+});
+
 const app = express();
 const PORT = process.env.PORT ?? 4000;
 

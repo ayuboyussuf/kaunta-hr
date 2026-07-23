@@ -20,8 +20,40 @@ export interface SmsResult {
   cost: string;
 }
 
-/** Send a single SMS. Throws on transport failure or a rejected recipient. */
+/** Error carrying whether the failure is worth retrying (transient 5xx / network). */
+class SmsError extends Error {
+  retriable: boolean;
+  constructor(message: string, retriable: boolean) {
+    super(message);
+    this.retriable = retriable;
+  }
+}
+
+/**
+ * Send a single SMS, retrying transient failures. AT's sandbox in particular
+ * returns 503 ("try again in a short while") under load; one retry usually
+ * clears it. Throws on a permanent failure (auth, rejected recipient).
+ */
 export async function sendSms(to: string, message: string): Promise<SmsResult> {
+  const maxAttempts = 3;
+  let lastErr: Error = new Error("[sms] send failed");
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await sendOnce(to, message);
+    } catch (err) {
+      lastErr = err as Error;
+      const retriable = err instanceof SmsError && err.retriable;
+      if (!retriable || attempt === maxAttempts) throw err;
+      const waitMs = 600 * attempt;
+      console.warn(`[sms] attempt ${attempt}/${maxAttempts} failed (retrying in ${waitMs}ms): ${(err as Error).message}`);
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
+  }
+  throw lastErr;
+}
+
+/** One send attempt. */
+async function sendOnce(to: string, message: string): Promise<SmsResult> {
   const username = env.at.username();
   const senderId = env.at.senderId();
   const url = baseUrl();
@@ -49,9 +81,9 @@ export async function sendSms(to: string, message: string): Promise<SmsResult> {
     });
     raw = await res.text();
   } catch (err) {
-    // Could not even reach AT (DNS, network, proxy). This is a transport failure.
+    // Could not even reach AT (DNS, network, proxy) — transient, worth a retry.
     console.error(`[sms] ✗ transport error reaching AT: ${(err as Error).message}`);
-    throw new Error(`[sms] could not reach Africa's Talking: ${(err as Error).message}`);
+    throw new SmsError(`[sms] could not reach Africa's Talking: ${(err as Error).message}`, true);
   }
 
   // Log AT's raw HTTP status + body so you can see exactly what they answered.
@@ -75,12 +107,13 @@ export async function sendSms(to: string, message: string): Promise<SmsResult> {
     // The summary line (e.g. "Sent to 0/1 ...") explains why.
     const summary = data.SMSMessageData?.Message ?? "(no message)";
     console.error(`[sms] ✗ no recipient accepted. AT says: ${summary}`);
-    throw new Error(`[sms] send failed: ${res.status} ${raw}`);
+    // 5xx = AT overloaded/timeout → retry; 4xx = auth/bad request → permanent.
+    throw new SmsError(`[sms] send failed: ${res.status} ${raw}`, res.status >= 500 || res.status === 429);
   }
   // AT success statuses: "Success" (101 processed / queued). Anything else is a failure.
   if (!/success|sent|queued/i.test(recipient.status)) {
     console.error(`[sms] ✗ recipient ${recipient.number} rejected: ${recipient.status} (code ${recipient.statusCode})`);
-    throw new Error(`[sms] rejected for ${recipient.number}: ${recipient.status}`);
+    throw new SmsError(`[sms] rejected for ${recipient.number}: ${recipient.status}`, false);
   }
 
   console.log(
