@@ -16,6 +16,7 @@ export interface SetupSummaryData {
     lng?: number | null;
     shifts: { name: string; kind: string; start: string; end: string }[];
     penalties: { reason: string; amount: number }[];
+    qr?: Buffer | null; // PNG of the clock-in QR (may be absent if generation failed)
   }[];
 }
 
@@ -43,6 +44,21 @@ export function setupSummaryPdf(d: SetupSummaryData): Promise<Buffer> {
       doc.fillColor(BRAND.ink).font("Helvetica");
       w.penalties.forEach((p) => doc.text(`  • ${p.reason}: ${fmtKes(p.amount)}`));
       if (!w.penalties.length) doc.text("  • none configured");
+      doc.moveDown(0.4);
+
+      // Printable clock-in QR for this workplace.
+      if (w.qr) {
+        const bottom = doc.page.height - doc.page.margins.bottom;
+        if (doc.y + 150 > bottom) doc.addPage();
+        doc.fillColor(BRAND.sage).font("Helvetica-Bold").text("Clock-in QR");
+        doc.image(w.qr, { width: 120 });
+        doc
+          .fillColor(BRAND.muted)
+          .fontSize(8)
+          .font("Helvetica")
+          .text("Print and post at this workplace — employees scan it to clock in.");
+        doc.fontSize(10);
+      }
       doc.moveDown(0.8);
     });
 
