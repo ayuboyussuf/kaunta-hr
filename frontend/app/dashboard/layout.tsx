@@ -9,7 +9,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
-import Logo from "@/components/Logo";
+import { KauntaWordmark } from "@/components/KauntaLogo";
 import { LogOut } from "lucide-react";
 
 const NAV = [
@@ -48,7 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
             <Link href="/dashboard" aria-label="Kaunta HR — Overview">
-              <Logo mark={28} />
+              <KauntaWordmark size="md" theme="dark" />
             </Link>
             <button
               onClick={signOut}
