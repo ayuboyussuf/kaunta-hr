@@ -22,16 +22,6 @@ function nairobiDayStartISO(): string {
   return new Date(`${ymd}T00:00:00+03:00`).toISOString();
 }
 
-const SECTIONS = [
-  { href: "/dashboard/employees", label: "Employees", desc: "Add & manage staff" },
-  { href: "/dashboard/shifts", label: "Shifts", desc: "Rosters & schedules" },
-  { href: "/dashboard/workplaces", label: "Workplaces", desc: "Locations & geofence" },
-  { href: "/dashboard/qr", label: "QR codes", desc: "Print clock-in codes" },
-  { href: "/dashboard/violations", label: "Penalties", desc: "Log & review appeals" },
-  { href: "/dashboard/payroll", label: "Payroll", desc: "Cycles & payslips" },
-  { href: "/dashboard/announcements", label: "Announcements", desc: "Post to staff" },
-];
-
 interface PageProps {
   searchParams: Promise<{ w?: string }>;
 }
@@ -197,23 +187,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             </p>
           </div>
         )}
-
-        {/* Section hub */}
-        <section>
-          <h2 className="font-display text-lg text-kaunta-slate/70 mb-3">Manage</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {SECTIONS.map((s) => (
-              <Link
-                key={s.href}
-                href={s.href}
-                className="rounded-[12px] border border-kaunta-mist bg-white p-5 hover:border-kaunta-copper/40 hover:shadow-[0_2px_16px_rgba(15,25,35,0.06)] transition"
-              >
-                <p className="font-display text-lg text-kaunta-ink">{s.label}</p>
-                <p className="text-xs text-kaunta-slate/60 mt-1">{s.desc}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
       </div>
     </main>
   );

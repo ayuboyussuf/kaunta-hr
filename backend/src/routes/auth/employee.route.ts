@@ -53,13 +53,23 @@ router.post("/request-otp", async (req, res) => {
 
   const emp = await findEmployeeByPhone(phone);
   // Do not leak whether a number is registered; respond 200 either way, but only
-  // actually send when the employee exists and is not suspended.
-  if (emp && emp.status !== "suspended") {
+  // actually send when the employee exists and is not suspended. These logs are
+  // server-side only (never returned to the client) so they don't leak anything.
+  if (!emp) {
+    console.log(`[auth] request-otp: no employee for ${phone} → skipping send (client still gets 200)`);
+  } else if (emp.status === "suspended") {
+    console.log(`[auth] request-otp: employee ${phone} is suspended → skipping send`);
+  } else {
+    console.log(`[auth] request-otp: sending OTP to employee ${phone} (${emp.name})`);
     try {
       await requestOtp(phone);
     } catch (err) {
       const status = (err as { status?: number }).status ?? 500;
-      if (status === 429) return res.status(429).json({ error: (err as Error).message });
+      if (status === 429) {
+        console.log(`[auth] request-otp: cooldown active for ${phone} (429)`);
+        return res.status(429).json({ error: (err as Error).message });
+      }
+      console.error(`[auth] request-otp: send failed for ${phone}:`, (err as Error).message);
       throw err;
     }
   }
