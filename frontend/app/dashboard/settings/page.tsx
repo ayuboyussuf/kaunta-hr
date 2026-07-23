@@ -15,6 +15,7 @@ import { Loader2, Building2, SlidersHorizontal, Check } from "lucide-react";
 interface OrgSettings {
   id: string;
   name: string;
+  phone: string | null;
   workplace_mode: "single" | "multiple";
   rules_mode: "shared" | "per_workplace";
   onboarding_complete: boolean;
@@ -36,6 +37,7 @@ export default function SettingsPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [org, setOrg] = useState<OrgSettings | null>(null);
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function SettingsPage() {
         const r = await api<{ org: OrgSettings }>("/api/owner/settings", { token: t });
         setOrg(r.org);
         setName(r.org.name);
+        setPhone(r.org.phone ?? "");
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load settings");
       } finally {
@@ -67,9 +70,10 @@ export default function SettingsPage() {
       const r = await api<{ org: OrgSettings }>("/api/owner/settings", {
         method: "PATCH",
         token,
-        body: { name: name.trim() },
+        body: { name: name.trim(), phone: phone.trim() },
       });
       setOrg(r.org);
+      setPhone(r.org.phone ?? "");
       setNotice("Settings saved.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
@@ -78,7 +82,7 @@ export default function SettingsPage() {
     }
   }
 
-  const dirty = org ? name.trim() !== org.name : false;
+  const dirty = org ? name.trim() !== org.name || phone.trim() !== (org.phone ?? "") : false;
 
   return (
     <main className="bg-kaunta-stone">
@@ -111,6 +115,18 @@ export default function SettingsPage() {
               <div>
                 <label className={labelCls}>Business name</label>
                 <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls}>Your phone (for SMS alerts)</label>
+                <input
+                  className={inputCls}
+                  value={phone}
+                  placeholder="07XX XXX XXX or +2547…"
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+                <p className="text-xs text-kaunta-slate/50 mt-1">
+                  We&apos;ll text this number when an employee submits an appeal. Leave blank to turn off SMS alerts.
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>

@@ -14,6 +14,7 @@ import { LogOut } from "lucide-react";
 
 const NAV = [
   { href: "/dashboard", label: "Overview", exact: true },
+  { href: "/dashboard/messages", label: "Messages" },
   { href: "/dashboard/employees", label: "Team" },
   { href: "/dashboard/shifts", label: "Shifts" },
   { href: "/dashboard/workplaces", label: "Workplaces" },
