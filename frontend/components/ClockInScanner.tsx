@@ -17,7 +17,7 @@ type Phase = "scanning" | "locating" | "sending" | "done" | "error";
 interface ScanResult {
   status: "normal" | "late" | "flagged";
   direction: "in" | "out";
-  distance_m: number;
+  distance_m: number | null;
   flags: string[];
   workplace: { name: string };
 }
@@ -59,43 +59,40 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
       return;
     }
 
+    // Location is best-effort — the QR scan is what clocks you in. We try to
+    // attach GPS (so the geofence can verify presence) but never block on it.
+    const sendScan = async (coords: { lat: number; lng: number; accuracy: number | null } | null) => {
+      setPhase("sending");
+      try {
+        const res = await api<ScanResult>("/api/attendance/scan", {
+          method: "POST",
+          token: sessionToken,
+          body: {
+            token,
+            lat: coords?.lat ?? null,
+            lng: coords?.lng ?? null,
+            accuracy: coords?.accuracy ?? null,
+          },
+        });
+        setResult(res);
+        setPhase("done");
+      } catch (e) {
+        setError((e as Error).message);
+        setPhase("error");
+      }
+    };
+
     setPhase("locating");
     if (!("geolocation" in navigator)) {
-      setError("This device can't share its location, which is required to clock in.");
-      setPhase("error");
+      await sendScan(null);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        setPhase("sending");
-        try {
-          const res = await api<ScanResult>("/api/attendance/scan", {
-            method: "POST",
-            token: sessionToken,
-            body: {
-              token,
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              accuracy: pos.coords.accuracy ?? null,
-            },
-          });
-          setResult(res);
-          setPhase("done");
-        } catch (e) {
-          setError((e as Error).message);
-          setPhase("error");
-        }
-      },
-      (geoErr) => {
-        setError(
-          geoErr.code === geoErr.PERMISSION_DENIED
-            ? "Location permission denied. Enable it to clock in."
-            : "Couldn't get your location. Try again outdoors with GPS on."
-        );
-        setPhase("error");
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      (pos) => sendScan({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy ?? null }),
+      // Permission denied / timeout / unavailable → still clock in via the QR scan.
+      () => sendScan(null),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }
 
@@ -143,7 +140,8 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
           <p className={`font-display text-2xl ${copy.tone}`}>{copy.title}</p>
           <p className="text-sm text-kaunta-ink">{result.workplace?.name}</p>
           <p className="text-xs text-kaunta-slate/60">
-            {copy.note} · {result.distance_m}m from the workplace
+            {copy.note}
+            {result.distance_m != null ? ` · ${result.distance_m}m from the workplace` : ""}
           </p>
           {result.flags?.length > 0 && (
             <p className="text-xs text-kaunta-red">Flags: {result.flags.join(", ")}</p>
