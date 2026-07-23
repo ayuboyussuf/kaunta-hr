@@ -6,6 +6,18 @@
 export const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
 
+/**
+ * Where `api()` sends requests.
+ * - In the browser: a same-origin Next.js gateway (`/gateway/*` → the backend).
+ *   Same-origin avoids CORS, HTTPS→HTTP mixed-content blocks, and the client
+ *   bundle hard-coding localhost when NEXT_PUBLIC_BACKEND_URL wasn't set at
+ *   build time — the failures that surfaced as "Load failed".
+ * - On the server: call the backend directly.
+ */
+function apiBase(): string {
+  return typeof window === "undefined" ? BACKEND_URL : "/gateway";
+}
+
 export interface ApiOptions {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
   token?: string; // owner Supabase token OR employee session JWT
@@ -13,14 +25,21 @@ export interface ApiOptions {
 }
 
 export async function api<T = unknown>(path: string, opts: ApiOptions = {}): Promise<T> {
-  const res = await fetch(`${BACKEND_URL}${path}`, {
-    method: opts.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(opts.token ? { Authorization: `Bearer ${opts.token}` } : {}),
-    },
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${apiBase()}${path}`, {
+      method: opts.method ?? "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(opts.token ? { Authorization: `Bearer ${opts.token}` } : {}),
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+  } catch {
+    // fetch() rejects (network/DNS/offline) with a terse "Load failed" /
+    // "Failed to fetch". Replace it with something the user can act on.
+    throw new Error("Cannot reach the server. Check your connection and try again.");
+  }
   const data = (await res.json().catch(() => ({}))) as T & { error?: string };
   if (!res.ok) throw new Error((data as { error?: string }).error ?? `Request failed (${res.status})`);
   return data as T;
