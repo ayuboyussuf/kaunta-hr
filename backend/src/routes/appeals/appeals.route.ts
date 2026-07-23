@@ -13,6 +13,8 @@ import { z } from "zod";
 import { getServiceClient } from "../../lib/supabase";
 import { requireOwner, requireEmployee } from "../../lib/auth";
 import { finalizeViolation } from "../../lib/violations/finalize";
+import { sendText } from "../../lib/messaging";
+import { env } from "../../lib/env";
 
 const router = Router();
 
@@ -62,6 +64,41 @@ router.post("/", requireEmployee, async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
 
   await db.from("violations").update({ status: "appealed" }).eq("id", v.id);
+
+  // Notify the owner: drop a message in their inbox, and SMS them if a number
+  // is on file. Best-effort — never fail the appeal because a notice didn't send.
+  try {
+    const { data: emp } = await db
+      .from("employees")
+      .select("name, org_id")
+      .eq("id", employeeId)
+      .maybeSingle();
+    if (emp) {
+      const { data: org } = await db
+        .from("orgs")
+        .select("phone")
+        .eq("id", emp.org_id)
+        .maybeSingle();
+
+      await db.from("owner_notifications").insert({
+        org_id: emp.org_id,
+        kind: "appeal",
+        title: `Appeal from ${emp.name}`,
+        body: parsed.data.message,
+        link: "/dashboard/violations",
+        ref_id: appeal.id,
+      });
+
+      if (org?.phone) {
+        await sendText(
+          org.phone,
+          `Kaunta HR: ${emp.name} submitted a penalty appeal. Review it at ${env.appUrl}/dashboard/violations`
+        );
+      }
+    }
+  } catch (err) {
+    console.warn("[appeals] owner notification failed:", (err as Error).message);
+  }
 
   res.status(201).json({ appeal });
 });

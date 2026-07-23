@@ -16,6 +16,7 @@ type Phase = "scanning" | "locating" | "sending" | "done" | "error";
 
 interface ScanResult {
   status: "normal" | "late" | "flagged";
+  direction: "in" | "out";
   distance_m: number;
   flags: string[];
   workplace: { name: string };
@@ -25,6 +26,7 @@ const STATUS_COPY: Record<string, { title: string; tone: string; note: string }>
   normal: { title: "Clocked in — on time", tone: "text-kaunta-sage", note: "You're inside the workplace area." },
   late: { title: "Clocked in — late", tone: "text-kaunta-amber", note: "Recorded as late against your shift." },
   flagged: { title: "Clocked in — flagged", tone: "text-kaunta-red", note: "This scan was flagged for review." },
+  out: { title: "Clocked out", tone: "text-kaunta-sage", note: "Your clock-out has been recorded." },
 };
 
 const SCANNER_ID = "kaunta-qr-reader";
@@ -134,7 +136,7 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
   }, [presetToken]);
 
   if (phase === "done" && result) {
-    const copy = STATUS_COPY[result.status] ?? STATUS_COPY.normal;
+    const copy = result.direction === "out" ? STATUS_COPY.out : STATUS_COPY[result.status] ?? STATUS_COPY.normal;
     return (
       <Card>
         <CardContent className="p-6 text-center space-y-2">

@@ -44,6 +44,17 @@ function timeToMinutes(t: string): number {
   return h * 60 + (m || 0);
 }
 
+/** Start of "today" in Nairobi (UTC+3, no DST) as an ISO instant. */
+function nairobiDayStartISO(now: Date): string {
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  return new Date(`${ymd}T00:00:00+03:00`).toISOString();
+}
+
 const scanInput = z.object({
   token: z.string().min(1),
   lat: z.number().min(-90).max(90),
@@ -107,6 +118,19 @@ router.post("/scan", requireEmployee, async (req, res) => {
     .maybeSingle();
 
   const now = new Date();
+
+  // Clock in vs out: the first scan of the Nairobi day is a clock-IN; the next
+  // toggles to OUT, and so on. This lets the owner see in→out per employee.
+  const { data: lastToday } = await db
+    .from("attendance_entries")
+    .select("direction")
+    .eq("employee_id", req.employee!.employeeId)
+    .gte("scanned_at", nairobiDayStartISO(now))
+    .order("scanned_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const direction: "in" | "out" = lastToday?.direction === "in" ? "out" : "in";
+
   const geo = evaluateScan({
     workplaceLat: workplace.lat,
     workplaceLng: workplace.lng,
@@ -118,10 +142,10 @@ router.post("/scan", requireEmployee, async (req, res) => {
     prior: prior && prior.lat != null && prior.lng != null ? { lat: prior.lat, lng: prior.lng, scanned_at: prior.scanned_at } : null,
   });
 
-  // Roster comparison → auto-lateness.
+  // Roster comparison → auto-lateness. Only clock-INs can be "late".
   let rosterExpected: { shift_id: string; expected_start: string; late_by_min: number } | null = null;
   let late = false;
-  if (shift) {
+  if (shift && direction === "in") {
     const startMin = timeToMinutes(shift.start_time);
     const nowMin = minutesSinceMidnight(now, TZ);
     let lateBy = nowMin - (startMin + (shift.grace_minutes ?? 0));
@@ -147,10 +171,11 @@ router.post("/scan", requireEmployee, async (req, res) => {
       accuracy_m: accuracy ?? null,
       distance_m: geo.distanceM,
       status,
+      direction,
       flags: geo.flags,
       roster_expected: rosterExpected,
     })
-    .select("id, scanned_at, status, distance_m, flags")
+    .select("id, scanned_at, status, direction, distance_m, flags")
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -160,6 +185,7 @@ router.post("/scan", requireEmployee, async (req, res) => {
     workplace: { id: workplace.id, name: workplace.name },
     distance_m: Math.round(geo.distanceM),
     status,
+    direction,
     flags: geo.flags,
   });
 });
