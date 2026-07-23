@@ -2,7 +2,7 @@
 
 /**
  * Employee / team management (spec §2, owner side). Add employees (name + phone),
- * assign a workplace + shift + base salary, and the backend sends a WhatsApp invite.
+ * assign a workplace + shift + base salary, and the backend sends an SMS invite.
  * List, edit, reassign, suspend / reactivate. Uses the owner Supabase token.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -129,8 +129,8 @@ export default function EmployeesPage() {
         });
         setNotice(
           resp.inviteSent
-            ? "Employee added and WhatsApp invite sent."
-            : `Employee added, but the WhatsApp invite could not be sent${resp.inviteError ? `: ${resp.inviteError}` : "."}`
+            ? "Employee added and invite sent by SMS."
+            : `Employee added, but the SMS invite could not be sent${resp.inviteError ? `: ${resp.inviteError}` : "."}`
         );
       }
       setDraft(null);
@@ -149,6 +149,25 @@ export default function EmployeesPage() {
       await load(token);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Action failed");
+    }
+  }
+
+  async function resendInvite(id: string) {
+    if (!token) return;
+    setError(null);
+    setNotice(null);
+    try {
+      const r = await api<{ inviteSent: boolean; inviteError?: string }>(
+        `/api/employees/${id}/resend-invite`,
+        { method: "POST", token }
+      );
+      setNotice(
+        r.inviteSent
+          ? "Invite resent by SMS."
+          : `Could not resend the invite${r.inviteError ? `: ${r.inviteError}` : "."}`
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Resend failed");
     }
   }
 
@@ -189,7 +208,7 @@ export default function EmployeesPage() {
                 <input className={inputCls} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
               </div>
               <div>
-                <label className={labelCls}>Phone (WhatsApp)</label>
+                <label className={labelCls}>Phone (SMS)</label>
                 <input
                   className={inputCls}
                   value={draft.phone}
@@ -260,10 +279,15 @@ export default function EmployeesPage() {
           <div className={`${cardCls} p-10 text-center`}>
             <Users className="h-8 w-8 text-kaunta-slate/30 mx-auto mb-3" />
             <p className="text-kaunta-slate/70">No employees yet.</p>
-            <p className="text-sm text-kaunta-slate/50 mt-1">Add your first team member — they&apos;ll get a WhatsApp invite.</p>
+            <p className="text-sm text-kaunta-slate/50 mt-1">Add your first team member — they&apos;ll get an SMS invite.</p>
           </div>
         ) : (
           <div className={`${cardCls} overflow-hidden`}>
+            <p className="px-4 pt-3 text-xs text-kaunta-slate/60">
+              <span className="font-medium text-kaunta-amber">Invited</span> = added but hasn&apos;t signed in yet ·{" "}
+              <span className="font-medium text-kaunta-sage">Active</span> = has signed in. Use the{" "}
+              <MessageCircle className="inline h-3 w-3" /> button to resend an invite.
+            </p>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-kaunta-mist text-left text-xs text-kaunta-slate/60">
@@ -311,6 +335,16 @@ export default function EmployeesPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
+                        {e.status === "invited" && (
+                          <button
+                            onClick={() => resendInvite(e.id)}
+                            className="text-kaunta-slate/60 hover:text-kaunta-copper p-1"
+                            aria-label="Resend invite"
+                            title="Resend invite by SMS"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </button>
+                        )}
                         {e.status === "suspended" ? (
                           <button onClick={() => setStatus(e.id, "activate")} className="text-kaunta-sage/70 hover:text-kaunta-sage p-1" aria-label="Reactivate">
                             <RotateCcw className="h-4 w-4" />

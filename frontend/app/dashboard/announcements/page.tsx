@@ -98,7 +98,7 @@ export default function AnnouncementsPage() {
       setTitle("");
       setBody("");
       setNotice(
-        `Posted. Notified ${res.notified.sent}/${res.notified.total} employee(s) on WhatsApp${
+        `Posted. Notified ${res.notified.sent}/${res.notified.total} employee(s) by SMS${
           res.notified.failed ? ` (${res.notified.failed} failed to send)` : ""
         }.`
       );
@@ -129,7 +129,7 @@ export default function AnnouncementsPage() {
             Announcements
           </h1>
           <p className="text-kaunta-slate/70 text-sm">
-            Post an update to all employees, or a single workplace, over WhatsApp.
+            Post an update to all employees, or a single workplace, by SMS.
           </p>
         </div>
 

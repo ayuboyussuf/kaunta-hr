@@ -27,7 +27,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: { default: "Kaunta HR", template: "%s | Kaunta HR" },
   description:
-    "Kaunta HR — attendance, rosters, penalties and payroll for teams. QR + GPS clock-in, WhatsApp onboarding, appeals and payslips.",
+    "Kaunta HR — attendance, rosters, penalties and payroll for teams. QR + GPS clock-in, SMS onboarding, appeals and payslips.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -16,10 +16,13 @@
  */
 import { Router } from "express";
 import { z } from "zod";
+import QRCode from "qrcode";
 import { requireOwner } from "../../lib/auth";
 import { getServiceClient, extractToken } from "../../lib/supabase";
 import { setupSummaryPdf, SetupSummaryData } from "../../lib/pdf/templates";
 import { uploadPdf } from "../../lib/pdf/render";
+import { signWorkplaceToken } from "../../lib/qr";
+import { env } from "../../lib/env";
 
 const router = Router();
 
@@ -207,7 +210,9 @@ router.post("/complete", requireOwner, async (req, res) => {
     }
   }
 
-  // 2) Workplaces + their shifts.
+  // 2) Workplaces + their shifts. Collect a clock-in QR (PNG) per workplace, in
+  // cfg order, so the setup summary PDF can embed a printable code for each.
+  const wpQrs: (Buffer | null)[] = [];
   for (const w of cfg.workplaces) {
     const { data: wp, error: wErr } = await db
       .from("workplaces")
@@ -219,9 +224,19 @@ router.post("/complete", requireOwner, async (req, res) => {
         geofence_radius_m: w.geofence_radius_m,
         ruleset_id: keyToId.get(w.rulesetKey)!,
       })
-      .select("id")
+      .select("id, qr_nonce")
       .single();
     if (wErr || !wp) return res.status(500).json({ error: wErr?.message ?? "workplace insert failed" });
+
+    // Same deep link the QR page prints: <app>/scan?w=<signed token>.
+    try {
+      const token = signWorkplaceToken(wp.id, wp.qr_nonce);
+      const scanUrl = `${env.appUrl}/scan?w=${token}`;
+      wpQrs.push(await QRCode.toBuffer(scanUrl, { width: 320, margin: 1 }));
+    } catch (err) {
+      console.warn(`[onboarding] QR generation failed for workplace ${wp.id}:`, err);
+      wpQrs.push(null);
+    }
 
     if (w.shifts.length) {
       const { error: sErr } = await db.from("shifts").insert(
@@ -256,7 +271,7 @@ router.post("/complete", requireOwner, async (req, res) => {
     orgName: cfg.name,
     workplaceMode: cfg.workplace_mode,
     rulesMode: cfg.rules_mode,
-    workplaces: cfg.workplaces.map((w) => ({
+    workplaces: cfg.workplaces.map((w, i) => ({
       name: w.name,
       radiusM: w.geofence_radius_m,
       lat: w.lat ?? null,
@@ -271,6 +286,7 @@ router.post("/complete", requireOwner, async (req, res) => {
         reason: p.reason,
         amount: p.amount,
       })),
+      qr: wpQrs[i] ?? null,
     })),
   };
 
