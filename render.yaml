@@ -1,0 +1,53 @@
+services:
+  # ── Web service (Express API) ──────────────────────────────────────────────
+  - type: web
+    name: kaunta-hr
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      # Set every secret below in the Render dashboard — do not commit them.
+      - key: FRONTEND_URL
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: QR_TOKEN_SECRET
+        sync: false
+      - key: EMPLOYEE_JWT_SECRET
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+      - key: AT_USERNAME
+        sync: false
+      - key: AT_API_KEY
+        sync: false
+      - key: AT_SENDER_ID
+        sync: false
+
+  # ── Cron: close appeal windows + lock outcomes (every 15 min) ──────────────
+  - type: cron
+    name: kaunta-hr-close-appeals
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    schedule: "*/15 * * * *"
+    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/close-appeals',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
