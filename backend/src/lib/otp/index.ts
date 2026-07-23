@@ -65,7 +65,14 @@ export async function requestOtp(phone: string): Promise<{ sent: true; channel: 
     console.log(`[otp][sandbox] verification code for ${phone} is ${code} (sandbox — not a real SMS)`);
   }
 
-  await activeChannel.send(phone, code);
+  // Send in the BACKGROUND. The code is already persisted and valid, so the
+  // caller must not wait on the SMS provider — a slow/flaky AT response used to
+  // hang the whole request and leave the UI stuck on "Sending…". Fire-and-forget
+  // with its own error handling instead.
+  void activeChannel.send(phone, code).catch((err) => {
+    console.error(`[otp] background send failed for ${phone}:`, (err as Error).message);
+  });
+
   return { sent: true, channel: activeChannel.name };
 }
 

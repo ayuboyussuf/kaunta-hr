@@ -69,6 +69,8 @@ async function sendOnce(to: string, message: string): Promise<SmsResult> {
 
   let res: Response;
   let raw: string;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12_000); // AT can hang; never wait forever
   try {
     res = await fetch(url, {
       method: "POST",
@@ -78,12 +80,16 @@ async function sendOnce(to: string, message: string): Promise<SmsResult> {
         Accept: "application/json",
       },
       body: params.toString(),
+      signal: controller.signal,
     });
     raw = await res.text();
   } catch (err) {
-    // Could not even reach AT (DNS, network, proxy) — transient, worth a retry.
-    console.error(`[sms] ✗ transport error reaching AT: ${(err as Error).message}`);
+    // Timed out (abort) or couldn't reach AT (DNS, network) — transient, retry.
+    const aborted = (err as Error).name === "AbortError";
+    console.error(`[sms] ✗ ${aborted ? "timed out after 12s" : "transport error"} reaching AT: ${(err as Error).message}`);
     throw new SmsError(`[sms] could not reach Africa's Talking: ${(err as Error).message}`, true);
+  } finally {
+    clearTimeout(timer);
   }
 
   // Log AT's raw HTTP status + body so you can see exactly what they answered.
