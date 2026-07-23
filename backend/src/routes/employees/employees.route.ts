@@ -177,16 +177,18 @@ router.post("/:id/resend-invite", requireOwner, async (req, res) => {
   const orgName = org?.name ?? "your workplace";
   const loginUrl = `${env.appUrl}/me/login`;
 
+  console.log(`[employees] resend-invite → sending to ${emp.phone} (${emp.name})`);
   try {
     await sendText(
       emp.phone,
       `Hi ${emp.name}, here's your Kaunta HR invite for ${orgName} again.\n\n` +
         `Open ${loginUrl} and sign in with this phone number (${emp.phone}) to clock in and view your pay.`
     );
+    console.log(`[employees] resend-invite ✓ accepted by SMS provider for ${emp.phone}`);
     return res.json({ inviteSent: true });
   } catch (err) {
     const inviteError = err instanceof Error ? err.message : String(err);
-    console.warn(`[employees] resend invite to ${emp.phone} failed:`, inviteError);
+    console.warn(`[employees] resend-invite ✗ to ${emp.phone} failed:`, inviteError);
     return res.status(502).json({ inviteSent: false, inviteError });
   }
 });
