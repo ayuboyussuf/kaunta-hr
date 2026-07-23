@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+/* ── Kaunta Design System ───────────────────────────────────────── */
+@theme {
+  /* Core palette */
+  --color-kaunta-ink:        #0F1923;
+  --color-kaunta-slate:      #1C2B3A;
+  --color-kaunta-copper:     #C4622D;
+  --color-kaunta-copper-lt:  #F2E4D9;
+  --color-kaunta-sage:       #3D6B5E;
+  --color-kaunta-sage-lt:    #DFF0EB;
+  --color-kaunta-stone:      #F7F4F0;
+  --color-kaunta-mist:       #EAE6E1;
+  --color-kaunta-amber:      #D4A017;
+  --color-kaunta-red:        #B83232;
+  --color-kaunta-white:      #FFFFFF;
+
+  /* Typography */
+  --font-display: var(--font-instrument-serif), "Georgia", serif;
+  --font-sans: var(--font-dm-sans), "system-ui", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "Courier New", monospace;
+
+  /* Shadows */
+  --shadow-card: 0 2px 16px rgba(15, 25, 35, 0.08);
+  --shadow-card-hover: 0 8px 32px rgba(15, 25, 35, 0.14);
+  --shadow-modal: 0 24px 64px rgba(15, 25, 35, 0.18);
+
+  /* Border radius */
+  --radius-card: 12px;
+}
+
+/* ── Base ────────────────────────────────────────────────────────── */
+:root {
+  --background: #F7F4F0;
+  --foreground: #0F1923;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* ── Grain texture overlay (used on hero) ───────────────────────── */
+.grain-overlay {
+  position: relative;
+}
+.grain-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+/* ── Copper glow (hero background effect) ───────────────────────── */
+/* NOTE: must use background-image (not background shorthand) so that
+   Tailwind's bg-kaunta-slate background-color is not overridden. */
+.copper-glow {
+  background-image: radial-gradient(ellipse 80% 50% at 50% 110%, rgba(196, 98, 45, 0.18) 0%, transparent 70%);
+}
+
+/* ── Typography utilities ────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* ── Number formatting (monospace for financial figures) ─────────── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+/* ── Accordion animations ────────────────────────────────────────── */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+.animate-accordion-down { animation: accordion-down 0.2s ease-out; }
+.animate-accordion-up   { animation: accordion-up   0.2s ease-out; }
+
+/* ── Slide-in animation (cookie notice) ─────────────────────────── */
+@keyframes slide-in-from-bottom-4 {
+  from { transform: translateX(-50%) translateY(1rem); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+}
+.animate-in.slide-in-from-bottom-4.fade-in {
+  animation: slide-in-from-bottom-4 0.3s ease-out forwards;
+}
+
+/* ── Compliance pulse animation ─────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+.pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-kaunta-stone);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-kaunta-mist);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-kaunta-copper);
+}
+
+/* ── Focus ring ─────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #C4622D;
+  outline-offset: 2px;
+}
+
+/* ── Table zebra striping ────────────────────────────────────────── */
+.table-zebra tbody tr:nth-child(even) {
+  background-color: #F7F4F0;
+}
+.table-zebra tbody tr:nth-child(odd) {
+  background-color: #FFFFFF;
+}
