@@ -12,7 +12,7 @@ import {
 type Step = "phone" | "otp" | "pin" | "setpin";
 
 /**
- * Employee sign-in (spec §2): phone → WhatsApp OTP → trusted device → PIN.
+ * Employee sign-in (spec §2): phone → SMS OTP → trusted device → PIN.
  * On a trusted device the employee can log in with PIN alone; a new device
  * forces OTP again.
  */
@@ -26,8 +26,17 @@ export default function EmployeeLoginPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resendIn, setResendIn] = useState(0); // seconds until "Resend code" re-enables
+  const [next, setNext] = useState<string | null>(null); // where to go after login (e.g. back to /scan)
 
   const fp = () => getDeviceFingerprint();
+
+  // Honour a ?next= deep link (e.g. arriving from a scanned QR) so login returns
+  // the employee to where they were headed. Only same-origin paths are allowed.
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("next");
+    if (raw && raw.startsWith("/")) setNext(raw);
+  }, []);
+  const dest = () => next ?? "/me";
 
   // Count down the resend cooldown.
   useEffect(() => {
@@ -50,7 +59,7 @@ export default function EmployeeLoginPage() {
       await api("/api/auth/employee/request-otp", { method: "POST", body: { phone } });
       setStep("otp");
       setResendIn(30); // throttle resends
-      if (isResend) setNotice("A new code is on its way to your WhatsApp.");
+      if (isResend) setNotice("A new code is on its way by SMS.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -68,7 +77,7 @@ export default function EmployeeLoginPage() {
       );
       setEmployeeToken(r.token);
       if (r.needsPinSetup) setStep("setpin");
-      else router.push("/me");
+      else router.push(dest());
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -85,11 +94,11 @@ export default function EmployeeLoginPage() {
         body: { phone, pin, fingerprint: fp() },
       });
       setEmployeeToken(r.token);
-      router.push("/me");
+      router.push(dest());
     } catch (e) {
       const msg = (e as Error).message;
       if (msg === "new_device") {
-        setError("New device — we'll send a code to your WhatsApp.");
+        setError("New device — we'll send a code by SMS.");
         setStep("phone");
       } else {
         setError(msg);
@@ -109,7 +118,7 @@ export default function EmployeeLoginPage() {
         token: token ?? undefined,
         body: { pin },
       });
-      router.push("/me");
+      router.push(dest());
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -142,7 +151,7 @@ export default function EmployeeLoginPage() {
             </div>
             {error && <p className="text-sm text-kaunta-red">{error}</p>}
             <Button onClick={() => requestOtp()} disabled={loading || !phone} className="w-full">
-              {loading ? "Sending…" : "Send code on WhatsApp"}
+              {loading ? "Sending…" : "Send code by SMS"}
             </Button>
             <button
               onClick={tryPinFirst}
@@ -156,7 +165,7 @@ export default function EmployeeLoginPage() {
         {step === "otp" && (
           <div className="space-y-4">
             <p className="text-sm text-kaunta-slate">
-              Enter the 6-digit code sent to your WhatsApp{phone ? ` (${phone})` : ""}.
+              Enter the 6-digit code sent by SMS{phone ? ` to ${phone}` : ""}.
             </p>
             <input
               inputMode="numeric"
