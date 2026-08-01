@@ -21,7 +21,10 @@ export default function OwnerLoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) return setError(error.message);
-    router.push("/dashboard");
+    // Return the owner to where they were headed, if the middleware sent a
+    // ?next= (only same-app /dashboard paths, to avoid an open redirect).
+    const next = new URLSearchParams(window.location.search).get("next");
+    router.push(next && next.startsWith("/dashboard") ? next : "/dashboard");
     router.refresh();
   }
 
