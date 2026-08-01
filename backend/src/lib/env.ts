@@ -35,4 +35,13 @@ export const env = {
     apiKey: () => req("AT_API_KEY"),
     senderId: () => opt("AT_SENDER_ID", ""),
   },
+
+  // Web Push (mid-shift presence prompts). Optional: when unset, presence checks
+  // fall back to SMS + the in-app banner. Generate with `npx web-push generate-vapid-keys`.
+  vapid: {
+    publicKey: () => opt("VAPID_PUBLIC_KEY", ""),
+    privateKey: () => opt("VAPID_PRIVATE_KEY", ""),
+    subject: () => opt("VAPID_SUBJECT", "mailto:support@kaunta.app"),
+    configured: () => !!process.env.VAPID_PUBLIC_KEY && !!process.env.VAPID_PRIVATE_KEY,
+  },
 };

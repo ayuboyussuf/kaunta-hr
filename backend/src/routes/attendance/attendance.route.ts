@@ -21,6 +21,7 @@ import { getServiceClient } from "../../lib/supabase";
 import { signWorkplaceToken, verifyWorkplaceToken } from "../../lib/qr";
 import { evaluateScan } from "../../lib/attendance/geofence";
 import { uploadSelfie, signSelfie } from "../../lib/storage/selfies";
+import { confirmPendingCheck } from "../../lib/presence";
 
 const router = Router();
 
@@ -207,6 +208,13 @@ router.post("/scan", requireEmployee, async (req, res) => {
     } catch (err) {
       console.error(`[scan] selfie upload failed for entry ${entry.id}:`, (err as Error).message);
     }
+  }
+
+  // A scan answers any pending mid-shift presence check (best-effort).
+  try {
+    await confirmPendingCheck(db, req.employee!.employeeId, entry.id);
+  } catch (err) {
+    console.error(`[scan] presence confirm failed for entry ${entry.id}:`, (err as Error).message);
   }
 
   res.status(201).json({
