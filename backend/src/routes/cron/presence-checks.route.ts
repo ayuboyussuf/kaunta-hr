@@ -76,7 +76,7 @@ router.post("/", async (req, res) => {
   // ── 2) Fire new checks for clocked-in employees in enabled orgs. ─────────────
   const { data: orgs } = await db
     .from("orgs")
-    .select("id, presence_checks_per_shift, presence_check_window_min")
+    .select("id, presence_checks_per_shift, presence_check_window_min, presence_sms_fallback")
     .gt("presence_checks_per_shift", 0);
 
   const dayStart = nairobiDayStartISO(now);
@@ -85,6 +85,7 @@ router.post("/", async (req, res) => {
   for (const org of orgs ?? []) {
     const target = org.presence_checks_per_shift as number;
     const windowMin = (org.presence_check_window_min as number) || 10;
+    const smsFallback = org.presence_sms_fallback !== false; // default on
 
     const { data: employees } = await db
       .from("employees")
@@ -150,7 +151,7 @@ router.post("/", async (req, res) => {
         url: "/me/clock-in",
       };
       const delivered = await pushToEmployee(emp.id, payload).catch(() => 0);
-      if (delivered === 0 && emp.phone) {
+      if (delivered === 0 && smsFallback && emp.phone) {
         try {
           await sendText(
             emp.phone,

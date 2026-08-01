@@ -14,6 +14,10 @@ ALTER TABLE orgs
   ADD COLUMN IF NOT EXISTS presence_checks_per_shift int NOT NULL DEFAULT 0;
 ALTER TABLE orgs
   ADD COLUMN IF NOT EXISTS presence_check_window_min int NOT NULL DEFAULT 10;
+-- When true, a presence prompt also SMSes employees without a push device
+-- (costs money per check). When false, push + in-app banner only.
+ALTER TABLE orgs
+  ADD COLUMN IF NOT EXISTS presence_sms_fallback boolean NOT NULL DEFAULT true;
 
 -- 3) Presence checks — one row per prompt fired at a clocked-in employee.
 CREATE TABLE IF NOT EXISTS presence_checks (

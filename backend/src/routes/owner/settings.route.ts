@@ -15,7 +15,9 @@ import { getServiceClient } from "../../lib/supabase";
 
 const router = Router();
 
-const ORG_SELECT = "id, name, phone, workplace_mode, rules_mode, onboarding_complete, created_at";
+const ORG_SELECT =
+  "id, name, phone, workplace_mode, rules_mode, onboarding_complete, created_at, " +
+  "presence_checks_per_shift, presence_check_window_min, presence_sms_fallback";
 
 /** Normalise a raw phone to E.164 with a leading '+', Kenya-aware. */
 function normPhone(raw: string): string {
@@ -40,6 +42,9 @@ router.get("/", requireOwner, async (req, res) => {
 const patchInput = z.object({
   name: z.string().min(1).max(120).optional(),
   phone: z.string().max(20).nullable().optional(), // "" / null clears it
+  presence_checks_per_shift: z.number().int().min(0).max(10).optional(), // 0 = off
+  presence_check_window_min: z.number().int().min(1).max(120).optional(),
+  presence_sms_fallback: z.boolean().optional(),
 });
 
 router.patch("/", requireOwner, async (req, res) => {
@@ -52,6 +57,12 @@ router.patch("/", requireOwner, async (req, res) => {
     const p = (parsed.data.phone ?? "").trim();
     patch.phone = p ? normPhone(p) : null;
   }
+  if (parsed.data.presence_checks_per_shift !== undefined)
+    patch.presence_checks_per_shift = parsed.data.presence_checks_per_shift;
+  if (parsed.data.presence_check_window_min !== undefined)
+    patch.presence_check_window_min = parsed.data.presence_check_window_min;
+  if (parsed.data.presence_sms_fallback !== undefined)
+    patch.presence_sms_fallback = parsed.data.presence_sms_fallback;
   if (Object.keys(patch).length === 0) {
     return res.status(400).json({ error: "nothing to update" });
   }

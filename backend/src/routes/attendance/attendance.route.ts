@@ -210,9 +210,15 @@ router.post("/scan", requireEmployee, async (req, res) => {
     }
   }
 
-  // A scan answers any pending mid-shift presence check (best-effort).
+  // A scan answers any pending mid-shift presence check — but only when the
+  // employee is verifiably at the workplace. If the workplace has coordinates,
+  // the scan must be inside the geofence (so a photographed QR scanned from
+  // outside, or with GPS off, does NOT confirm); a workplace without coordinates
+  // can't be geofenced, so the QR + selfie stands.
+  const workplaceHasCoords = workplace.lat != null && workplace.lng != null;
+  const locationOk = !workplaceHasCoords || (hasCoords && geo.insideGeofence);
   try {
-    await confirmPendingCheck(db, req.employee!.employeeId, entry.id);
+    await confirmPendingCheck(db, req.employee!.employeeId, entry.id, locationOk);
   } catch (err) {
     console.error(`[scan] presence confirm failed for entry ${entry.id}:`, (err as Error).message);
   }

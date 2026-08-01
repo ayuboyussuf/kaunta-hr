@@ -10,7 +10,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Loader2, Building2, SlidersHorizontal, Check } from "lucide-react";
+import { Loader2, Building2, SlidersHorizontal, Check, ShieldCheck } from "lucide-react";
 
 interface OrgSettings {
   id: string;
@@ -20,6 +20,9 @@ interface OrgSettings {
   rules_mode: "shared" | "per_workplace";
   onboarding_complete: boolean;
   created_at: string;
+  presence_checks_per_shift: number;
+  presence_check_window_min: number;
+  presence_sms_fallback: boolean;
 }
 
 const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
@@ -39,6 +42,11 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  // Presence-check config
+  const [checksPerShift, setChecksPerShift] = useState(0);
+  const [windowMin, setWindowMin] = useState(10);
+  const [smsFallback, setSmsFallback] = useState(true);
+  const [savingPresence, setSavingPresence] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -52,6 +60,9 @@ export default function SettingsPage() {
         setOrg(r.org);
         setName(r.org.name);
         setPhone(r.org.phone ?? "");
+        setChecksPerShift(r.org.presence_checks_per_shift ?? 0);
+        setWindowMin(r.org.presence_check_window_min ?? 10);
+        setSmsFallback(r.org.presence_sms_fallback ?? true);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load settings");
       } finally {
@@ -82,7 +93,36 @@ export default function SettingsPage() {
     }
   }
 
+  async function savePresence() {
+    if (!token) return;
+    setSavingPresence(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const r = await api<{ org: OrgSettings }>("/api/owner/settings", {
+        method: "PATCH",
+        token,
+        body: {
+          presence_checks_per_shift: Number(checksPerShift) || 0,
+          presence_check_window_min: Number(windowMin) || 10,
+          presence_sms_fallback: smsFallback,
+        },
+      });
+      setOrg(r.org);
+      setNotice("Presence-check settings saved.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSavingPresence(false);
+    }
+  }
+
   const dirty = org ? name.trim() !== org.name || phone.trim() !== (org.phone ?? "") : false;
+  const presenceDirty = org
+    ? checksPerShift !== org.presence_checks_per_shift ||
+      windowMin !== org.presence_check_window_min ||
+      smsFallback !== org.presence_sms_fallback
+    : false;
 
   return (
     <main className="bg-kaunta-stone">
@@ -146,6 +186,62 @@ export default function SettingsPage() {
                   Save changes
                 </Button>
                 {dirty && <span className="text-xs text-kaunta-slate/50">Unsaved changes</span>}
+              </div>
+            </section>
+
+            {/* Presence checks */}
+            <section className={`${cardCls} p-6 space-y-4`}>
+              <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-kaunta-copper" /> Presence checks
+              </h2>
+              <p className="text-sm text-kaunta-slate/60">
+                Randomly prompt clocked-in staff to re-scan during a shift, so someone can&apos;t clock in and
+                leave. A missed check is flagged for your review (not an automatic penalty).
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>Random checks per shift</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    className={inputCls}
+                    value={checksPerShift}
+                    onChange={(e) => setChecksPerShift(Math.max(0, Math.min(10, Number(e.target.value))))}
+                  />
+                  <p className="text-xs text-kaunta-slate/50 mt-1">0 turns presence checks off.</p>
+                </div>
+                <div>
+                  <label className={labelCls}>Response window (minutes)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={120}
+                    className={inputCls}
+                    value={windowMin}
+                    onChange={(e) => setWindowMin(Math.max(1, Math.min(120, Number(e.target.value))))}
+                  />
+                  <p className="text-xs text-kaunta-slate/50 mt-1">
+                    How long staff have to scan after a prompt. Longer is friendlier; shorter is harder to fake.
+                  </p>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-kaunta-ink">
+                <input
+                  type="checkbox"
+                  checked={smsFallback}
+                  onChange={(e) => setSmsFallback(e.target.checked)}
+                  className="h-4 w-4 accent-kaunta-copper"
+                />
+                Also send an SMS to staff without push notifications
+                <span className="text-xs text-kaunta-slate/50">(costs money per check)</span>
+              </label>
+              <div className="flex items-center gap-2 pt-1">
+                <Button onClick={savePresence} disabled={savingPresence || !presenceDirty}>
+                  {savingPresence ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Save presence settings
+                </Button>
+                {presenceDirty && <span className="text-xs text-kaunta-slate/50">Unsaved changes</span>}
               </div>
             </section>
 
