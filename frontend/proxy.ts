@@ -4,8 +4,11 @@ import { createServerClient } from "@supabase/ssr";
 /**
  * Route proxy (Next.js 16 uses proxy.ts, not middleware.ts).
  * Refreshes the Supabase (owner) session cookie so server components see a valid
- * session. No-ops gracefully until Supabase env vars are configured. Employee
- * auth is a backend-issued JWT in localStorage and is not handled here.
+ * session, AND gates the owner dashboard: an unauthenticated visit to
+ * /dashboard/* (e.g. someone sent a /dashboard/qr link) is redirected to /login
+ * instead of rendering the dashboard shell. No-ops gracefully until Supabase env
+ * vars are configured. Employee auth is a backend-issued JWT in localStorage and
+ * is not gated here (/me/* is untouched).
  */
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -29,7 +32,19 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Gate the owner dashboard. Everything else (/, /me/*, /login, /scan) passes
+  // through — this only refreshes their session cookie.
+  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/login";
+    redirectUrl.searchParams.set("next", request.nextUrl.pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
+
   return response;
 }
 
