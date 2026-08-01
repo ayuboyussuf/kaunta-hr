@@ -9,10 +9,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { api, getEmployeeToken } from "@/lib/api";
+import { captureSelfie } from "@/lib/selfie";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-type Phase = "scanning" | "locating" | "sending" | "done" | "error";
+type Phase = "scanning" | "selfie" | "locating" | "sending" | "done" | "error";
 
 interface ScanResult {
   status: "normal" | "late" | "flagged";
@@ -46,6 +47,7 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const submittingRef = useRef(false);
 
   async function submit(token: string) {
@@ -57,6 +59,17 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
       setError("Your session expired. Please log in again.");
       setPhase("error");
       return;
+    }
+
+    // Identity check: capture a live front-camera selfie before clocking in.
+    // Best-effort — a denied/absent camera still proceeds (server flags it).
+    setPhase("selfie");
+    let selfie: string | null = null;
+    let faceDetected = false;
+    if (videoRef.current) {
+      const shot = await captureSelfie(videoRef.current);
+      selfie = shot.image;
+      faceDetected = shot.faceDetected;
     }
 
     // Location is best-effort — the QR scan is what clocks you in. We try to
@@ -72,6 +85,8 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
             lat: coords?.lat ?? null,
             lng: coords?.lng ?? null,
             accuracy: coords?.accuracy ?? null,
+            selfie,
+            faceDetected,
           },
         });
         setResult(res);
@@ -170,11 +185,24 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
   return (
     <Card>
       <CardContent className="p-4 space-y-3">
-        {!presetToken && (
+        {!presetToken && phase === "scanning" && (
           <div id={SCANNER_ID} className="w-full overflow-hidden rounded-xl bg-black/5" />
         )}
+        {/* Front-camera preview for the identity selfie. Kept mounted (hidden
+            off-selfie) so the ref exists when capture starts. Mirrored for a
+            natural "selfie" feel. */}
+        <video
+          ref={videoRef}
+          playsInline
+          muted
+          className={`mx-auto w-48 h-48 rounded-full object-cover bg-black/5 ${
+            phase === "selfie" ? "block" : "hidden"
+          }`}
+          style={{ transform: "scaleX(-1)" }}
+        />
         <p className="text-center text-sm text-kaunta-slate/70">
           {phase === "scanning" && "Point your camera at the workplace QR code."}
+          {phase === "selfie" && "Look at the camera to confirm it's you…"}
           {phase === "locating" && "Reading your location…"}
           {phase === "sending" && "Recording your clock-in…"}
         </p>

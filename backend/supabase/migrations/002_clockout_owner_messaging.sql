@@ -26,6 +26,9 @@ CREATE INDEX IF NOT EXISTS owner_notifications_org_idx
   ON owner_notifications (org_id, created_at DESC);
 
 ALTER TABLE owner_notifications ENABLE ROW LEVEL SECURITY;
+-- Postgres has no CREATE POLICY IF NOT EXISTS, so drop-then-create keeps this
+-- migration safe to re-run.
+DROP POLICY IF EXISTS "owner manages own notifications" ON owner_notifications;
 CREATE POLICY "owner manages own notifications" ON owner_notifications FOR ALL
   USING (org_id = get_auth_user_org_id())
   WITH CHECK (org_id = get_auth_user_org_id());

@@ -20,6 +20,7 @@ const NAV = [
   { href: "/dashboard/workplaces", label: "Workplaces" },
   { href: "/dashboard/qr", label: "QR codes" },
   { href: "/dashboard/violations", label: "Penalties" },
+  { href: "/dashboard/rules", label: "Rules" },
   { href: "/dashboard/payroll", label: "Payroll" },
   { href: "/dashboard/announcements", label: "Announcements" },
   { href: "/dashboard/settings", label: "Settings" },

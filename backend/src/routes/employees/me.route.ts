@@ -81,4 +81,38 @@ router.get("/announcements", requireEmployee, async (req, res) => {
   res.json({ announcements: data ?? [] });
 });
 
+// ── GET /rules ────────────────────────────────────────────────────────────────
+// The penalty rules that apply to the caller (via their workplace's ruleset), so
+// a new employee can see what they can be penalised for before it happens.
+router.get("/rules", requireEmployee, async (req, res) => {
+  const db = getServiceClient();
+
+  const { data: employee } = await db
+    .from("employees")
+    .select("workplace:workplaces(id, name, ruleset_id)")
+    .eq("id", req.employee!.employeeId)
+    .maybeSingle();
+
+  const wp = employee
+    ? (Array.isArray((employee as any).workplace) ? (employee as any).workplace[0] : (employee as any).workplace)
+    : null;
+
+  if (!wp?.ruleset_id) {
+    return res.json({ workplace: wp ? { name: wp.name } : null, ruleset: null, rules: [] });
+  }
+
+  const { data: ruleset, error } = await db
+    .from("rulesets")
+    .select("id, name, penalty_rules(id, code, reason, amount, appeal_window_hours)")
+    .eq("id", wp.ruleset_id)
+    .maybeSingle();
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json({
+    workplace: { name: wp.name },
+    ruleset: ruleset ? { id: ruleset.id, name: ruleset.name } : null,
+    rules: ruleset?.penalty_rules ?? [],
+  });
+});
+
 export default { basePath: "/api/employees/me", router };

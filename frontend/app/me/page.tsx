@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { QrCode, ChevronRight } from "lucide-react";
 import { api, getEmployeeToken } from "@/lib/api";
+import { registerPush } from "@/lib/push";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ATTENDANCE_STATUS, formatDate, formatTime } from "@/lib/utils";
@@ -56,6 +57,7 @@ export default function EmployeeHome() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [attendance, setAttendance] = useState<AttendanceEntry[]>([]);
   const [unread, setUnread] = useState(0);
+  const [presenceDue, setPresenceDue] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,6 +87,25 @@ export default function EmployeeHome() {
         setLoading(false);
       }
     })();
+
+    // Subscribe to push (best-effort), then poll for a pending presence check so
+    // the banner shows even if the notification was missed.
+    registerPush(token);
+    let cancelled = false;
+    const checkPending = async () => {
+      try {
+        const { check } = await api<{ check: { id: string } | null }>("/api/presence/pending", { token });
+        if (!cancelled) setPresenceDue(!!check);
+      } catch {
+        /* ignore */
+      }
+    };
+    checkPending();
+    const timer = setInterval(checkPending, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, []);
 
   if (loading) {
@@ -110,6 +131,23 @@ export default function EmployeeHome() {
           {profile?.shift ? ` · ${profile.shift.name} shift` : ""}
         </p>
       </div>
+
+      {presenceDue && (
+        <Card className="bg-kaunta-red text-white border-none">
+          <CardContent className="p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-display text-lg mb-0.5">Presence check</p>
+              <p className="text-sm text-white/85">Scan the workplace QR now to confirm you&rsquo;re at work.</p>
+            </div>
+            <Button asChild variant="secondary" size="lg">
+              <Link href="/me/clock-in" className="flex items-center gap-2">
+                <QrCode className="h-4 w-4" />
+                Confirm
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="bg-kaunta-copper text-white border-none">
         <CardContent className="p-6 flex items-center justify-between">
@@ -180,6 +218,24 @@ export default function EmployeeHome() {
               className="mt-4 flex items-center gap-1 text-sm text-kaunta-copper hover:underline"
             >
               View announcements <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Workplace rules</CardTitle>
+            <CardDescription>Know the penalties before they apply</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-kaunta-slate/60">
+              See the penalties that apply at your workplace and their appeal windows.
+            </p>
+            <Link
+              href="/me/rules"
+              className="mt-4 flex items-center gap-1 text-sm text-kaunta-copper hover:underline"
+            >
+              View rules <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </CardContent>
         </Card>

@@ -118,6 +118,7 @@ router.get("/", requireOwner, async (req, res) => {
 
 // ── Complete: persist the whole configuration + generate the PDF ──────────────
 const penaltySchema = z.object({
+  id: z.string().uuid().optional(), // present → update in place; absent → insert
   code: z.string().min(1).max(60),
   reason: z.string().min(1).max(200),
   amount: z.number().min(0).max(1e9).default(0),
@@ -125,6 +126,7 @@ const penaltySchema = z.object({
 });
 
 const rulesetSchema = z.object({
+  id: z.string().uuid().optional(), // present → update existing ruleset (preserves links)
   key: z.string().min(1), // client-side reference id, mapped to a real uuid
   name: z.string().min(1).max(120),
   is_shared: z.boolean().default(false),
@@ -133,6 +135,7 @@ const rulesetSchema = z.object({
 });
 
 const shiftSchema = z.object({
+  id: z.string().uuid().optional(), // present → update existing shift
   name: z.string().min(1).max(120),
   kind: z.enum(["day", "night", "custom"]).default("day"),
   start_time: z.string().regex(TIME_RE, "start_time must be HH:MM"),
@@ -142,6 +145,7 @@ const shiftSchema = z.object({
 });
 
 const wpSchema = z.object({
+  id: z.string().uuid().optional(), // present → update existing workplace (keeps employee links)
   name: z.string().min(1).max(120),
   lat: z.number().min(-90).max(90).nullable().optional(),
   lng: z.number().min(-180).max(180).nullable().optional(),
@@ -174,59 +178,97 @@ router.post("/complete", requireOwner, async (req, res) => {
   const db = getServiceClient();
   const orgId = req.owner!.orgId;
 
-  // Idempotent re-run of the wizard: clear the previous config for this org.
-  // (Deleting rulesets/workplaces cascades to penalty_rules/shifts and nulls any
-  // employee references; the setup wizard owns the whole configuration.)
-  await db.from("workplaces").delete().eq("org_id", orgId);
-  await db.from("rulesets").delete().eq("org_id", orgId);
+  // Non-destructive reconcile: update rows the owner kept (by id), insert new
+  // ones, and delete only what they actually removed. Preserving ids keeps
+  // employees linked to their workplace/shift instead of silently unassigning
+  // everyone on every save (the old delete-all behaviour).
 
-  // 1) Rulesets → map client keys to real ids.
+  // 1) Rulesets → map client keys to real ids (update existing, insert new).
   const keyToId = new Map<string, string>();
+  const keptRulesetIds: string[] = [];
   for (const rs of cfg.rulesets) {
-    const { data: created, error } = await db
-      .from("rulesets")
-      .insert({
-        org_id: orgId,
-        name: rs.name,
-        is_shared: rs.is_shared,
-        deduction_logic: rs.deduction_logic,
-      })
-      .select("id")
-      .single();
-    if (error || !created) return res.status(500).json({ error: error?.message ?? "ruleset insert failed" });
-    keyToId.set(rs.key, created.id);
-
-    if (rs.penalties.length) {
-      const { error: pErr } = await db.from("penalty_rules").insert(
-        rs.penalties.map((p) => ({
-          ruleset_id: created.id,
-          code: p.code,
-          reason: p.reason,
-          amount: p.amount,
-          appeal_window_hours: p.appeal_window_hours,
-        }))
-      );
-      if (pErr) return res.status(500).json({ error: pErr.message });
+    const fields = { org_id: orgId, name: rs.name, is_shared: rs.is_shared, deduction_logic: rs.deduction_logic };
+    let rulesetId: string;
+    if (rs.id) {
+      const { data: updated, error } = await db
+        .from("rulesets")
+        .update(fields)
+        .eq("id", rs.id)
+        .eq("org_id", orgId)
+        .select("id")
+        .maybeSingle();
+      if (error) return res.status(500).json({ error: error.message });
+      if (!updated) return res.status(400).json({ error: "ruleset not found for this org" });
+      rulesetId = updated.id;
+    } else {
+      const { data: created, error } = await db.from("rulesets").insert(fields).select("id").single();
+      if (error || !created) return res.status(500).json({ error: error?.message ?? "ruleset insert failed" });
+      rulesetId = created.id;
     }
+    keyToId.set(rs.key, rulesetId);
+    keptRulesetIds.push(rulesetId);
+
+    // Penalty rules for this ruleset: upsert by id, delete removed.
+    const keptRuleIds: string[] = [];
+    for (const p of rs.penalties) {
+      const pf = { code: p.code, reason: p.reason, amount: p.amount, appeal_window_hours: p.appeal_window_hours };
+      if (p.id) {
+        const { data: upd, error } = await db
+          .from("penalty_rules")
+          .update(pf)
+          .eq("id", p.id)
+          .eq("ruleset_id", rulesetId)
+          .select("id")
+          .maybeSingle();
+        if (error) return res.status(500).json({ error: error.message });
+        if (upd) keptRuleIds.push(upd.id);
+      } else {
+        const { data: ins, error } = await db
+          .from("penalty_rules")
+          .insert({ ruleset_id: rulesetId, ...pf })
+          .select("id")
+          .single();
+        if (error || !ins) return res.status(500).json({ error: error?.message ?? "penalty insert failed" });
+        keptRuleIds.push(ins.id);
+      }
+    }
+    let delRules = db.from("penalty_rules").delete().eq("ruleset_id", rulesetId);
+    if (keptRuleIds.length) delRules = delRules.not("id", "in", `(${keptRuleIds.join(",")})`);
+    const { error: delRuleErr } = await delRules;
+    if (delRuleErr) return res.status(500).json({ error: delRuleErr.message });
   }
 
-  // 2) Workplaces + their shifts. Collect a clock-in QR (PNG) per workplace, in
-  // cfg order, so the setup summary PDF can embed a printable code for each.
+  // 2) Workplaces + their shifts (upsert by id). Collect a clock-in QR (PNG) per
+  // workplace, in cfg order, so the setup summary PDF can embed a printable code.
   const wpQrs: (Buffer | null)[] = [];
+  const keptWorkplaceIds: string[] = [];
   for (const w of cfg.workplaces) {
-    const { data: wp, error: wErr } = await db
-      .from("workplaces")
-      .insert({
-        org_id: orgId,
-        name: w.name,
-        lat: w.lat ?? null,
-        lng: w.lng ?? null,
-        geofence_radius_m: w.geofence_radius_m,
-        ruleset_id: keyToId.get(w.rulesetKey)!,
-      })
-      .select("id, qr_nonce")
-      .single();
-    if (wErr || !wp) return res.status(500).json({ error: wErr?.message ?? "workplace insert failed" });
+    const fields = {
+      org_id: orgId,
+      name: w.name,
+      lat: w.lat ?? null,
+      lng: w.lng ?? null,
+      geofence_radius_m: w.geofence_radius_m,
+      ruleset_id: keyToId.get(w.rulesetKey)!,
+    };
+    let wp: { id: string; qr_nonce: string } | null;
+    if (w.id) {
+      const { data, error } = await db
+        .from("workplaces")
+        .update(fields)
+        .eq("id", w.id)
+        .eq("org_id", orgId)
+        .select("id, qr_nonce")
+        .maybeSingle();
+      if (error) return res.status(500).json({ error: error.message });
+      wp = data;
+    } else {
+      const { data, error } = await db.from("workplaces").insert(fields).select("id, qr_nonce").single();
+      if (error || !data) return res.status(500).json({ error: error?.message ?? "workplace insert failed" });
+      wp = data;
+    }
+    if (!wp) return res.status(400).json({ error: "workplace not found for this org" });
+    keptWorkplaceIds.push(wp.id);
 
     // Same deep link the QR page prints: <app>/scan?w=<signed token>.
     try {
@@ -238,23 +280,56 @@ router.post("/complete", requireOwner, async (req, res) => {
       wpQrs.push(null);
     }
 
-    if (w.shifts.length) {
-      const { error: sErr } = await db.from("shifts").insert(
-        w.shifts.map((s) => ({
-          workplace_id: wp.id,
-          name: s.name,
-          kind: s.kind,
-          start_time: s.start_time,
-          end_time: s.end_time,
-          days_of_week: s.days_of_week,
-          grace_minutes: s.grace_minutes,
-        }))
-      );
-      if (sErr) return res.status(500).json({ error: sErr.message });
+    // Shifts for this workplace: upsert by id, delete removed.
+    const keptShiftIds: string[] = [];
+    for (const s of w.shifts) {
+      const sf = {
+        name: s.name,
+        kind: s.kind,
+        start_time: s.start_time,
+        end_time: s.end_time,
+        days_of_week: s.days_of_week,
+        grace_minutes: s.grace_minutes,
+      };
+      if (s.id) {
+        const { data: upd, error } = await db
+          .from("shifts")
+          .update(sf)
+          .eq("id", s.id)
+          .eq("workplace_id", wp.id)
+          .select("id")
+          .maybeSingle();
+        if (error) return res.status(500).json({ error: error.message });
+        if (upd) keptShiftIds.push(upd.id);
+      } else {
+        const { data: ins, error } = await db
+          .from("shifts")
+          .insert({ workplace_id: wp.id, ...sf })
+          .select("id")
+          .single();
+        if (error || !ins) return res.status(500).json({ error: error?.message ?? "shift insert failed" });
+        keptShiftIds.push(ins.id);
+      }
     }
+    let delShifts = db.from("shifts").delete().eq("workplace_id", wp.id);
+    if (keptShiftIds.length) delShifts = delShifts.not("id", "in", `(${keptShiftIds.join(",")})`);
+    const { error: delShiftErr } = await delShifts;
+    if (delShiftErr) return res.status(500).json({ error: delShiftErr.message });
   }
 
-  // 3) Mark org complete + persist mode selections + name.
+  // 3) Delete workplaces and rulesets the owner removed (employees on a removed
+  // workplace are unassigned via the FK — expected; kept ones are untouched).
+  let delWps = db.from("workplaces").delete().eq("org_id", orgId);
+  if (keptWorkplaceIds.length) delWps = delWps.not("id", "in", `(${keptWorkplaceIds.join(",")})`);
+  const { error: delWpErr } = await delWps;
+  if (delWpErr) return res.status(500).json({ error: delWpErr.message });
+
+  let delRs = db.from("rulesets").delete().eq("org_id", orgId);
+  if (keptRulesetIds.length) delRs = delRs.not("id", "in", `(${keptRulesetIds.join(",")})`);
+  const { error: delRsErr } = await delRs;
+  if (delRsErr) return res.status(500).json({ error: delRsErr.message });
+
+  // 4) Mark org complete + persist mode selections + name.
   await db
     .from("orgs")
     .update({
@@ -265,7 +340,7 @@ router.post("/complete", requireOwner, async (req, res) => {
     })
     .eq("id", orgId);
 
-  // 4) PDF summary. Build from the config (penalties resolved per workplace ruleset).
+  // 5) PDF summary. Build from the config (penalties resolved per workplace ruleset).
   const rulesetByKey = new Map(cfg.rulesets.map((r) => [r.key, r]));
   const summary: SetupSummaryData = {
     orgName: cfg.name,
