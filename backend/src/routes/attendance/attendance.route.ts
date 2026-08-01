@@ -20,6 +20,7 @@ import { requireEmployee, requireOwner } from "../../lib/auth";
 import { getServiceClient } from "../../lib/supabase";
 import { signWorkplaceToken, verifyWorkplaceToken } from "../../lib/qr";
 import { evaluateScan } from "../../lib/attendance/geofence";
+import { uploadSelfie, signSelfie } from "../../lib/storage/selfies";
 
 const router = Router();
 
@@ -62,13 +63,17 @@ const scanInput = z.object({
   lat: z.number().min(-90).max(90).nullable().optional(),
   lng: z.number().min(-180).max(180).nullable().optional(),
   accuracy: z.number().nonnegative().nullable().optional(),
+  // Live front-camera selfie (data URL or bare base64). Best-effort proof of WHO
+  // scanned; owner-reviewed. `faceDetected` is the on-device gate result.
+  selfie: z.string().max(3_000_000).nullable().optional(),
+  faceDetected: z.boolean().nullable().optional(),
 });
 
 // ── POST /scan ────────────────────────────────────────────────────────────────
 router.post("/scan", requireEmployee, async (req, res) => {
   const parsed = scanInput.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
-  const { token, lat, lng, accuracy } = parsed.data;
+  const { token, lat, lng, accuracy, selfie, faceDetected } = parsed.data;
 
   const payload = verifyWorkplaceToken(token);
   if (!payload) return res.status(400).json({ error: "Invalid or expired QR code." });
@@ -165,8 +170,14 @@ router.post("/scan", requireEmployee, async (req, res) => {
     rosterExpected = { shift_id: shift.id, expected_start: shift.start_time, late_by_min: late ? lateBy : 0 };
   }
 
+  // Identity gate: a scan without a verified live face is flagged for owner
+  // review — this is the anti-buddy-punching signal (someone's phone left at
+  // work). Consistent with the geofence: we flag, never block.
+  const flags = [...geo.flags];
+  if (faceDetected !== true) flags.push("no_face");
+
   // Status precedence: integrity flags → flagged; else shift lateness → late; else normal.
-  const status = geo.flags.length > 0 ? "flagged" : late ? "late" : "normal";
+  const status = flags.length > 0 ? "flagged" : late ? "late" : "normal";
 
   const { data: entry, error } = await db
     .from("attendance_entries")
@@ -179,7 +190,7 @@ router.post("/scan", requireEmployee, async (req, res) => {
       distance_m: geo.distanceM,
       status,
       direction,
-      flags: geo.flags,
+      flags,
       roster_expected: rosterExpected,
     })
     .select("id, scanned_at, status, direction, distance_m, flags")
@@ -187,14 +198,50 @@ router.post("/scan", requireEmployee, async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
 
+  // Store the selfie (best-effort) and stamp its path on the entry. A failed
+  // upload must never fail the clock-in — the attendance record already exists.
+  if (selfie) {
+    try {
+      const path = await uploadSelfie(req.employee!.employeeId, entry.id, selfie);
+      await db.from("attendance_entries").update({ selfie_path: path }).eq("id", entry.id);
+    } catch (err) {
+      console.error(`[scan] selfie upload failed for entry ${entry.id}:`, (err as Error).message);
+    }
+  }
+
   res.status(201).json({
     entry,
     workplace: { id: workplace.id, name: workplace.name },
     distance_m: geo.distanceM == null ? null : Math.round(geo.distanceM),
     status,
     direction,
-    flags: geo.flags,
+    flags,
   });
+});
+
+// ── GET /selfie/:entryId (owner) — short-lived signed URL for a scan selfie ───
+router.get("/selfie/:entryId", requireOwner, async (req, res) => {
+  const idParse = z.string().uuid().safeParse(req.params.entryId);
+  if (!idParse.success) return res.status(400).json({ error: "invalid id" });
+
+  const db = getServiceClient();
+  // The entry must belong to an employee in the owner's org.
+  const { data: entry } = await db
+    .from("attendance_entries")
+    .select("selfie_path, employees!inner(org_id)")
+    .eq("id", idParse.data)
+    .maybeSingle();
+  const emp = entry
+    ? (Array.isArray((entry as any).employees) ? (entry as any).employees[0] : (entry as any).employees)
+    : null;
+  if (!entry || !emp || emp.org_id !== req.owner!.orgId) {
+    return res.status(404).json({ error: "not found" });
+  }
+  if (!entry.selfie_path) return res.status(404).json({ error: "no selfie" });
+
+  const url = await signSelfie(entry.selfie_path);
+  if (!url) return res.status(502).json({ error: "could not sign selfie" });
+  res.json({ url });
 });
 
 // ── GET /qr/:workplaceId (owner) — issue printable token ─────────────────────

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import SelfieThumb from "@/components/SelfieThumb";
 
 /**
  * Owner live dashboard + hub (spec §9). Shows, per workplace, who's clocked in /
@@ -55,7 +56,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         .eq("status", "active"),
       supabase
         .from("attendance_entries")
-        .select("id, employee_id, workplace_id, scanned_at, status, direction, flags")
+        .select("id, employee_id, workplace_id, scanned_at, status, direction, flags, selfie_path")
         .gte("scanned_at", dayStart)
         .order("scanned_at", { ascending: true }),
       supabase
@@ -84,16 +85,25 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   interface Att {
     inAt: string | null;
     outAt: string | null;
+    inSelfieId: string | null; // attendance entry id of the clock-IN (for the selfie)
+    outSelfieId: string | null; // attendance entry id of the last clock-OUT
     status: string;
     flags: string[];
     scans: number;
   }
   const attByEmp = new Map<string, Att>();
   for (const e of wpEntries) {
-    const a = attByEmp.get(e.employee_id) ?? { inAt: null, outAt: null, status: "normal", flags: [], scans: 0 };
+    const a =
+      attByEmp.get(e.employee_id) ??
+      { inAt: null, outAt: null, inSelfieId: null, outSelfieId: null, status: "normal", flags: [], scans: 0 };
     a.scans += 1;
-    if (e.direction === "out") a.outAt = e.scanned_at; // ascending → last wins
-    else if (!a.inAt) a.inAt = e.scanned_at; // first 'in' wins
+    if (e.direction === "out") {
+      a.outAt = e.scanned_at; // ascending → last wins
+      if (e.selfie_path) a.outSelfieId = e.id;
+    } else if (!a.inAt) {
+      a.inAt = e.scanned_at; // first 'in' wins
+      if (e.selfie_path) a.inSelfieId = e.id;
+    }
     if ((STATUS_RANK[e.status] ?? 0) > (STATUS_RANK[a.status] ?? 0)) a.status = e.status;
     if (Array.isArray(e.flags)) for (const f of e.flags as string[]) if (!a.flags.includes(f)) a.flags.push(f);
     attByEmp.set(e.employee_id, a);
@@ -228,6 +238,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                           <div className="px-6 pb-4 -mt-1 text-sm text-kaunta-slate/70 space-y-1">
                             <p>Clock in: <span className="text-kaunta-ink">{a?.inAt ? fmtTime(a.inAt) : "—"}</span></p>
                             <p>Clock out: <span className="text-kaunta-ink">{a?.outAt ? fmtTime(a.outAt) : (clockedIn ? "still on site" : "—")}</span></p>
+                            {a && (a.inSelfieId || a.outSelfieId) && (
+                              <div className="flex items-center gap-3 pt-1">
+                                {a.inSelfieId && <SelfieThumb entryId={a.inSelfieId} label="clock-in" />}
+                                {a.outSelfieId && <SelfieThumb entryId={a.outSelfieId} label="clock-out" />}
+                              </div>
+                            )}
                             {a && a.status !== "normal" && (
                               <p>Status: <span className="capitalize text-kaunta-ink">{a.status}</span></p>
                             )}
