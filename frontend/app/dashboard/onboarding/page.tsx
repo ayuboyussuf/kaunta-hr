@@ -29,12 +29,14 @@ type WorkplaceMode = "single" | "multiple";
 type RulesMode = "shared" | "per_workplace";
 
 interface Penalty {
+  id?: string; // present when editing an existing rule (preserved on save)
   code: string;
   reason: string;
   amount: number;
   appeal_window_hours: number;
 }
 interface Ruleset {
+  id?: string; // present when editing an existing ruleset
   key: string;
   name: string;
   is_shared: boolean;
@@ -43,6 +45,7 @@ interface Ruleset {
   penalties: Penalty[];
 }
 interface Shift {
+  id?: string; // present when editing an existing shift
   name: string;
   kind: "day" | "night" | "custom";
   start_time: string;
@@ -51,6 +54,7 @@ interface Shift {
   grace_minutes: number;
 }
 interface Workplace {
+  id?: string; // present when editing an existing workplace
   name: string;
   lat: number | null;
   lng: number | null;
@@ -142,11 +146,83 @@ export default function OnboardingWizard() {
       try {
         const state = await api<{
           org?: { name: string; workplace_mode: WorkplaceMode; rules_mode: RulesMode; onboarding_complete: boolean } | null;
+          rulesets?: {
+            id: string;
+            name: string;
+            is_shared: boolean;
+            deduction_logic: { mode?: string; rate?: number } | null;
+            penalty_rules?: { id: string; code: string; reason: string; amount: number; appeal_window_hours: number }[];
+          }[];
+          workplaces?: {
+            id: string;
+            name: string;
+            lat: number | null;
+            lng: number | null;
+            geofence_radius_m: number;
+            ruleset_id: string | null;
+            shifts?: {
+              id: string;
+              name: string;
+              kind: "day" | "night" | "custom";
+              start_time: string;
+              end_time: string;
+              days_of_week: number[];
+              grace_minutes: number;
+            }[];
+          }[];
         }>("/api/owner/onboarding", { token: t });
         if (state.org) {
           setName(state.org.name ?? "");
           setWorkplaceMode(state.org.workplace_mode);
           setRulesMode(state.org.rules_mode);
+        }
+        // Rehydrate the existing configuration so re-opening the wizard shows
+        // what's already set up (and saving preserves ids → employee links)
+        // instead of forcing a blank re-fill.
+        if (state.rulesets && state.rulesets.length > 0) {
+          const idToKey = new Map<string, string>();
+          const loaded: Ruleset[] = state.rulesets.map((rs) => {
+            const key = uid();
+            idToKey.set(rs.id, key);
+            const perMinute = rs.deduction_logic?.mode === "per_minute";
+            return {
+              id: rs.id,
+              key,
+              name: rs.name,
+              is_shared: rs.is_shared,
+              deductionMode: perMinute ? "per_minute" : "fixed",
+              perMinuteRate: Number(rs.deduction_logic?.rate ?? 10),
+              penalties: (rs.penalty_rules ?? []).map((p) => ({
+                id: p.id,
+                code: p.code,
+                reason: p.reason,
+                amount: Number(p.amount),
+                appeal_window_hours: Number(p.appeal_window_hours),
+              })),
+            };
+          });
+          setRulesets(loaded);
+          if (state.workplaces && state.workplaces.length > 0) {
+            setWorkplaces(
+              state.workplaces.map((w) => ({
+                id: w.id,
+                name: w.name,
+                lat: w.lat,
+                lng: w.lng,
+                geofence_radius_m: w.geofence_radius_m,
+                rulesetKey: (w.ruleset_id && idToKey.get(w.ruleset_id)) || loaded[0].key,
+                shifts: (w.shifts ?? []).map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  kind: s.kind,
+                  start_time: s.start_time,
+                  end_time: s.end_time,
+                  days_of_week: s.days_of_week,
+                  grace_minutes: s.grace_minutes,
+                })),
+              }))
+            );
+          }
         }
       } catch {
         // No org yet — first run. That's fine.
@@ -222,6 +298,7 @@ export default function OnboardingWizard() {
         workplace_mode: workplaceMode,
         rules_mode: sharedRules ? "shared" : rulesMode,
         rulesets: rulesets.map((r) => ({
+          id: r.id,
           key: r.key,
           name: r.name.trim(),
           is_shared: r.is_shared,
@@ -230,6 +307,7 @@ export default function OnboardingWizard() {
               ? { mode: "per_minute", rate: r.perMinuteRate }
               : { mode: "fixed" },
           penalties: r.penalties.map((p) => ({
+            id: p.id,
             code: p.code.trim() || "penalty",
             reason: p.reason.trim() || "Penalty",
             amount: Number(p.amount) || 0,
@@ -237,12 +315,14 @@ export default function OnboardingWizard() {
           })),
         })),
         workplaces: workplaces.map((w) => ({
+          id: w.id,
           name: w.name.trim(),
           lat: w.lat,
           lng: w.lng,
           geofence_radius_m: Number(w.geofence_radius_m) || 100,
           rulesetKey: w.rulesetKey,
           shifts: w.shifts.map((s) => ({
+            id: s.id,
             name: s.name.trim() || "Shift",
             kind: s.kind,
             start_time: s.start_time,
