@@ -183,6 +183,24 @@ export default function EmployeeHome() {
             </Link>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Workplace rules</CardTitle>
+            <CardDescription>Know the penalties before they apply</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-kaunta-slate/60">
+              See the penalties that apply at your workplace and their appeal windows.
+            </p>
+            <Link
+              href="/me/rules"
+              className="mt-4 flex items-center gap-1 text-sm text-kaunta-copper hover:underline"
+            >
+              View rules <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
