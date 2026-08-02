@@ -12,7 +12,9 @@ import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { formatKES } from "@/lib/utils";
-import { Users, Plus, Loader2, Pencil, Ban, RotateCcw, Phone, MessageCircle, ChevronDown } from "lucide-react";
+import AttendanceCalendar from "@/components/AttendanceCalendar";
+import SelfieThumb from "@/components/SelfieThumb";
+import { Users, Plus, Loader2, Pencil, Ban, RotateCcw, Phone, MessageCircle, ChevronDown, Download } from "lucide-react";
 
 interface Shift {
   id: string;
@@ -88,6 +90,7 @@ interface HistoryEntry {
   direction: "in" | "out";
   status: string;
   flags: string[];
+  selfie_path: string | null;
   workplace: { name: string } | null;
 }
 interface HistoryCheck {
@@ -96,6 +99,15 @@ interface HistoryCheck {
   respond_by: string;
   status: "pending" | "confirmed" | "missed";
 }
+interface History {
+  entries: HistoryEntry[];
+  checks: HistoryCheck[];
+  scheduled_days: number[];
+  employment_start: string | null;
+}
+const TZ = "Africa/Nairobi";
+const ymdTz = (iso: string) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
 
 /** Last-seen badge from days-since-clock-in. */
 function seenBadge(o: Overview | undefined): { label: string; cls: string } {
@@ -120,8 +132,11 @@ export default function EmployeesPage() {
   const [saving, setSaving] = useState(false);
   const [overview, setOverview] = useState<Record<string, Overview>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [history, setHistory] = useState<{ entries: HistoryEntry[]; checks: HistoryCheck[] } | null>(null);
+  const [history, setHistory] = useState<History | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [selDay, setSelDay] = useState<string | null>(null); // employer: selected calendar day
+  const [viewMonth, setViewMonth] = useState<string>(""); // "YYYY-MM" the calendar shows
+  const [downloading, setDownloading] = useState(false);
 
   const load = useCallback(async (t: string) => {
     setLoading(true);
@@ -145,20 +160,42 @@ export default function EmployeesPage() {
     if (expandedId === id) {
       setExpandedId(null);
       setHistory(null);
+      setSelDay(null);
       return;
     }
     setExpandedId(id);
     setHistory(null);
+    setSelDay(null);
     setHistoryLoading(true);
     try {
-      const h = await api<{ entries: HistoryEntry[]; checks: HistoryCheck[] }>(`/api/employees/${id}/history`, {
-        token: token ?? undefined,
-      });
+      const h = await api<History>(`/api/employees/${id}/history`, { token: token ?? undefined });
       setHistory(h);
     } catch {
-      setHistory({ entries: [], checks: [] });
+      setHistory({ entries: [], checks: [], scheduled_days: [], employment_start: null });
     } finally {
       setHistoryLoading(false);
+    }
+  }
+
+  async function downloadReport(empId: string, empName: string) {
+    if (!token || !viewMonth) return;
+    setDownloading(true);
+    try {
+      const res = await fetch(`/gateway/api/employees/${empId}/attendance-report.pdf?month=${viewMonth}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) { setError("Could not generate the report."); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `attendance-${empName.replace(/[^a-z0-9]+/gi, "-")}-${viewMonth}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Download failed.");
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -511,64 +548,46 @@ export default function EmployeesPage() {
                                 <Loader2 className="h-4 w-4 animate-spin" /> Loading history…
                               </div>
                             ) : (
-                              <div className="grid gap-4 md:grid-cols-2">
-                                <div>
-                                  <p className="text-xs font-medium text-kaunta-slate mb-2">Recent scans (30 days)</p>
-                                  {history && history.entries.length > 0 ? (
-                                    <ul className="space-y-1 text-sm">
-                                      {history.entries.slice(0, 12).map((en) => (
-                                        <li key={en.id} className="flex items-center justify-between gap-2">
-                                          <span className="text-kaunta-ink">
-                                            {new Date(en.scanned_at).toLocaleString("en-KE", {
-                                              month: "short",
-                                              day: "numeric",
-                                              hour: "2-digit",
-                                              minute: "2-digit",
-                                            })}{" "}
-                                            <span className="text-kaunta-slate/50">· {en.direction === "in" ? "in" : "out"}</span>
-                                          </span>
-                                          <span
-                                            className={`text-xs ${
-                                              en.status === "flagged" ? "text-kaunta-red" : en.status === "late" ? "text-kaunta-amber" : "text-kaunta-sage"
-                                            }`}
-                                          >
-                                            {en.status}
-                                          </span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <p className="text-sm text-kaunta-slate/50">No scans in the last 30 days.</p>
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="text-xs font-medium text-kaunta-slate mb-2">Presence checks (30 days)</p>
-                                  {history && history.checks.length > 0 ? (
-                                    <ul className="space-y-1 text-sm">
-                                      {history.checks.slice(0, 12).map((c) => (
-                                        <li key={c.id} className="flex items-center justify-between gap-2">
-                                          <span className="text-kaunta-slate/70">
-                                            {new Date(c.due_at).toLocaleString("en-KE", {
-                                              month: "short",
-                                              day: "numeric",
-                                              hour: "2-digit",
-                                              minute: "2-digit",
-                                            })}
-                                          </span>
-                                          <span
-                                            className={`text-xs ${
-                                              c.status === "confirmed" ? "text-kaunta-sage" : c.status === "missed" ? "text-kaunta-red" : "text-kaunta-slate/50"
-                                            }`}
-                                          >
-                                            {c.status === "confirmed" ? "passed" : c.status}
-                                          </span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <p className="text-sm text-kaunta-slate/50">No presence checks yet.</p>
-                                  )}
-                                </div>
+                              <div className="max-w-md space-y-3">
+                                <AttendanceCalendar
+                                  entries={history?.entries ?? []}
+                                  checks={history?.checks ?? []}
+                                  scheduledDays={history?.scheduled_days ?? []}
+                                  employmentStart={history?.employment_start ?? null}
+                                  onSelectDay={(ymd) => setSelDay(ymd)}
+                                  onMonthChange={(mk) => setViewMonth(mk)}
+                                />
+                                {selDay && (
+                                  <div className="rounded-lg border border-kaunta-mist bg-white p-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <p className="text-xs font-medium text-kaunta-slate">{selDay}</p>
+                                      <button onClick={() => setSelDay(null)} className="text-xs text-kaunta-slate/50 hover:text-kaunta-ink">Close</button>
+                                    </div>
+                                    {(() => {
+                                      const dayEntries = (history?.entries ?? []).filter((en) => ymdTz(en.scanned_at) === selDay);
+                                      return dayEntries.length === 0 ? (
+                                        <p className="text-sm text-kaunta-slate/50">No scans this day.</p>
+                                      ) : (
+                                        <ul className="space-y-2">
+                                          {dayEntries.map((en) => (
+                                            <li key={en.id} className="flex items-center justify-between gap-3">
+                                              <div className="text-sm">
+                                                <span className="text-kaunta-ink">{new Date(en.scanned_at).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</span>
+                                                <span className="text-kaunta-slate/50"> · {en.direction}</span>
+                                                <span className={`ml-2 text-xs ${en.status === "flagged" ? "text-kaunta-red" : en.status === "late" ? "text-kaunta-amber" : "text-kaunta-sage"}`}>{en.status}</span>
+                                              </div>
+                                              {en.selfie_path && <SelfieThumb entryId={en.id} label="scan" />}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      );
+                                    })()}
+                                  </div>
+                                )}
+                                <Button variant="outline" onClick={() => downloadReport(e.id, e.name)} disabled={downloading || !viewMonth}>
+                                  {downloading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Download className="h-4 w-4 mr-1" />}
+                                  Download {viewMonth} report (with photos)
+                                </Button>
                               </div>
                             )}
                           </td>

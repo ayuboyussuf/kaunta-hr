@@ -16,7 +16,7 @@ router.get("/profile", requireEmployee, async (req, res) => {
   const { data: employee, error } = await db
     .from("employees")
     .select(
-      "id, name, phone, status, base_salary, workplace:workplaces(id, name), shift:shifts(id, name, kind, start_time, end_time, days_of_week, grace_minutes)"
+      "id, name, phone, status, base_salary, start_date, workplace:workplaces(id, name), shift:shifts(id, name, kind, start_time, end_time, days_of_week, grace_minutes)"
     )
     .eq("id", req.employee!.employeeId)
     .eq("org_id", req.employee!.orgId)

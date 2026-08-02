@@ -17,8 +17,10 @@ import { requireOwner } from "../../lib/auth";
 import { getServiceClient } from "../../lib/supabase";
 import { sendText } from "../../lib/whatsapp/meta";
 import { env } from "../../lib/env";
+import { renderToBuffer, drawHeader, drawFooter, BRAND } from "../../lib/pdf/render";
 
 const router = Router();
+const TZ = "Africa/Nairobi";
 
 /** Normalise a raw phone to E.164 with a leading '+', Kenya-aware. */
 function normPhone(raw: string): string {
@@ -174,31 +176,143 @@ router.get("/:id/history", requireOwner, async (req, res) => {
 
   const { data: emp } = await db
     .from("employees")
-    .select("id")
+    .select("id, start_date, created_at, shift:shifts(days_of_week)")
     .eq("id", idParse.data)
     .eq("org_id", orgId)
     .maybeSingle();
   if (!emp) return res.status(404).json({ error: "employee not found" });
+  const shift = Array.isArray((emp as any).shift) ? (emp as any).shift[0] : (emp as any).shift;
 
-  const since = new Date(Date.now() - 30 * 864e5).toISOString();
+  // ~6 months back for the calendar to page through, bounded for memory/size.
+  const since = new Date(Date.now() - 186 * 864e5).toISOString();
   const [{ data: entries }, { data: checks }] = await Promise.all([
     db
       .from("attendance_entries")
-      .select("id, scanned_at, direction, status, flags, workplace:workplaces(name)")
+      .select("id, scanned_at, direction, status, flags, selfie_path, workplace:workplaces(name)")
       .eq("employee_id", idParse.data)
       .gte("scanned_at", since)
       .order("scanned_at", { ascending: false })
-      .limit(200),
+      .limit(600),
     db
       .from("presence_checks")
       .select("id, due_at, respond_by, status")
       .eq("employee_id", idParse.data)
       .gte("created_at", since)
       .order("due_at", { ascending: false })
-      .limit(100),
+      .limit(300),
   ]);
 
-  res.json({ entries: entries ?? [], checks: checks ?? [] });
+  res.json({
+    entries: entries ?? [],
+    checks: checks ?? [],
+    scheduled_days: shift?.days_of_week ?? [],
+    employment_start: (emp as any).start_date ?? ((emp as any).created_at ? String((emp as any).created_at).slice(0, 10) : null),
+  });
+});
+
+// ── Downloadable attendance report PDF (owner only; includes selfies) ─────────
+// One month per request, images fetched sequentially and capped, to stay within
+// the backend's memory budget. Employees cannot reach this route.
+router.get("/:id/attendance-report.pdf", requireOwner, async (req, res) => {
+  const idParse = z.string().uuid().safeParse(req.params.id);
+  if (!idParse.success) return res.status(400).json({ error: "invalid id" });
+  const month = typeof req.query.month === "string" ? req.query.month : "";
+  if (!/^\d{4}-\d{2}$/.test(month)) return res.status(400).json({ error: "month must be YYYY-MM" });
+
+  const db = getServiceClient();
+  const orgId = req.owner!.orgId;
+  const { data: emp } = await db
+    .from("employees")
+    .select("id, name, workplace:workplaces(name)")
+    .eq("id", idParse.data)
+    .eq("org_id", orgId)
+    .maybeSingle();
+  if (!emp) return res.status(404).json({ error: "employee not found" });
+
+  // Month window in Nairobi (UTC+3, no DST).
+  const [y, m] = month.split("-").map(Number);
+  const startISO = new Date(`${month}-01T00:00:00+03:00`).toISOString();
+  const nextMonth = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
+  const endISO = new Date(`${nextMonth}-01T00:00:00+03:00`).toISOString();
+
+  const { data: entries } = await db
+    .from("attendance_entries")
+    .select("id, scanned_at, direction, status, flags, selfie_path")
+    .eq("employee_id", idParse.data)
+    .gte("scanned_at", startISO)
+    .lt("scanned_at", endISO)
+    .order("scanned_at", { ascending: true })
+    .limit(400);
+
+  // Pre-fetch selfie image buffers sequentially (bounded) so drawing stays sync.
+  const MAX_IMAGES = 80;
+  const imgByEntry = new Map<string, Buffer>();
+  let fetched = 0;
+  for (const e of entries ?? []) {
+    if (fetched >= MAX_IMAGES) break;
+    if (!e.selfie_path) continue;
+    try {
+      const { data: blob } = await db.storage.from("selfies").download(e.selfie_path);
+      if (blob) {
+        imgByEntry.set(e.id, Buffer.from(await blob.arrayBuffer()));
+        fetched++;
+      }
+    } catch {
+      /* skip a missing/unreadable image */
+    }
+  }
+
+  const rows = entries ?? [];
+  const present = new Set(rows.filter((e) => e.direction === "in").map((e) => e.scanned_at.slice(0, 10))).size;
+  const late = rows.filter((e) => e.status === "late").length;
+  const flagged = rows.filter((e) => e.status === "flagged").length;
+  const empName = (emp as any).name as string;
+  const monthLabel = new Date(`${month}-01T12:00:00Z`).toLocaleDateString("en-KE", { month: "long", year: "numeric" });
+
+  const fmtTime = (iso: string) =>
+    new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
+  const dayLabel = (iso: string) =>
+    new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short", day: "2-digit", month: "short" }).format(new Date(iso));
+  const nairDay = (iso: string) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+
+  try {
+    const buf = await renderToBuffer((doc) => {
+      drawHeader(doc, "Attendance report", `${empName} · ${monthLabel}`);
+      doc.fillColor(BRAND.muted).fontSize(10).font("Helvetica")
+        .text(`Days present: ${present}    Late: ${late}    Flagged: ${flagged}    Scans: ${rows.length}`);
+      doc.moveDown(0.8);
+
+      let lastDay = "";
+      for (const e of rows) {
+        const d = nairDay(e.scanned_at);
+        if (d !== lastDay) {
+          if (doc.y > doc.page.height - 120) doc.addPage();
+          doc.moveDown(0.4).fillColor(BRAND.ink).fontSize(11).font("Helvetica-Bold").text(dayLabel(e.scanned_at));
+          lastDay = d;
+        }
+        const statusColor = e.status === "flagged" ? BRAND.red : e.status === "late" ? BRAND.copper : BRAND.sage;
+        doc.fillColor(BRAND.slate).fontSize(10).font("Helvetica")
+          .text(`${fmtTime(e.scanned_at)}  ·  ${e.direction}  ·  `, { continued: true })
+          .fillColor(statusColor).text(e.status);
+        const img = imgByEntry.get(e.id);
+        if (img) {
+          if (doc.y > doc.page.height - 110) doc.addPage();
+          try { doc.image(img, { width: 70 }); } catch { /* bad image */ }
+          doc.moveDown(0.3);
+        }
+      }
+      if (rows.length === 0) doc.fillColor(BRAND.muted).text("No scans recorded this month.");
+      drawFooter(doc);
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="attendance-${empName.replace(/[^a-z0-9]+/gi, "-")}-${month}.pdf"`);
+    res.send(buf);
+  } catch (err) {
+    console.error("[attendance-report] pdf failed:", err);
+    res.status(500).json({ error: "could not generate the report" });
+  }
 });
 
 // ── Create + WhatsApp invite ──────────────────────────────────────────────────
