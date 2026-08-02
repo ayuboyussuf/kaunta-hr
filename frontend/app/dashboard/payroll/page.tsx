@@ -281,23 +281,30 @@ export default function PayrollPage() {
                     <span className="text-sm tabular-nums text-kaunta-slate">{fmtKes(g.subtotal)}</span>
                   </div>
                   <div className="divide-y divide-kaunta-mist/60">
-                    {g.lines.map((l) => (
+                    {g.lines.map((l) => {
+                      // "Needs attention" (red) is only for unresolved BLOCKING flags —
+                      // informational flags (absence, flagged scans) get a subtle grey hint.
+                      const blocking = (l.flags ?? []).some((f) => !f.resolved && f.blocking !== false);
+                      const info = !blocking && (l.flags ?? []).some((f) => !f.resolved);
+                      return (
                       <button key={l.id} onClick={() => setOpenLine(l)} className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left min-h-[52px] active:bg-kaunta-stone/40">
                         <div className="min-w-0">
                           <p className="text-sm text-kaunta-ink truncate">{l.employee_name}{l.held && <span className="ml-1 text-xs text-kaunta-amber">(held)</span>}</p>
                           <p className="text-xs text-kaunta-slate/60">
                             {l.breakdown.days_present ?? 0}/{l.breakdown.expected_days ?? 0} days
-                            {l.has_unresolved_flag && <span className="text-kaunta-red"> · needs attention</span>}
+                            {blocking && <span className="text-kaunta-red"> · needs attention</span>}
+                            {info && !locked && <span className="text-kaunta-slate/50"> · review</span>}
                             {locked && <span className={l.payment_status === "paid" ? "text-kaunta-sage" : l.payment_status === "failed" ? "text-kaunta-red" : "text-kaunta-slate/50"}> · {l.payment_status === "not_yet" ? "not paid" : l.payment_status}</span>}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          {l.has_unresolved_flag && <AlertTriangle className="h-4 w-4 text-kaunta-red" />}
+                          {blocking && <AlertTriangle className="h-4 w-4 text-kaunta-red" />}
                           <span className="text-sm font-medium tabular-nums text-kaunta-ink">{fmtKes(l.net)}</span>
                           <ChevronRight className="h-4 w-4 text-kaunta-slate/40" />
                         </div>
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))
