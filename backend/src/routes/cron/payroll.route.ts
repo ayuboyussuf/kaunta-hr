@@ -115,21 +115,30 @@ router.post("/", async (req, res) => {
         .single();
       if (error || !cycle) throw new Error(error?.message ?? "cycle insert failed");
 
-      const result = await runPayrollDraft(cycle.id);
+      await runPayrollDraft(cycle.id);
 
       // Mark the period done so we don't re-run it.
       await db.from("orgs").update({ payroll_last_period: trig.period }).eq("id", org.id);
 
-      // Notify the owner: inbox + SMS.
-      const totalStr = `KES ${Math.round(result.grand_total).toLocaleString("en-KE")}`;
+      // Read the rolled-up totals the draft just produced.
+      const { data: done } = await db
+        .from("pay_cycles")
+        .select("total_net, employee_count, flagged_count")
+        .eq("id", cycle.id)
+        .single();
+      const total = Number(done?.total_net ?? 0);
+      const totalStr = `KES ${Math.round(total).toLocaleString("en-KE")}`;
+      const flagged = Number(done?.flagged_count ?? 0);
+      const flaggedNote = flagged > 0 ? ` ${flagged} item(s) need attention before approval.` : "";
+
+      // Notify the owner: inbox + SMS. Human-gated — they must review and approve.
       await db.from("owner_notifications").insert({
         org_id: org.id,
         kind: "payroll",
-        title: `Payroll ready — ${trig.label}`,
+        title: `Payroll draft ready — ${trig.label}`,
         body:
-          `Draft payroll is ready: ${totalStr} across ${result.count} staff.` +
-          (result.summary_pdf_url ? ` Payout summary: ${result.summary_pdf_url}` : "") +
-          ` Review and release payslips.`,
+          `Draft payroll is ready: ${totalStr} across ${done?.employee_count ?? 0} staff.${flaggedNote}` +
+          ` Review, resolve any flags, and approve.`,
         link: "/dashboard/payroll",
         ref_id: cycle.id,
       });
@@ -138,14 +147,14 @@ router.post("/", async (req, res) => {
         try {
           await sendText(
             org.phone,
-            `Kaunta HR: payroll for ${trig.label} is ready (${totalStr}). Review and release at ${env.appUrl}/dashboard/payroll`
+            `Kaunta HR: draft payroll for ${trig.label} is ready (${totalStr}).${flaggedNote} Review and approve at ${env.appUrl}/dashboard/payroll`
           );
         } catch (err) {
           console.warn(`[cron][payroll] SMS to owner failed for org ${org.id}:`, (err as Error).message);
         }
       }
 
-      ran.push({ org_id: org.id, period: trig.period, total: result.grand_total });
+      ran.push({ org_id: org.id, period: trig.period, total });
     } catch (err) {
       console.error(`[cron][payroll] run failed for org ${org.id}:`, (err as Error).message);
     }

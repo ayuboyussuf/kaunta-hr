@@ -26,11 +26,14 @@ interface Workplace {
   name: string;
   shifts: Shift[];
 }
+type PayType = "monthly" | "daily" | "hourly";
 interface Employee {
   id: string;
   name: string;
   phone: string;
   base_salary: number;
+  pay_type: PayType;
+  pay_rate: number | null;
   status: "invited" | "active" | "suspended";
   workplace_id: string | null;
   shift_id: string | null;
@@ -56,8 +59,18 @@ interface Draft {
   workplace_id: string | null;
   shift_id: string | null;
   base_salary: number;
+  pay_type: PayType;
+  pay_rate: number | null;
 }
-const emptyDraft = (): Draft => ({ name: "", phone: "", workplace_id: null, shift_id: null, base_salary: 0 });
+const emptyDraft = (): Draft => ({
+  name: "",
+  phone: "",
+  workplace_id: null,
+  shift_id: null,
+  base_salary: 0,
+  pay_type: "monthly",
+  pay_rate: null,
+});
 
 interface Overview {
   employee_id: string;
@@ -176,6 +189,8 @@ export default function EmployeesPage() {
         workplace_id: draft.workplace_id,
         shift_id: draft.shift_id,
         base_salary: Number(draft.base_salary) || 0,
+        pay_type: draft.pay_type,
+        pay_rate: draft.pay_type === "monthly" ? null : Number(draft.pay_rate) || 0,
       };
       if (draft.id) {
         await api(`/api/employees/${draft.id}`, { method: "PATCH", token, body });
@@ -309,15 +324,41 @@ export default function EmployeesPage() {
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Base salary (KES)</label>
-                <input
-                  type="number"
-                  min={0}
+                <label className={labelCls}>Pay type</label>
+                <select
                   className={inputCls}
-                  value={draft.base_salary}
-                  onChange={(e) => setDraft({ ...draft, base_salary: Number(e.target.value) })}
-                />
+                  value={draft.pay_type}
+                  onChange={(e) => setDraft({ ...draft, pay_type: e.target.value as PayType })}
+                >
+                  <option value="monthly">Monthly salary</option>
+                  <option value="daily">Daily rate</option>
+                  <option value="hourly">Hourly rate</option>
+                </select>
               </div>
+              {draft.pay_type === "monthly" ? (
+                <div>
+                  <label className={labelCls}>Monthly salary (KES)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputCls}
+                    value={draft.base_salary}
+                    onChange={(e) => setDraft({ ...draft, base_salary: Number(e.target.value) })}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className={labelCls}>{draft.pay_type === "daily" ? "Daily rate (KES)" : "Hourly rate (KES)"}</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputCls}
+                    value={draft.pay_rate ?? ""}
+                    onChange={(e) => setDraft({ ...draft, pay_rate: e.target.value === "" ? null : Number(e.target.value) })}
+                  />
+                  <p className="text-xs text-kaunta-slate/50 mt-1">Pay is computed from attendance × this rate.</p>
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <Button onClick={save} disabled={saving}>
@@ -347,7 +388,8 @@ export default function EmployeesPage() {
               <span className="font-medium text-kaunta-sage">Active</span> = has signed in. Use the{" "}
               <MessageCircle className="inline h-3 w-3" /> button to resend an invite.
             </p>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[720px]">
               <thead>
                 <tr className="border-b border-kaunta-mist text-left text-xs text-kaunta-slate/60">
                   <th className="px-4 py-3 font-medium">Name</th>
@@ -376,7 +418,13 @@ export default function EmployeesPage() {
                         </td>
                         <td className="px-4 py-3 text-kaunta-slate/70">{e.workplace?.name ?? "—"}</td>
                         <td className="px-4 py-3 text-kaunta-slate/70">{e.shift?.name ?? "—"}</td>
-                        <td className="px-4 py-3 tabular-nums text-kaunta-slate/70">{formatKES(e.base_salary)}</td>
+                        <td className="px-4 py-3 tabular-nums text-kaunta-slate/70">
+                          {e.pay_type === "daily"
+                            ? `${formatKES(e.pay_rate ?? 0)}/day`
+                            : e.pay_type === "hourly"
+                            ? `${formatKES(e.pay_rate ?? 0)}/hr`
+                            : `${formatKES(e.base_salary)}/mo`}
+                        </td>
                         <td className="px-4 py-3">
                           <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
                             {badge.label}
@@ -409,6 +457,8 @@ export default function EmployeesPage() {
                                   workplace_id: e.workplace_id,
                                   shift_id: e.shift_id,
                                   base_salary: e.base_salary,
+                                  pay_type: e.pay_type ?? "monthly",
+                                  pay_rate: e.pay_rate,
                                 })
                               }
                               className="text-kaunta-slate/60 hover:text-kaunta-copper p-1"
@@ -514,6 +564,7 @@ export default function EmployeesPage() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

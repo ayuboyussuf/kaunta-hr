@@ -53,6 +53,8 @@ export default function SettingsPage() {
   const [cadence, setCadence] = useState<"off" | "weekly" | "biweekly" | "monthly">("off");
   const [payDay, setPayDay] = useState<number | null>(null);
   const [savingPayroll, setSavingPayroll] = useState(false);
+  const [payrollPin, setPayrollPin] = useState("");
+  const [savingPin, setSavingPin] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -145,6 +147,23 @@ export default function SettingsPage() {
     }
   }
 
+  async function savePin() {
+    if (!token) return;
+    if (!/^\d{4,6}$/.test(payrollPin)) return setError("Payroll PIN must be 4–6 digits.");
+    setSavingPin(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await api("/api/payroll/pin", { method: "POST", token, body: { pin: payrollPin } });
+      setPayrollPin("");
+      setNotice("Payroll PIN saved. You'll enter it to approve a payroll run.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSavingPin(false);
+    }
+  }
+
   const dirty = org ? name.trim() !== org.name || phone.trim() !== (org.phone ?? "") : false;
   const payrollDirty = org ? cadence !== org.payroll_cadence || payDay !== org.payroll_pay_day : false;
   const presenceDirty = org
@@ -225,8 +244,8 @@ export default function SettingsPage() {
               </h2>
               <p className="text-sm text-kaunta-slate/60">
                 How often do you pay staff? When a period ends, Kaunta auto-calculates everyone&apos;s pay and
-                deductions and messages you the amounts per workplace to review — payslips only go out when you
-                release them.
+                deductions into a draft and messages you to review — nothing is final until you approve it with
+                your PIN.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -276,6 +295,26 @@ export default function SettingsPage() {
                   Save payroll settings
                 </Button>
                 {payrollDirty && <span className="text-xs text-kaunta-slate/50">Unsaved changes</span>}
+              </div>
+
+              <div className="border-t border-kaunta-mist pt-4">
+                <label className={labelCls}>Approval PIN</label>
+                <p className="text-xs text-kaunta-slate/60 mb-2">
+                  A 4–6 digit PIN you enter to approve and lock a payroll run. Set it once; enter it at approval.
+                </p>
+                <div className="flex gap-2 max-w-xs">
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    placeholder="Set / change PIN"
+                    className={inputCls}
+                    value={payrollPin}
+                    onChange={(e) => setPayrollPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  />
+                  <Button onClick={savePin} disabled={savingPin || payrollPin.length < 4}>
+                    {savingPin ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save PIN"}
+                  </Button>
+                </div>
               </div>
             </section>
 

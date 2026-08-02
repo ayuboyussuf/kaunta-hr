@@ -29,12 +29,15 @@ function normPhone(raw: string): string {
   return `+${d}`;
 }
 
+const payType = z.enum(["monthly", "daily", "hourly"]);
 const createInput = z.object({
   name: z.string().min(1).max(120),
   phone: z.string().min(7).max(20),
   workplace_id: z.string().uuid().nullable().optional(),
   shift_id: z.string().uuid().nullable().optional(),
   base_salary: z.number().min(0).max(1e9).default(0),
+  pay_type: payType.default("monthly"),
+  pay_rate: z.number().min(0).max(1e9).nullable().optional(),
 });
 
 const updateInput = z.object({
@@ -43,6 +46,8 @@ const updateInput = z.object({
   workplace_id: z.string().uuid().nullable().optional(),
   shift_id: z.string().uuid().nullable().optional(),
   base_salary: z.number().min(0).max(1e9).optional(),
+  pay_type: payType.optional(),
+  pay_rate: z.number().min(0).max(1e9).nullable().optional(),
 });
 
 /** Verify a workplace belongs to the org (when provided). */
@@ -78,7 +83,7 @@ async function assertOrgShift(
 }
 
 const EMP_SELECT =
-  "id, org_id, workplace_id, shift_id, name, phone, base_salary, status, created_at, " +
+  "id, org_id, workplace_id, shift_id, name, phone, base_salary, pay_type, pay_rate, status, created_at, " +
   "workplace:workplaces(id, name), shift:shifts(id, name, kind, start_time, end_time)";
 
 // ── List ──────────────────────────────────────────────────────────────────────
@@ -228,6 +233,8 @@ router.post("/", requireOwner, async (req, res) => {
       workplace_id: parsed.data.workplace_id ?? null,
       shift_id: parsed.data.shift_id ?? null,
       base_salary: parsed.data.base_salary,
+      pay_type: parsed.data.pay_type,
+      pay_rate: parsed.data.pay_rate ?? null,
       status: "invited",
     })
     .select(EMP_SELECT)
