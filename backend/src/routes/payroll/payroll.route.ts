@@ -260,6 +260,31 @@ router.post("/cycles/:id/lines/:pid/resolve-flag", requireOwner, async (req, res
   res.json({ ok: true });
 });
 
+// ── Remove an owner adjustment (undo a bonus / deduction / override) ──────────
+router.delete("/cycles/:id/lines/:pid/adjustments/:adjId", requireOwner, async (req, res) => {
+  const db = getServiceClient();
+  const g = await guardEditable(db, req.params.id, req.owner!.orgId, req.params.pid);
+  if (!g.ok) return res.status(g.status).json({ error: g.msg });
+
+  // The adjustment must belong to this payslip. Only owner-created money
+  // adjustments can be removed (not the flag-resolution audit trail).
+  const { data: adj } = await db
+    .from("payroll_adjustments")
+    .select("id, type")
+    .eq("id", req.params.adjId)
+    .eq("payslip_id", g.slip.id)
+    .maybeSingle();
+  if (!adj) return res.status(404).json({ error: "adjustment not found" });
+  if (!["bonus", "deduction", "override_net", "hold", "unhold"].includes(adj.type)) {
+    return res.status(400).json({ error: "this entry can't be removed" });
+  }
+
+  await db.from("payroll_adjustments").delete().eq("id", adj.id);
+  await recomputeNet(db, g.slip.id);
+  await recomputeCycle(db, req.params.id);
+  res.json({ ok: true });
+});
+
 // ── Approve → lock + outputs (requires the payroll PIN; no unresolved flags) ──
 router.post("/cycles/:id/approve", requireOwner, async (req, res) => {
   const idParse = z.string().uuid().safeParse(req.params.id);

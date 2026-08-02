@@ -32,7 +32,7 @@ interface Breakdown {
   additions?: { label: string; amount: number; adjustment_id?: string }[];
   manual_deductions?: { label: string; amount: number; adjustment_id?: string }[];
   absence_suggestion?: number | null;
-  override_net?: number | null; net_computed?: number; workplace_name?: string;
+  override_net?: number | null; override_adjustment_id?: string | null; net_computed?: number; workplace_name?: string;
 }
 interface Line {
   id: string; employee_name: string | null; phone: string | null; workplace_name: string;
@@ -156,22 +156,11 @@ export default function PayrollPage() {
     finally { setBusy(false); }
   }
 
-  async function applyAbsence(line: Line) {
+  async function removeAdjustment(line: Line, adjId: string) {
     if (!token || !selId) return;
-    const amount = line.breakdown?.absence_suggestion;
-    if (!amount) return;
     setBusy(true); setError(null);
     try {
-      await api(`/api/payroll/cycles/${selId}/lines/${line.id}/deduction`, {
-        method: "POST", token,
-        body: { amount, note: `Absence: ${line.breakdown?.absent_days ?? 0} day(s)` },
-      });
-      // Also mark the absence flag resolved so it stops blocking.
-      const f = line.flags.find((x) => x.code === "missing_clockins" && !x.resolved);
-      if (f) await api(`/api/payroll/cycles/${selId}/lines/${line.id}/resolve-flag`, {
-        method: "POST", token, body: { code: "missing_clockins", note: "Applied absence deduction" },
-      });
-      setOpenLine(null);
+      await api(`/api/payroll/cycles/${selId}/lines/${line.id}/adjustments/${adjId}`, { method: "DELETE", token });
       await loadLines(token, selId);
       await loadCycles(token);
     } catch (e) { setError((e as Error).message); }
@@ -325,7 +314,7 @@ export default function PayrollPage() {
           onClose={() => setOpenLine(null)}
           onAction={(kind, code) => { setAction({ kind, code }); setActAmount(""); setActNote(""); }}
           onStatus={setPaymentStatus}
-          onApplyAbsence={applyAbsence}
+          onRemove={removeAdjustment}
         />
       )}
 
@@ -376,11 +365,11 @@ export default function PayrollPage() {
 }
 
 // ── Bottom-sheet breakdown for one employee ──────────────────────────────────
-function LineDrawer({ line, locked, onClose, onAction, onStatus, onApplyAbsence }: {
+function LineDrawer({ line, locked, onClose, onAction, onStatus, onRemove }: {
   line: Line; locked: boolean; onClose: () => void;
   onAction: (kind: string, code?: string) => void;
   onStatus: (line: Line, status: string) => void;
-  onApplyAbsence: (line: Line) => void;
+  onRemove: (line: Line, adjId: string) => void;
 }) {
   const b = line.breakdown ?? {};
   const all = b.deductions ?? [];
@@ -406,16 +395,9 @@ function LineDrawer({ line, locked, onClose, onAction, onStatus, onApplyAbsence 
                   <AlertTriangle className="h-4 w-4" /> {blocks ? "Needs attention" : "For your info"}
                 </p>
                 <p className="text-kaunta-slate/80 mt-0.5">{f.message}</p>
-                {/* One-tap absence deduction when a suggestion exists (monthly-flat). */}
-                {!locked && f.code === "missing_clockins" && b.absence_suggestion ? (
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-kaunta-ink">Suggested absence deduction: {fmtKes(b.absence_suggestion)}</span>
-                    <button onClick={() => onApplyAbsence(line)} className="text-xs text-kaunta-copper hover:underline font-medium">Apply</button>
-                    <span className="text-kaunta-slate/40 text-xs">·</span>
-                    <button onClick={() => onAction("resolve", f.code)} className="text-xs text-kaunta-copper hover:underline">Keep full pay (note)</button>
-                  </div>
-                ) : (
-                  !locked && <button onClick={() => onAction("resolve", f.code)} className="mt-1 text-xs text-kaunta-copper hover:underline">Mark resolved (with a note)</button>
+                {/* Blocking flags (can't compute a number) can be acknowledged with a note. */}
+                {!locked && blocks && (
+                  <button onClick={() => onAction("resolve", f.code)} className="mt-1 text-xs text-kaunta-copper hover:underline">Mark resolved (with a note)</button>
                 )}
               </div>
             );
@@ -441,10 +423,34 @@ function LineDrawer({ line, locked, onClose, onAction, onStatus, onApplyAbsence 
           )}
           {/* Absence (pro-rated) */}
           {absence.map((d, i) => <div key={`a${i}`} className="flex justify-between"><span className="text-kaunta-slate/80">{d.label}</span><span className="text-kaunta-red tabular-nums">−{fmtKes(d.amount)}</span></div>)}
-          {/* Manual adjustments */}
-          {bonuses.map((d, i) => <div key={`b${i}`} className="flex justify-between"><span className="text-kaunta-slate/80">Bonus · {d.label}</span><span className="text-kaunta-sage tabular-nums">+{fmtKes(d.amount)}</span></div>)}
-          {manual.map((d, i) => <div key={`m${i}`} className="flex justify-between"><span className="text-kaunta-slate/80">Deduction · {d.label}</span><span className="text-kaunta-red tabular-nums">−{fmtKes(d.amount)}</span></div>)}
-          {b.override_net != null && <div className="flex justify-between"><span className="text-kaunta-amber">Net overridden</span><span className="text-kaunta-amber tabular-nums">{fmtKes(b.override_net)}</span></div>}
+          {/* Owner adjustments — each removable while unlocked */}
+          {bonuses.map((d, i) => (
+            <div key={`b${i}`} className="flex items-center justify-between gap-2">
+              <span className="text-kaunta-slate/80">Bonus · {d.label}</span>
+              <span className="flex items-center gap-2">
+                <span className="text-kaunta-sage tabular-nums">+{fmtKes(d.amount)}</span>
+                {!locked && d.adjustment_id && <button onClick={() => onRemove(line, d.adjustment_id!)} aria-label="Remove" className="text-kaunta-slate/40 hover:text-kaunta-red"><X className="h-3.5 w-3.5" /></button>}
+              </span>
+            </div>
+          ))}
+          {manual.map((d, i) => (
+            <div key={`m${i}`} className="flex items-center justify-between gap-2">
+              <span className="text-kaunta-slate/80">Deduction · {d.label}</span>
+              <span className="flex items-center gap-2">
+                <span className="text-kaunta-red tabular-nums">−{fmtKes(d.amount)}</span>
+                {!locked && d.adjustment_id && <button onClick={() => onRemove(line, d.adjustment_id!)} aria-label="Remove" className="text-kaunta-slate/40 hover:text-kaunta-red"><X className="h-3.5 w-3.5" /></button>}
+              </span>
+            </div>
+          ))}
+          {b.override_net != null && (
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-kaunta-amber">Net overridden</span>
+              <span className="flex items-center gap-2">
+                <span className="text-kaunta-amber tabular-nums">{fmtKes(b.override_net)}</span>
+                {!locked && b.override_adjustment_id && <button onClick={() => onRemove(line, b.override_adjustment_id!)} aria-label="Remove override" className="text-kaunta-slate/40 hover:text-kaunta-red"><X className="h-3.5 w-3.5" /></button>}
+              </span>
+            </div>
+          )}
 
           {/* Net */}
           <div className="flex justify-between border-t border-kaunta-mist pt-2"><span className="font-medium text-kaunta-ink">Net pay</span><span className="font-display text-lg text-kaunta-copper tabular-nums">{fmtKes(line.net)}</span></div>

@@ -128,18 +128,20 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
       // Blocks approval only when it affects pay in a way the owner must confirm:
       // a monthly-flat employee paid full despite absence. Where pay already
       // reflects attendance (daily/hourly, or monthly-prorate), it's informational.
-      const blocking = payType === "monthly" && absencePolicy === "flat";
+      // Informational — a computed absence figure exists (or the owner pays flat),
+      // so the owner reviews and approves; this never hard-blocks.
       flags.push({
         code: "missing_clockins",
         message: `No clock-in on ${missingDates.length} scheduled day(s): ${missingDates.join(", ")}`,
         resolved: false,
-        blocking,
+        blocking: false,
       });
     }
     if (anyFlaggedAttendance) {
+      // Informational — the owner sees flagged scans and decides.
       flags.push({
         code: "flagged_attendance",
-        blocking: true,
+        blocking: false,
         message: "One or more scans in this period were flagged for review.",
         resolved: false,
       });
@@ -235,7 +237,8 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
       ? [{ source: "absence" as const, label: `Absence (${absentDays} day(s))`, amount: absenceAmount }]
       : [];
     const allDeductions = [...penaltyLines, ...absenceLines];
-    const netComputed = round2(gross - penaltyTotal - absenceAmount);
+    // Payroll can never be negative — floor at zero.
+    const netComputed = Math.max(0, round2(gross - penaltyTotal - absenceAmount));
 
     const breakdown = {
       pay_type: payType,
@@ -300,12 +303,13 @@ export async function recomputeNet(db: SupabaseClient, payslipId: string): Promi
   const additions: { adjustment_id: string; label: string; amount: number }[] = [];
   const manualDeductions: { adjustment_id: string; label: string; amount: number }[] = [];
   let override: number | null = null;
+  let overrideId: string | null = null;
   let held = false;
 
   for (const a of adj ?? []) {
     if (a.type === "bonus") additions.push({ adjustment_id: a.id, label: a.note, amount: round2(Number(a.amount ?? 0)) });
     else if (a.type === "deduction") manualDeductions.push({ adjustment_id: a.id, label: a.note, amount: round2(Number(a.amount ?? 0)) });
-    else if (a.type === "override_net") override = round2(Number(a.amount ?? 0));
+    else if (a.type === "override_net") { override = round2(Number(a.amount ?? 0)); overrideId = a.id; }
     else if (a.type === "hold") held = true;
     else if (a.type === "unhold") held = false;
   }
@@ -313,9 +317,10 @@ export async function recomputeNet(db: SupabaseClient, payslipId: string): Promi
   const addTotal = additions.reduce((s, x) => s + x.amount, 0);
   const dedTotal = manualDeductions.reduce((s, x) => s + x.amount, 0);
   const derived = round2(netComputed + addTotal - dedTotal);
-  const net = override != null ? override : derived;
+  // Never negative.
+  const net = Math.max(0, override != null ? override : derived);
 
-  const nextBreakdown = { ...breakdown, additions, manual_deductions: manualDeductions, override_net: override };
+  const nextBreakdown = { ...breakdown, additions, manual_deductions: manualDeductions, override_net: override, override_adjustment_id: overrideId };
   await db
     .from("payslips")
     .update({ net, override_net: override, held, breakdown: nextBreakdown })
