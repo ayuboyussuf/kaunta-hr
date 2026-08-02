@@ -24,13 +24,10 @@ import { Router } from "express";
 import { z } from "zod";
 import { getServiceClient } from "../../lib/supabase";
 import { requireOwner } from "../../lib/auth";
-import { payslipPdf } from "../../lib/pdf/templates";
-import { uploadPdf } from "../../lib/pdf/render";
 import { sendDocument } from "../../lib/whatsapp/meta";
+import { runPayrollDraft } from "../../lib/payroll/run";
 
 const router = Router();
-
-const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 // ── Create a pay cycle ────────────────────────────────────────────────────────
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD");
@@ -65,151 +62,79 @@ router.get("/cycles", requireOwner, async (req, res) => {
   const db = getServiceClient();
   const { data, error } = await db
     .from("pay_cycles")
-    .select("id, label, start_date, end_date, pay_date, status, created_at")
+    .select("id, label, start_date, end_date, pay_date, status, summary_pdf_url, released_at, auto, created_at")
     .eq("org_id", req.owner!.orgId)
     .order("pay_date", { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ cycles: data ?? [] });
 });
 
-// ── Run payroll for a cycle ───────────────────────────────────────────────────
+// ── Run payroll for a cycle → DRAFT (no payslips sent yet) ────────────────────
 router.post("/cycles/:id/run", requireOwner, async (req, res) => {
   const idParse = z.string().uuid().safeParse(req.params.id);
   if (!idParse.success) return res.status(400).json({ error: "invalid cycle id" });
 
   const db = getServiceClient();
-  const orgId = req.owner!.orgId;
-  const cycleId = idParse.data;
-
   const { data: cycle } = await db
     .from("pay_cycles")
-    .select("id, label, start_date, end_date, status")
-    .eq("id", cycleId)
-    .eq("org_id", orgId)
+    .select("id")
+    .eq("id", idParse.data)
+    .eq("org_id", req.owner!.orgId)
     .maybeSingle();
   if (!cycle) return res.status(404).json({ error: "pay cycle not found" });
 
-  // Cycle window as a half-open timestamp interval [start_date, end_date + 1 day).
-  const startBoundary = `${cycle.start_date}T00:00:00.000Z`;
-  const end = new Date(`${cycle.end_date}T00:00:00.000Z`);
-  end.setUTCDate(end.getUTCDate() + 1);
-  const endBoundary = end.toISOString();
+  try {
+    const result = await runPayrollDraft(idParse.data);
+    res.json(result);
+  } catch (err) {
+    console.error("[payroll] run failed:", err);
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
 
-  await db.from("pay_cycles").update({ status: "processing" }).eq("id", cycleId);
+// ── Release: send the (already-computed) payslips to employees ────────────────
+router.post("/cycles/:id/release", requireOwner, async (req, res) => {
+  const idParse = z.string().uuid().safeParse(req.params.id);
+  if (!idParse.success) return res.status(400).json({ error: "invalid cycle id" });
 
-  const { data: employees, error: empErr } = await db
-    .from("employees")
-    .select("id, name, phone, base_salary")
+  const db = getServiceClient();
+  const orgId = req.owner!.orgId;
+  const { data: cycle } = await db
+    .from("pay_cycles")
+    .select("id, label, status")
+    .eq("id", idParse.data)
     .eq("org_id", orgId)
-    .eq("status", "active");
-  if (empErr) return res.status(500).json({ error: empErr.message });
-
-  const results: {
-    employee_id: string;
-    employee_name: string;
-    payslip_id: string;
-    gross: number;
-    deduction_total: number;
-    net: number;
-    sent: boolean;
-  }[] = [];
-
-  for (const emp of employees ?? []) {
-    const gross = round2(Number(emp.base_salary ?? 0));
-
-    // Locked violations in-window, not attached to a prior cycle. Include ones
-    // already stamped to THIS cycle so re-running the cycle is idempotent.
-    const { data: viols, error: vErr } = await db
-      .from("violations")
-      .select("id, reason, amount, pay_cycle_id")
-      .eq("employee_id", emp.id)
-      .eq("status", "locked")
-      .gte("created_at", startBoundary)
-      .lt("created_at", endBoundary)
-      .or(`pay_cycle_id.is.null,pay_cycle_id.eq.${cycleId}`);
-    if (vErr) return res.status(500).json({ error: vErr.message });
-
-    const deductions = (viols ?? []).map((v: any) => ({
-      reason: v.reason as string,
-      amount: round2(Number(v.amount ?? 0)),
-      violation_id: v.id as string,
-    }));
-    const deductionTotal = round2(deductions.reduce((s, d) => s + d.amount, 0));
-    const net = round2(gross - deductionTotal);
-
-    // Upsert the payslip first so we have an id for the PDF path.
-    const { data: slip, error: slipErr } = await db
-      .from("payslips")
-      .upsert(
-        {
-          employee_id: emp.id,
-          cycle_id: cycleId,
-          gross,
-          deductions,
-          net,
-        },
-        { onConflict: "employee_id,cycle_id" }
-      )
-      .select("id")
-      .single();
-    if (slipErr) return res.status(500).json({ error: slipErr.message });
-    const payslipId = slip.id as string;
-
-    // Stamp the included violations to this cycle so no other cycle re-deducts them.
-    if (deductions.length) {
-      await db
-        .from("violations")
-        .update({ pay_cycle_id: cycleId })
-        .in(
-          "id",
-          deductions.map((d) => d.violation_id)
-        );
-    }
-
-    // Generate + store the payslip PDF, then deliver over WhatsApp.
-    const pdf = await payslipPdf({
-      employeeName: emp.name,
-      cycleLabel: cycle.label,
-      gross,
-      deductions: deductions.map((d) => ({ reason: d.reason, amount: d.amount })),
-      net,
-    });
-    const { signedUrl } = await uploadPdf(`payslips/${payslipId}.pdf`, pdf);
-
-    let sent = false;
-    if (emp.phone) {
-      try {
-        await sendDocument(
-          emp.phone,
-          signedUrl,
-          `payslip-${payslipId.slice(0, 8)}.pdf`,
-          `Payslip — ${cycle.label}`
-        );
-        sent = true;
-      } catch (err) {
-        console.error(`[payroll] WhatsApp delivery failed for ${emp.id}:`, err);
-      }
-    }
-
-    await db
-      .from("payslips")
-      .update({ pdf_url: signedUrl, ...(sent ? { sent_at: new Date().toISOString() } : {}) })
-      .eq("id", payslipId);
-
-    results.push({
-      employee_id: emp.id,
-      employee_name: emp.name,
-      payslip_id: payslipId,
-      gross,
-      deduction_total: deductionTotal,
-      net,
-      sent,
-    });
+    .maybeSingle();
+  if (!cycle) return res.status(404).json({ error: "pay cycle not found" });
+  if (cycle.status !== "draft" && cycle.status !== "paid") {
+    return res.status(409).json({ error: "run payroll before releasing" });
   }
 
-  await db.from("pay_cycles").update({ status: "paid" }).eq("id", cycleId);
+  const { data: slips } = await db
+    .from("payslips")
+    .select("id, pdf_url, sent_at, employees!inner(name, phone, org_id)")
+    .eq("cycle_id", idParse.data)
+    .eq("employees.org_id", orgId);
 
-  res.json({ cycle_id: cycleId, count: results.length, results });
+  let sent = 0;
+  for (const s of slips ?? []) {
+    const emp = Array.isArray((s as any).employees) ? (s as any).employees[0] : (s as any).employees;
+    if (!emp?.phone || !s.pdf_url) continue;
+    try {
+      await sendDocument(emp.phone, s.pdf_url, `payslip-${String(s.id).slice(0, 8)}.pdf`, `Payslip — ${cycle.label}`);
+      await db.from("payslips").update({ sent_at: new Date().toISOString() }).eq("id", s.id);
+      sent++;
+    } catch (err) {
+      console.error(`[payroll] release send failed for payslip ${s.id}:`, (err as Error).message);
+    }
+  }
+
+  await db
+    .from("pay_cycles")
+    .update({ status: "paid", released_at: new Date().toISOString() })
+    .eq("id", idParse.data);
+
+  res.json({ ok: true, sent });
 });
 
 // ── Payslips for a cycle ──────────────────────────────────────────────────────

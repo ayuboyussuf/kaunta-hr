@@ -138,3 +138,51 @@ export function payslipPdf(d: PayslipData): Promise<Buffer> {
     drawFooter(doc);
   });
 }
+
+// ── Payroll payout summary (per workplace) ────────────────────────────────────
+export interface PayrollSummaryData {
+  orgName: string;
+  cycleLabel: string;
+  workplaces: {
+    name: string;
+    employees: { name: string; net: number }[];
+    subtotal: number;
+  }[];
+  grandTotal: number;
+}
+
+/** A one-page "who to pay how much" sheet, grouped by workplace, for the owner. */
+export function payrollSummaryPdf(d: PayrollSummaryData): Promise<Buffer> {
+  return renderToBuffer((doc) => {
+    drawHeader(doc, "Payroll payout summary", `${d.orgName} · ${d.cycleLabel}`);
+
+    const left = doc.page.margins.left;
+    const right = doc.page.width - doc.page.margins.right;
+
+    for (const wp of d.workplaces) {
+      if (doc.y > doc.page.height - 140) doc.addPage();
+      doc.fillColor(BRAND.copper).fontSize(12).font("Helvetica-Bold").text(wp.name);
+      doc.moveDown(0.2);
+      doc.fontSize(10).font("Helvetica");
+      for (const e of wp.employees) {
+        doc.fillColor(BRAND.ink).text(e.name, left, doc.y, { continued: true });
+        doc.fillColor(BRAND.ink).text(fmtKes(e.net), { align: "right" });
+      }
+      doc.moveDown(0.2);
+      doc.fillColor(BRAND.muted).fontSize(9).text("Subtotal", left, doc.y, { continued: true });
+      doc.fillColor(BRAND.slate).font("Helvetica-Bold").text(fmtKes(wp.subtotal), { align: "right" });
+      doc.font("Helvetica").moveDown(0.6);
+      doc.strokeColor(BRAND.mist).moveTo(left, doc.y).lineTo(right, doc.y).stroke();
+      doc.moveDown(0.5);
+    }
+
+    doc.moveDown(0.3);
+    doc.fillColor(BRAND.muted).fontSize(10).font("Helvetica").text("Total to pay out", left, doc.y, {
+      continued: true,
+    });
+    doc.fillColor(BRAND.copper).fontSize(16).font("Helvetica-Bold").text(fmtKes(d.grandTotal), {
+      align: "right",
+    });
+    drawFooter(doc);
+  });
+}
