@@ -62,11 +62,18 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
     );
   }
 
-  const payload = await upstream.text();
+  // Forward the raw response body byte-for-byte. Reading it as text (the old
+  // behaviour) UTF-8-decoded the bytes, which turns every non-ASCII byte of a
+  // binary payload (PDF reports, CSV exports) into the U+FFFD replacement
+  // character — corrupting the download so it opens as an "empty"/broken file.
+  // Streaming `upstream.body` preserves the bytes and stays memory-light.
   const resContentType = upstream.headers.get("content-type") ?? "application/json";
-  return new NextResponse(payload, {
+  const resHeaders: Record<string, string> = { "content-type": resContentType };
+  const disposition = upstream.headers.get("content-disposition");
+  if (disposition) resHeaders["content-disposition"] = disposition;
+  return new NextResponse(upstream.body, {
     status: upstream.status,
-    headers: { "content-type": resContentType },
+    headers: resHeaders,
   });
 }
 
