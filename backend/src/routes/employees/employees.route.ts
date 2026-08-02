@@ -29,12 +29,15 @@ function normPhone(raw: string): string {
   return `+${d}`;
 }
 
+const payType = z.enum(["monthly", "daily", "hourly"]);
 const createInput = z.object({
   name: z.string().min(1).max(120),
   phone: z.string().min(7).max(20),
   workplace_id: z.string().uuid().nullable().optional(),
   shift_id: z.string().uuid().nullable().optional(),
   base_salary: z.number().min(0).max(1e9).default(0),
+  pay_type: payType.default("monthly"),
+  pay_rate: z.number().min(0).max(1e9).nullable().optional(),
 });
 
 const updateInput = z.object({
@@ -43,6 +46,8 @@ const updateInput = z.object({
   workplace_id: z.string().uuid().nullable().optional(),
   shift_id: z.string().uuid().nullable().optional(),
   base_salary: z.number().min(0).max(1e9).optional(),
+  pay_type: payType.optional(),
+  pay_rate: z.number().min(0).max(1e9).nullable().optional(),
 });
 
 /** Verify a workplace belongs to the org (when provided). */
@@ -78,7 +83,7 @@ async function assertOrgShift(
 }
 
 const EMP_SELECT =
-  "id, org_id, workplace_id, shift_id, name, phone, base_salary, status, created_at, " +
+  "id, org_id, workplace_id, shift_id, name, phone, base_salary, pay_type, pay_rate, status, created_at, " +
   "workplace:workplaces(id, name), shift:shifts(id, name, kind, start_time, end_time)";
 
 // ── List ──────────────────────────────────────────────────────────────────────
@@ -92,6 +97,106 @@ router.get("/", requireOwner, async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
   res.json({ employees: data ?? [] });
+});
+
+// ── Attendance overview (absence radar) ───────────────────────────────────────
+// Per active employee: when they last clocked in, how many days ago, and their
+// presence-check pass/miss counts over the last 7 days. Lets the owner spot
+// someone who hasn't shown up in days.
+router.get("/attendance-overview", requireOwner, async (req, res) => {
+  const db = getServiceClient();
+  const orgId = req.owner!.orgId;
+
+  const { data: emps } = await db
+    .from("employees")
+    .select("id, name")
+    .eq("org_id", orgId)
+    .eq("status", "active");
+  const ids = (emps ?? []).map((e) => e.id);
+  if (ids.length === 0) return res.json({ overview: [] });
+
+  const now = Date.now();
+  const since60 = new Date(now - 60 * 864e5).toISOString();
+  const since7 = new Date(now - 7 * 864e5).toISOString();
+
+  const [{ data: ins }, { data: checks }] = await Promise.all([
+    db
+      .from("attendance_entries")
+      .select("employee_id, scanned_at")
+      .in("employee_id", ids)
+      .eq("direction", "in")
+      .gte("scanned_at", since60)
+      .order("scanned_at", { ascending: false }),
+    db
+      .from("presence_checks")
+      .select("employee_id, status")
+      .in("employee_id", ids)
+      .gte("created_at", since7),
+  ]);
+
+  const lastIn = new Map<string, string>(); // first (latest) wins
+  for (const r of ins ?? []) if (!lastIn.has(r.employee_id)) lastIn.set(r.employee_id, r.scanned_at);
+
+  const checkAgg = new Map<string, { confirmed: number; missed: number }>();
+  for (const c of checks ?? []) {
+    const a = checkAgg.get(c.employee_id) ?? { confirmed: 0, missed: 0 };
+    if (c.status === "confirmed") a.confirmed++;
+    else if (c.status === "missed") a.missed++;
+    checkAgg.set(c.employee_id, a);
+  }
+
+  const overview = (emps ?? []).map((e) => {
+    const last = lastIn.get(e.id) ?? null;
+    const daysSince = last ? Math.floor((now - new Date(last).getTime()) / 864e5) : null;
+    const agg = checkAgg.get(e.id) ?? { confirmed: 0, missed: 0 };
+    return {
+      employee_id: e.id,
+      name: e.name,
+      last_in: last,
+      days_since_seen: daysSince,
+      checks_confirmed_7d: agg.confirmed,
+      checks_missed_7d: agg.missed,
+    };
+  });
+
+  res.json({ overview });
+});
+
+// ── One employee's recent attendance history + presence checks ────────────────
+router.get("/:id/history", requireOwner, async (req, res) => {
+  const idParse = z.string().uuid().safeParse(req.params.id);
+  if (!idParse.success) return res.status(400).json({ error: "invalid id" });
+
+  const db = getServiceClient();
+  const orgId = req.owner!.orgId;
+
+  const { data: emp } = await db
+    .from("employees")
+    .select("id")
+    .eq("id", idParse.data)
+    .eq("org_id", orgId)
+    .maybeSingle();
+  if (!emp) return res.status(404).json({ error: "employee not found" });
+
+  const since = new Date(Date.now() - 30 * 864e5).toISOString();
+  const [{ data: entries }, { data: checks }] = await Promise.all([
+    db
+      .from("attendance_entries")
+      .select("id, scanned_at, direction, status, flags, workplace:workplaces(name)")
+      .eq("employee_id", idParse.data)
+      .gte("scanned_at", since)
+      .order("scanned_at", { ascending: false })
+      .limit(200),
+    db
+      .from("presence_checks")
+      .select("id, due_at, respond_by, status")
+      .eq("employee_id", idParse.data)
+      .gte("created_at", since)
+      .order("due_at", { ascending: false })
+      .limit(100),
+  ]);
+
+  res.json({ entries: entries ?? [], checks: checks ?? [] });
 });
 
 // ── Create + WhatsApp invite ──────────────────────────────────────────────────
@@ -128,6 +233,8 @@ router.post("/", requireOwner, async (req, res) => {
       workplace_id: parsed.data.workplace_id ?? null,
       shift_id: parsed.data.shift_id ?? null,
       base_salary: parsed.data.base_salary,
+      pay_type: parsed.data.pay_type,
+      pay_rate: parsed.data.pay_rate ?? null,
       status: "invited",
     })
     .select(EMP_SELECT)

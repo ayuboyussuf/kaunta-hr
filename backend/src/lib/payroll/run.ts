@@ -1,0 +1,312 @@
+/**
+ * Payroll compute engine — compliance-grade, calculate-only (never sends, never
+ * moves money). Produces a DRAFT run whose every figure is traceable to a source
+ * record and which FLAGS (never guesses) missing or ambiguous data.
+ *
+ *   runPayrollDraft(cycleId)  → compute all lines, set run draft|flagged
+ *   recomputeNet(payslipId)   → re-derive one line's net from breakdown + audited
+ *                               adjustments (bonus/deduction/override/hold)
+ *   recomputeCycle(cycleId)   → roll up totals + flag count + run status
+ *
+ * Deduction source of truth is unchanged: `locked` violations dated in the
+ * window, idempotently stamped to the cycle.
+ */
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getServiceClient } from "../supabase";
+
+const TZ = "Africa/Nairobi";
+const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+/** Nairobi calendar date (YYYY-MM-DD) for an instant. */
+function nairobiDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+}
+
+/** Every YYYY-MM-DD from start to end inclusive. */
+function datesInRange(start: string, end: string): string[] {
+  const out: string[] = [];
+  const d = new Date(`${start}T00:00:00Z`);
+  const last = new Date(`${end}T00:00:00Z`);
+  while (d <= last) {
+    out.push(d.toISOString().slice(0, 10));
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return out;
+}
+const weekdayOf = (ymd: string) => new Date(`${ymd}T00:00:00Z`).getUTCDay(); // 0=Sun..6=Sat
+
+export interface PayrollFlag {
+  code: "missing_clockins" | "flagged_attendance" | "incomplete_session" | "no_pay_config";
+  message: string;
+  resolved: boolean;
+}
+
+/** Compute + persist a draft payroll for a cycle. */
+export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: string; count: number }> {
+  const db = getServiceClient();
+
+  const { data: cycle, error: cErr } = await db
+    .from("pay_cycles")
+    .select("id, org_id, label, start_date, end_date, locked")
+    .eq("id", cycleId)
+    .single();
+  if (cErr || !cycle) throw new Error(cErr?.message ?? "pay cycle not found");
+  if (cycle.locked) throw new Error("this run is approved and locked");
+
+  const startBoundary = `${cycle.start_date}T00:00:00.000Z`;
+  const endD = new Date(`${cycle.end_date}T00:00:00.000Z`);
+  endD.setUTCDate(endD.getUTCDate() + 1);
+  const endBoundary = endD.toISOString();
+  const rangeDates = datesInRange(cycle.start_date, cycle.end_date);
+
+  await db.from("pay_cycles").update({ status: "processing" }).eq("id", cycleId);
+
+  const { data: employees, error: empErr } = await db
+    .from("employees")
+    .select(
+      "id, name, base_salary, pay_type, pay_rate, workplace_id, " +
+        "workplace:workplaces(name), shift:shifts(days_of_week)"
+    )
+    .eq("org_id", cycle.org_id)
+    .eq("status", "active");
+  if (empErr) throw new Error(empErr.message);
+
+  for (const emp of (employees ?? []) as any[]) {
+    const wp = Array.isArray((emp as any).workplace) ? (emp as any).workplace[0] : (emp as any).workplace;
+    const shift = Array.isArray((emp as any).shift) ? (emp as any).shift[0] : (emp as any).shift;
+    const daysOfWeek: number[] = shift?.days_of_week ?? [];
+
+    // All entries in window (asc) for day counting, hourly pairing, flag checks.
+    const { data: entries } = await db
+      .from("attendance_entries")
+      .select("id, scanned_at, direction, status")
+      .eq("employee_id", emp.id)
+      .gte("scanned_at", startBoundary)
+      .lt("scanned_at", endBoundary)
+      .order("scanned_at", { ascending: true });
+
+    const flags: PayrollFlag[] = [];
+
+    // Days present = distinct Nairobi days with an 'in' scan.
+    const presentDates = new Set<string>();
+    const inEntryIds: string[] = [];
+    let anyFlaggedAttendance = false;
+    for (const e of entries ?? []) {
+      if (e.status === "flagged") anyFlaggedAttendance = true;
+      if (e.direction === "in") {
+        presentDates.add(nairobiDate(e.scanned_at));
+        inEntryIds.push(e.id);
+      }
+    }
+    const daysPresent = presentDates.size;
+
+    // Expected working days from the shift schedule (only if a shift is assigned).
+    const expectedDates = daysOfWeek.length
+      ? rangeDates.filter((d) => daysOfWeek.includes(weekdayOf(d)))
+      : [];
+    const missingDates = expectedDates.filter((d) => !presentDates.has(d));
+    if (missingDates.length > 0) {
+      flags.push({
+        code: "missing_clockins",
+        message: `No clock-in on ${missingDates.length} scheduled day(s): ${missingDates.join(", ")}`,
+        resolved: false,
+      });
+    }
+    if (anyFlaggedAttendance) {
+      flags.push({
+        code: "flagged_attendance",
+        message: "One or more scans in this period were flagged for review.",
+        resolved: false,
+      });
+    }
+
+    // Gross by pay model.
+    const payType = (emp.pay_type as string) ?? "monthly";
+    const payRate = emp.pay_rate == null ? null : Number(emp.pay_rate);
+    const baseSalary = emp.base_salary == null ? null : Number(emp.base_salary);
+    let gross = 0;
+    let grossBasis = "";
+    let hoursWorked: number | undefined;
+
+    if (payType === "monthly") {
+      if (baseSalary == null || baseSalary <= 0) {
+        flags.push({ code: "no_pay_config", message: "No monthly salary set for this employee.", resolved: false });
+      }
+      gross = round2(baseSalary ?? 0);
+      grossBasis = "Monthly salary";
+    } else if (payType === "daily") {
+      if (payRate == null) {
+        flags.push({ code: "no_pay_config", message: "No daily rate set for this employee.", resolved: false });
+      }
+      gross = round2((payRate ?? 0) * daysPresent);
+      grossBasis = `${daysPresent} day(s) × ${payRate ?? 0}/day`;
+    } else {
+      // hourly — pair in→out chronologically.
+      if (payRate == null) {
+        flags.push({ code: "no_pay_config", message: "No hourly rate set for this employee.", resolved: false });
+      }
+      let ms = 0;
+      let openIn: string | null = null;
+      let incomplete = false;
+      for (const e of entries ?? []) {
+        if (e.direction === "in") {
+          if (openIn) incomplete = true; // two ins with no out between
+          openIn = e.scanned_at;
+        } else if (e.direction === "out") {
+          if (openIn) {
+            ms += new Date(e.scanned_at).getTime() - new Date(openIn).getTime();
+            openIn = null;
+          }
+        }
+      }
+      if (openIn) incomplete = true; // trailing in with no out
+      if (incomplete) {
+        flags.push({
+          code: "incomplete_session",
+          message: "A clock-in has no matching clock-out — hours can't be computed for it.",
+          resolved: false,
+        });
+      }
+      hoursWorked = round2(ms / 3_600_000);
+      gross = round2((payRate ?? 0) * hoursWorked);
+      grossBasis = `${hoursWorked} hour(s) × ${payRate ?? 0}/hr`;
+    }
+
+    // Deductions = locked violations in-window (idempotent stamp).
+    const { data: viols } = await db
+      .from("violations")
+      .select("id, rule_id, reason, amount, pay_cycle_id")
+      .eq("employee_id", emp.id)
+      .eq("status", "locked")
+      .gte("created_at", startBoundary)
+      .lt("created_at", endBoundary)
+      .or(`pay_cycle_id.is.null,pay_cycle_id.eq.${cycleId}`);
+
+    const penaltyLines = (viols ?? []).map((v: any) => ({
+      source: "penalty" as const,
+      violation_id: v.id as string,
+      rule_id: (v.rule_id as string) ?? null,
+      label: (v.reason as string) ?? "Penalty",
+      amount: round2(Number(v.amount ?? 0)),
+    }));
+    if (penaltyLines.length) {
+      await db.from("violations").update({ pay_cycle_id: cycleId }).in("id", penaltyLines.map((p) => p.violation_id));
+    }
+    const penaltyTotal = round2(penaltyLines.reduce((s, p) => s + p.amount, 0));
+    const netComputed = round2(gross - penaltyTotal);
+
+    const breakdown = {
+      pay_type: payType,
+      pay_rate: payRate,
+      base_salary: baseSalary,
+      days_present: daysPresent,
+      expected_days: expectedDates.length,
+      present_dates: [...presentDates].sort(),
+      missing_dates: missingDates,
+      attendance_entry_ids: inEntryIds,
+      hours_worked: hoursWorked,
+      gross_basis: grossBasis,
+      gross,
+      deductions: penaltyLines, // penalties; adjustments are merged in recomputeNet
+      additions: [] as unknown[],
+      manual_deductions: [] as unknown[],
+      override_net: null as number | null,
+      net_computed: netComputed,
+      workplace_name: wp?.name ?? "Unassigned",
+    };
+
+    // Upsert the line. Preserve owner state (held/override) across re-runs by not
+    // overwriting them here — recomputeNet re-derives net from audited adjustments.
+    const { data: slip, error: slipErr } = await db
+      .from("payslips")
+      .upsert(
+        {
+          employee_id: emp.id,
+          cycle_id: cycleId,
+          gross,
+          deductions: penaltyLines,
+          net: netComputed,
+          breakdown,
+          flags,
+        },
+        { onConflict: "employee_id,cycle_id" }
+      )
+      .select("id")
+      .single();
+    if (slipErr || !slip) throw new Error(slipErr?.message ?? "payslip upsert failed");
+    await recomputeNet(db, (slip as { id: string }).id);
+  }
+
+  await recomputeCycle(db, cycleId);
+  return { cycle_id: cycleId, count: (employees ?? []).length };
+}
+
+/** Re-derive a line's net from its computed base + the audited adjustment log. */
+export async function recomputeNet(db: SupabaseClient, payslipId: string): Promise<number> {
+  const { data: slip } = await db.from("payslips").select("breakdown").eq("id", payslipId).single();
+  const breakdown = (slip?.breakdown ?? {}) as Record<string, unknown>;
+  const netComputed = Number(breakdown.net_computed ?? 0);
+
+  const { data: adj } = await db
+    .from("payroll_adjustments")
+    .select("id, type, amount, note, created_at")
+    .eq("payslip_id", payslipId)
+    .order("created_at", { ascending: true });
+
+  const additions: { adjustment_id: string; label: string; amount: number }[] = [];
+  const manualDeductions: { adjustment_id: string; label: string; amount: number }[] = [];
+  let override: number | null = null;
+  let held = false;
+
+  for (const a of adj ?? []) {
+    if (a.type === "bonus") additions.push({ adjustment_id: a.id, label: a.note, amount: round2(Number(a.amount ?? 0)) });
+    else if (a.type === "deduction") manualDeductions.push({ adjustment_id: a.id, label: a.note, amount: round2(Number(a.amount ?? 0)) });
+    else if (a.type === "override_net") override = round2(Number(a.amount ?? 0));
+    else if (a.type === "hold") held = true;
+    else if (a.type === "unhold") held = false;
+  }
+
+  const addTotal = additions.reduce((s, x) => s + x.amount, 0);
+  const dedTotal = manualDeductions.reduce((s, x) => s + x.amount, 0);
+  const derived = round2(netComputed + addTotal - dedTotal);
+  const net = override != null ? override : derived;
+
+  const nextBreakdown = { ...breakdown, additions, manual_deductions: manualDeductions, override_net: override };
+  await db
+    .from("payslips")
+    .update({ net, override_net: override, held, breakdown: nextBreakdown })
+    .eq("id", payslipId);
+  return net;
+}
+
+/** Roll up run totals, unresolved-flag count, and status (unless locked). */
+export async function recomputeCycle(db: SupabaseClient, cycleId: string): Promise<void> {
+  const { data: cycle } = await db.from("pay_cycles").select("locked").eq("id", cycleId).single();
+  const { data: slips } = await db.from("payslips").select("net, held, flags").eq("cycle_id", cycleId);
+
+  let total = 0;
+  let count = 0;
+  let flaggedLines = 0;
+  for (const s of slips ?? []) {
+    if (!s.held) {
+      total = round2(total + Number(s.net ?? 0));
+      count += 1;
+    }
+    const flags = Array.isArray(s.flags) ? (s.flags as { resolved?: boolean }[]) : [];
+    if (flags.some((f) => !f.resolved)) flaggedLines += 1;
+  }
+
+  const patch: Record<string, unknown> = {
+    total_net: total,
+    employee_count: count,
+    flagged_count: flaggedLines,
+  };
+  // Don't touch status once approved/locked.
+  if (!cycle?.locked) patch.status = flaggedLines > 0 ? "flagged" : "draft";
+  await db.from("pay_cycles").update(patch).eq("id", cycleId);
+}

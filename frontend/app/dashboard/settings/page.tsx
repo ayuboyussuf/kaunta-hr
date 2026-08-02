@@ -10,7 +10,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Loader2, Building2, SlidersHorizontal, Check, ShieldCheck } from "lucide-react";
+import { Loader2, Building2, SlidersHorizontal, Check, ShieldCheck, Wallet, MapPin, Scale, Clock } from "lucide-react";
 
 interface OrgSettings {
   id: string;
@@ -23,6 +23,8 @@ interface OrgSettings {
   presence_checks_per_shift: number;
   presence_check_window_min: number;
   presence_sms_fallback: boolean;
+  payroll_cadence: "off" | "weekly" | "biweekly" | "monthly";
+  payroll_pay_day: number | null;
 }
 
 const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
@@ -47,6 +49,12 @@ export default function SettingsPage() {
   const [windowMin, setWindowMin] = useState(10);
   const [smsFallback, setSmsFallback] = useState(true);
   const [savingPresence, setSavingPresence] = useState(false);
+  // Payroll config
+  const [cadence, setCadence] = useState<"off" | "weekly" | "biweekly" | "monthly">("off");
+  const [payDay, setPayDay] = useState<number | null>(null);
+  const [savingPayroll, setSavingPayroll] = useState(false);
+  const [payrollPin, setPayrollPin] = useState("");
+  const [savingPin, setSavingPin] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -63,6 +71,8 @@ export default function SettingsPage() {
         setChecksPerShift(r.org.presence_checks_per_shift ?? 0);
         setWindowMin(r.org.presence_check_window_min ?? 10);
         setSmsFallback(r.org.presence_sms_fallback ?? true);
+        setCadence(r.org.payroll_cadence ?? "off");
+        setPayDay(r.org.payroll_pay_day ?? null);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load settings");
       } finally {
@@ -117,7 +127,45 @@ export default function SettingsPage() {
     }
   }
 
+  async function savePayroll() {
+    if (!token) return;
+    setSavingPayroll(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const r = await api<{ org: OrgSettings }>("/api/owner/settings", {
+        method: "PATCH",
+        token,
+        body: { payroll_cadence: cadence, payroll_pay_day: cadence === "off" ? null : payDay },
+      });
+      setOrg(r.org);
+      setNotice("Payroll settings saved.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSavingPayroll(false);
+    }
+  }
+
+  async function savePin() {
+    if (!token) return;
+    if (!/^\d{4,6}$/.test(payrollPin)) return setError("Payroll PIN must be 4–6 digits.");
+    setSavingPin(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await api("/api/payroll/pin", { method: "POST", token, body: { pin: payrollPin } });
+      setPayrollPin("");
+      setNotice("Payroll PIN saved. You'll enter it to approve a payroll run.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSavingPin(false);
+    }
+  }
+
   const dirty = org ? name.trim() !== org.name || phone.trim() !== (org.phone ?? "") : false;
+  const payrollDirty = org ? cadence !== org.payroll_cadence || payDay !== org.payroll_pay_day : false;
   const presenceDirty = org
     ? checksPerShift !== org.presence_checks_per_shift ||
       windowMin !== org.presence_check_window_min ||
@@ -189,6 +237,87 @@ export default function SettingsPage() {
               </div>
             </section>
 
+            {/* Payroll cadence */}
+            <section className={`${cardCls} p-6 space-y-4`}>
+              <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
+                <Wallet className="h-5 w-5 text-kaunta-copper" /> Payroll
+              </h2>
+              <p className="text-sm text-kaunta-slate/60">
+                How often do you pay staff? When a period ends, Kaunta auto-calculates everyone&apos;s pay and
+                deductions into a draft and messages you to review — nothing is final until you approve it with
+                your PIN.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>Pay schedule</label>
+                  <select className={inputCls} value={cadence} onChange={(e) => setCadence(e.target.value as typeof cadence)}>
+                    <option value="off">Manual (I run it myself)</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="biweekly">Every 2 weeks</option>
+                    <option value="weekly">Weekly</option>
+                  </select>
+                </div>
+                {cadence === "monthly" && (
+                  <div>
+                    <label className={labelCls}>Pay day of month</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={28}
+                      placeholder="blank = last day"
+                      className={inputCls}
+                      value={payDay ?? ""}
+                      onChange={(e) => setPayDay(e.target.value === "" ? null : Math.max(1, Math.min(28, Number(e.target.value))))}
+                    />
+                    <p className="text-xs text-kaunta-slate/50 mt-1">Leave blank to run on the last day of the month.</p>
+                  </div>
+                )}
+                {(cadence === "weekly" || cadence === "biweekly") && (
+                  <div>
+                    <label className={labelCls}>Pay day of week</label>
+                    <select
+                      className={inputCls}
+                      value={payDay ?? 5}
+                      onChange={(e) => setPayDay(Number(e.target.value))}
+                    >
+                      {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d, i) => (
+                        <option key={i} value={i}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <Button onClick={savePayroll} disabled={savingPayroll || !payrollDirty}>
+                  {savingPayroll ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Save payroll settings
+                </Button>
+                {payrollDirty && <span className="text-xs text-kaunta-slate/50">Unsaved changes</span>}
+              </div>
+
+              <div className="border-t border-kaunta-mist pt-4">
+                <label className={labelCls}>Approval PIN</label>
+                <p className="text-xs text-kaunta-slate/60 mb-2">
+                  A 4–6 digit PIN you enter to approve and lock a payroll run. Set it once; enter it at approval.
+                </p>
+                <div className="flex gap-2 max-w-xs">
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    placeholder="Set / change PIN"
+                    className={inputCls}
+                    value={payrollPin}
+                    onChange={(e) => setPayrollPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  />
+                  <Button onClick={savePin} disabled={savingPin || payrollPin.length < 4}>
+                    {savingPin ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save PIN"}
+                  </Button>
+                </div>
+              </div>
+            </section>
+
             {/* Presence checks */}
             <section className={`${cardCls} p-6 space-y-4`}>
               <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
@@ -248,14 +377,36 @@ export default function SettingsPage() {
             {/* Attendance configuration */}
             <section className={`${cardCls} p-6`}>
               <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2 mb-2">
-                <SlidersHorizontal className="h-5 w-5 text-kaunta-copper" /> Attendance rules & workplaces
+                <SlidersHorizontal className="h-5 w-5 text-kaunta-copper" /> Attendance rules &amp; workplaces
               </h2>
               <p className="text-sm text-kaunta-slate/60 mb-4">
-                Rulesets, penalties, workplaces and shifts are managed through the setup wizard.
+                Add or edit these any time — no need to re-run setup. To add a new workplace, open
+                <span className="text-kaunta-ink"> Workplaces</span> and tap “Add workplace.”
               </p>
-              <Link href="/dashboard/onboarding">
-                <Button variant="outline">Open setup wizard</Button>
-              </Link>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Link href="/dashboard/workplaces">
+                  <Button variant="outline" className="w-full justify-start">
+                    <MapPin className="h-4 w-4 mr-2" /> Workplaces
+                  </Button>
+                </Link>
+                <Link href="/dashboard/rules">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Scale className="h-4 w-4 mr-2" /> Rules
+                  </Button>
+                </Link>
+                <Link href="/dashboard/shifts">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Clock className="h-4 w-4 mr-2" /> Shifts
+                  </Button>
+                </Link>
+              </div>
+              <p className="text-xs text-kaunta-slate/50 mt-3">
+                Prefer the guided flow?{" "}
+                <Link href="/dashboard/onboarding" className="text-kaunta-copper hover:underline">
+                  Re-run the setup wizard
+                </Link>
+                .
+              </p>
             </section>
 
             {/* Account */}

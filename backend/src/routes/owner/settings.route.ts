@@ -17,7 +17,8 @@ const router = Router();
 
 const ORG_SELECT =
   "id, name, phone, workplace_mode, rules_mode, onboarding_complete, created_at, " +
-  "presence_checks_per_shift, presence_check_window_min, presence_sms_fallback";
+  "presence_checks_per_shift, presence_check_window_min, presence_sms_fallback, " +
+  "payroll_cadence, payroll_pay_day";
 
 /** Normalise a raw phone to E.164 with a leading '+', Kenya-aware. */
 function normPhone(raw: string): string {
@@ -45,6 +46,8 @@ const patchInput = z.object({
   presence_checks_per_shift: z.number().int().min(0).max(10).optional(), // 0 = off
   presence_check_window_min: z.number().int().min(1).max(120).optional(),
   presence_sms_fallback: z.boolean().optional(),
+  payroll_cadence: z.enum(["off", "weekly", "biweekly", "monthly"]).optional(),
+  payroll_pay_day: z.number().int().min(0).max(31).nullable().optional(),
 });
 
 router.patch("/", requireOwner, async (req, res) => {
@@ -63,6 +66,8 @@ router.patch("/", requireOwner, async (req, res) => {
     patch.presence_check_window_min = parsed.data.presence_check_window_min;
   if (parsed.data.presence_sms_fallback !== undefined)
     patch.presence_sms_fallback = parsed.data.presence_sms_fallback;
+  if (parsed.data.payroll_cadence !== undefined) patch.payroll_cadence = parsed.data.payroll_cadence;
+  if (parsed.data.payroll_pay_day !== undefined) patch.payroll_pay_day = parsed.data.payroll_pay_day;
   if (Object.keys(patch).length === 0) {
     return res.status(400).json({ error: "nothing to update" });
   }
