@@ -70,6 +70,8 @@ router.patch("/", requireOwner, async (req, res) => {
     patch.presence_sms_fallback = parsed.data.presence_sms_fallback;
   if (parsed.data.payroll_cadence !== undefined) patch.payroll_cadence = parsed.data.payroll_cadence;
   if (parsed.data.payroll_pay_day !== undefined) patch.payroll_pay_day = parsed.data.payroll_pay_day;
+  if (parsed.data.payroll_pay_month !== undefined) patch.payroll_pay_month = parsed.data.payroll_pay_month;
+  if (parsed.data.absence_policy !== undefined) patch.absence_policy = parsed.data.absence_policy;
   if (Object.keys(patch).length === 0) {
     return res.status(400).json({ error: "nothing to update" });
   }
