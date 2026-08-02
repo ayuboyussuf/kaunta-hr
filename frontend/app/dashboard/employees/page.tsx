@@ -34,6 +34,7 @@ interface Employee {
   base_salary: number;
   pay_type: PayType;
   pay_rate: number | null;
+  start_date: string | null;
   status: "invited" | "active" | "suspended";
   workplace_id: string | null;
   shift_id: string | null;
@@ -61,6 +62,7 @@ interface Draft {
   base_salary: number;
   pay_type: PayType;
   pay_rate: number | null;
+  start_date: string | null;
 }
 const emptyDraft = (): Draft => ({
   name: "",
@@ -70,6 +72,7 @@ const emptyDraft = (): Draft => ({
   base_salary: 0,
   pay_type: "monthly",
   pay_rate: null,
+  start_date: null,
 });
 
 interface Overview {
@@ -191,6 +194,7 @@ export default function EmployeesPage() {
         base_salary: Number(draft.base_salary) || 0,
         pay_type: draft.pay_type,
         pay_rate: draft.pay_type === "monthly" ? null : Number(draft.pay_rate) || 0,
+        start_date: draft.start_date || null,
       };
       if (draft.id) {
         await api(`/api/employees/${draft.id}`, { method: "PATCH", token, body });
@@ -359,6 +363,16 @@ export default function EmployeesPage() {
                   <p className="text-xs text-kaunta-slate/50 mt-1">Pay is computed from attendance × this rate.</p>
                 </div>
               )}
+              <div>
+                <label className={labelCls}>Start date (optional)</label>
+                <input
+                  type="date"
+                  className={inputCls}
+                  value={draft.start_date ?? ""}
+                  onChange={(e) => setDraft({ ...draft, start_date: e.target.value || null })}
+                />
+                <p className="text-xs text-kaunta-slate/50 mt-1">Their first day. Payroll won&apos;t expect clock-ins before this.</p>
+              </div>
             </div>
             <div className="flex gap-2">
               <Button onClick={save} disabled={saving}>
@@ -459,6 +473,7 @@ export default function EmployeesPage() {
                                   base_salary: e.base_salary,
                                   pay_type: e.pay_type ?? "monthly",
                                   pay_rate: e.pay_rate,
+                                  start_date: e.start_date,
                                 })
                               }
                               className="text-kaunta-slate/60 hover:text-kaunta-copper p-1"

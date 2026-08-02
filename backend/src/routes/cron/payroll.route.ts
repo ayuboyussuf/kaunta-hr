@@ -28,13 +28,36 @@ interface Trigger {
   payDate: string;
 }
 
+/** Last day of a given (year, 1-based month). */
+function lastDayOf(y: number, m: number): number {
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
 /** Decide whether an org's cadence fires today, and for which period. */
 function triggerFor(
   cadence: string,
   payDay: number | null,
+  payMonth: string,
   p: { ymd: string; y: number; m: number; d: number; weekday: number; lastDay: number; daysSinceEpoch: number }
 ): Trigger | null {
   if (cadence === "monthly") {
+    if (payMonth === "previous") {
+      // Pay LAST month's work on `payDay` of this month (e.g. July's pay on 5 Aug).
+      const effective = payDay && payDay >= 1 && payDay <= 28 ? payDay : 1;
+      if (p.d !== effective) return null;
+      const py = p.m === 1 ? p.y - 1 : p.y;
+      const pm = p.m === 1 ? 12 : p.m - 1; // previous month (1-based)
+      const mm = String(pm).padStart(2, "0");
+      const lastD = lastDayOf(py, pm);
+      return {
+        period: `${py}-${mm}`,
+        label: `${MONTHS[pm - 1]} ${py}`,
+        start: `${py}-${mm}-01`,
+        end: `${py}-${mm}-${String(lastD).padStart(2, "0")}`,
+        payDate: p.ymd,
+      };
+    }
+    // "current": pay THIS month's work at month-end (or on the chosen day).
     const effective = payDay && payDay >= 1 && payDay <= 28 ? Math.min(payDay, p.lastDay) : p.lastDay;
     if (p.d !== effective) return null;
     const mm = String(p.m).padStart(2, "0");
@@ -89,13 +112,13 @@ router.post("/", async (req, res) => {
 
   const { data: orgs } = await db
     .from("orgs")
-    .select("id, name, phone, payroll_cadence, payroll_pay_day, payroll_last_period")
+    .select("id, name, phone, payroll_cadence, payroll_pay_day, payroll_pay_month, payroll_last_period")
     .neq("payroll_cadence", "off");
 
   const ran: { org_id: string; period: string; total: number }[] = [];
 
   for (const org of orgs ?? []) {
-    const trig = triggerFor(org.payroll_cadence, org.payroll_pay_day ?? null, parts);
+    const trig = triggerFor(org.payroll_cadence, org.payroll_pay_day ?? null, org.payroll_pay_month ?? "previous", parts);
     if (!trig) continue;
     if (org.payroll_last_period === trig.period) continue; // already ran this period
 

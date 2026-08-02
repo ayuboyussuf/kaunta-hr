@@ -24,13 +24,14 @@ interface Cycle {
   status: string; locked: boolean; flagged_count: number; total_net: number | null;
   employee_count: number | null; approved_at: string | null; auto: boolean;
 }
-interface Flag { code: string; message: string; resolved: boolean; resolution_note?: string }
+interface Flag { code: string; message: string; resolved: boolean; blocking?: boolean; resolution_note?: string }
 interface Breakdown {
-  pay_type?: string; days_present?: number; expected_days?: number; present_dates?: string[];
+  pay_type?: string; days_present?: number; expected_days?: number; absent_days?: number; present_dates?: string[];
   missing_dates?: string[]; hours_worked?: number; gross_basis?: string; gross?: number;
-  deductions?: { label: string; amount: number; violation_id?: string }[];
+  deductions?: { source?: string; label: string; amount: number; violation_id?: string }[];
   additions?: { label: string; amount: number; adjustment_id?: string }[];
   manual_deductions?: { label: string; amount: number; adjustment_id?: string }[];
+  absence_suggestion?: number | null;
   override_net?: number | null; net_computed?: number; workplace_name?: string;
 }
 interface Line {
@@ -151,6 +152,28 @@ export default function PayrollPage() {
       await api(`/api/payroll/cycles/${selId}/approve`, { method: "POST", token, body: { pin } });
       setShowApprove(false); setPin("");
       await refresh();
+    } catch (e) { setError((e as Error).message); }
+    finally { setBusy(false); }
+  }
+
+  async function applyAbsence(line: Line) {
+    if (!token || !selId) return;
+    const amount = line.breakdown?.absence_suggestion;
+    if (!amount) return;
+    setBusy(true); setError(null);
+    try {
+      await api(`/api/payroll/cycles/${selId}/lines/${line.id}/deduction`, {
+        method: "POST", token,
+        body: { amount, note: `Absence: ${line.breakdown?.absent_days ?? 0} day(s)` },
+      });
+      // Also mark the absence flag resolved so it stops blocking.
+      const f = line.flags.find((x) => x.code === "missing_clockins" && !x.resolved);
+      if (f) await api(`/api/payroll/cycles/${selId}/lines/${line.id}/resolve-flag`, {
+        method: "POST", token, body: { code: "missing_clockins", note: "Applied absence deduction" },
+      });
+      setOpenLine(null);
+      await loadLines(token, selId);
+      await loadCycles(token);
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   }
@@ -302,6 +325,7 @@ export default function PayrollPage() {
           onClose={() => setOpenLine(null)}
           onAction={(kind, code) => { setAction({ kind, code }); setActAmount(""); setActNote(""); }}
           onStatus={setPaymentStatus}
+          onApplyAbsence={applyAbsence}
         />
       )}
 
@@ -352,13 +376,16 @@ export default function PayrollPage() {
 }
 
 // ── Bottom-sheet breakdown for one employee ──────────────────────────────────
-function LineDrawer({ line, locked, onClose, onAction, onStatus }: {
+function LineDrawer({ line, locked, onClose, onAction, onStatus, onApplyAbsence }: {
   line: Line; locked: boolean; onClose: () => void;
   onAction: (kind: string, code?: string) => void;
   onStatus: (line: Line, status: string) => void;
+  onApplyAbsence: (line: Line) => void;
 }) {
   const b = line.breakdown ?? {};
-  const penalties = b.deductions ?? [];
+  const all = b.deductions ?? [];
+  const penalties = all.filter((d) => d.source !== "absence");
+  const absence = all.filter((d) => d.source === "absence");
   const bonuses = b.additions ?? [];
   const manual = b.manual_deductions ?? [];
   return (
@@ -370,14 +397,29 @@ function LineDrawer({ line, locked, onClose, onAction, onStatus }: {
         </div>
 
         <div className="p-4 space-y-4 text-sm">
-          {/* Flags */}
-          {line.flags?.filter((f) => !f.resolved).map((f) => (
-            <div key={f.code} className="rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-3 py-2">
-              <p className="text-kaunta-red font-medium flex items-center gap-1"><AlertTriangle className="h-4 w-4" /> Needs attention</p>
-              <p className="text-kaunta-slate/80 mt-0.5">{f.message}</p>
-              {!locked && <button onClick={() => onAction("resolve", f.code)} className="mt-1 text-xs text-kaunta-copper hover:underline">Mark resolved (with a note)</button>}
-            </div>
-          ))}
+          {/* Flags — red if they block approval, amber if informational */}
+          {line.flags?.filter((f) => !f.resolved).map((f) => {
+            const blocks = f.blocking !== false;
+            return (
+              <div key={f.code} className={`rounded-lg border px-3 py-2 ${blocks ? "border-kaunta-red/30 bg-kaunta-red/5" : "border-kaunta-amber/30 bg-kaunta-amber/10"}`}>
+                <p className={`font-medium flex items-center gap-1 ${blocks ? "text-kaunta-red" : "text-kaunta-amber"}`}>
+                  <AlertTriangle className="h-4 w-4" /> {blocks ? "Needs attention" : "For your info"}
+                </p>
+                <p className="text-kaunta-slate/80 mt-0.5">{f.message}</p>
+                {/* One-tap absence deduction when a suggestion exists (monthly-flat). */}
+                {!locked && f.code === "missing_clockins" && b.absence_suggestion ? (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-kaunta-ink">Suggested absence deduction: {fmtKes(b.absence_suggestion)}</span>
+                    <button onClick={() => onApplyAbsence(line)} className="text-xs text-kaunta-copper hover:underline font-medium">Apply</button>
+                    <span className="text-kaunta-slate/40 text-xs">·</span>
+                    <button onClick={() => onAction("resolve", f.code)} className="text-xs text-kaunta-copper hover:underline">Keep full pay (note)</button>
+                  </div>
+                ) : (
+                  !locked && <button onClick={() => onAction("resolve", f.code)} className="mt-1 text-xs text-kaunta-copper hover:underline">Mark resolved (with a note)</button>
+                )}
+              </div>
+            );
+          })}
 
           {/* Days present — every day cited */}
           <div>
@@ -397,6 +439,8 @@ function LineDrawer({ line, locked, onClose, onAction, onStatus }: {
               {penalties.map((d, i) => <div key={i} className="flex justify-between text-kaunta-slate/80"><span>{d.label}</span><span className="text-kaunta-red tabular-nums">−{fmtKes(d.amount)}</span></div>)}
             </div>
           )}
+          {/* Absence (pro-rated) */}
+          {absence.map((d, i) => <div key={`a${i}`} className="flex justify-between"><span className="text-kaunta-slate/80">{d.label}</span><span className="text-kaunta-red tabular-nums">−{fmtKes(d.amount)}</span></div>)}
           {/* Manual adjustments */}
           {bonuses.map((d, i) => <div key={`b${i}`} className="flex justify-between"><span className="text-kaunta-slate/80">Bonus · {d.label}</span><span className="text-kaunta-sage tabular-nums">+{fmtKes(d.amount)}</span></div>)}
           {manual.map((d, i) => <div key={`m${i}`} className="flex justify-between"><span className="text-kaunta-slate/80">Deduction · {d.label}</span><span className="text-kaunta-red tabular-nums">−{fmtKes(d.amount)}</span></div>)}

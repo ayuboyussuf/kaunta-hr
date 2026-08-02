@@ -25,6 +25,8 @@ interface OrgSettings {
   presence_sms_fallback: boolean;
   payroll_cadence: "off" | "weekly" | "biweekly" | "monthly";
   payroll_pay_day: number | null;
+  payroll_pay_month: "previous" | "current";
+  absence_policy: "flat" | "prorate";
 }
 
 const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
@@ -53,6 +55,8 @@ export default function SettingsPage() {
   const [cadence, setCadence] = useState<"off" | "weekly" | "biweekly" | "monthly">("off");
   const [payDay, setPayDay] = useState<number | null>(null);
   const [savingPayroll, setSavingPayroll] = useState(false);
+  const [payMonth, setPayMonth] = useState<"previous" | "current">("previous");
+  const [absencePolicy, setAbsencePolicy] = useState<"flat" | "prorate">("flat");
   const [payrollPin, setPayrollPin] = useState("");
   const [savingPin, setSavingPin] = useState(false);
 
@@ -73,6 +77,8 @@ export default function SettingsPage() {
         setSmsFallback(r.org.presence_sms_fallback ?? true);
         setCadence(r.org.payroll_cadence ?? "off");
         setPayDay(r.org.payroll_pay_day ?? null);
+        setPayMonth(r.org.payroll_pay_month ?? "previous");
+        setAbsencePolicy(r.org.absence_policy ?? "flat");
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load settings");
       } finally {
@@ -136,7 +142,12 @@ export default function SettingsPage() {
       const r = await api<{ org: OrgSettings }>("/api/owner/settings", {
         method: "PATCH",
         token,
-        body: { payroll_cadence: cadence, payroll_pay_day: cadence === "off" ? null : payDay },
+        body: {
+          payroll_cadence: cadence,
+          payroll_pay_day: cadence === "off" ? null : payDay,
+          payroll_pay_month: payMonth,
+          absence_policy: absencePolicy,
+        },
       });
       setOrg(r.org);
       setNotice("Payroll settings saved.");
@@ -165,7 +176,26 @@ export default function SettingsPage() {
   }
 
   const dirty = org ? name.trim() !== org.name || phone.trim() !== (org.phone ?? "") : false;
-  const payrollDirty = org ? cadence !== org.payroll_cadence || payDay !== org.payroll_pay_day : false;
+  const payrollDirty = org
+    ? cadence !== org.payroll_cadence ||
+      payDay !== org.payroll_pay_day ||
+      payMonth !== org.payroll_pay_month ||
+      absencePolicy !== org.absence_policy
+    : false;
+
+  // Plain-English preview of when/what a monthly run pays.
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const payPreview = (() => {
+    if (cadence !== "monthly") return null;
+    const now = new Date();
+    const day = payDay ?? (payMonth === "previous" ? 1 : 0);
+    if (payMonth === "previous") {
+      const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const payMon = MONTHS[now.getMonth()];
+      return `You'll pay ${MONTHS[prev.getMonth()]}'s salary on ${day || 1} ${payMon}.`;
+    }
+    return `You'll pay ${MONTHS[now.getMonth()]}'s salary ${payDay ? `on the ${payDay}th` : "on the last day of the month"}.`;
+  })();
   const presenceDirty = org
     ? checksPerShift !== org.presence_checks_per_shift ||
       windowMin !== org.presence_check_window_min ||
@@ -288,6 +318,30 @@ export default function SettingsPage() {
                     </select>
                   </div>
                 )}
+                {cadence === "monthly" && (
+                  <div>
+                    <label className={labelCls}>Which work does this pay for?</label>
+                    <select className={inputCls} value={payMonth} onChange={(e) => setPayMonth(e.target.value as "previous" | "current")}>
+                      <option value="previous">Previous month (e.g. July&rsquo;s pay early August)</option>
+                      <option value="current">This month (pay at month-end)</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+              {payPreview && (
+                <p className="text-xs text-kaunta-sage bg-kaunta-sage/10 rounded-lg px-3 py-2">{payPreview}</p>
+              )}
+
+              <div>
+                <label className={labelCls}>Monthly staff who miss scheduled days</label>
+                <select className={inputCls} value={absencePolicy} onChange={(e) => setAbsencePolicy(e.target.value as "flat" | "prorate")}>
+                  <option value="flat">Pay full salary (review absences before approving)</option>
+                  <option value="prorate">Pro-rate by attendance (auto-deduct absent days)</option>
+                </select>
+                <p className="text-xs text-kaunta-slate/50 mt-1">
+                  Either way the breakdown shows the absent days and the exact daily-equivalent amount. Daily/hourly
+                  staff are always paid only for days/hours present.
+                </p>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <Button onClick={savePayroll} disabled={savingPayroll || !payrollDirty}>
