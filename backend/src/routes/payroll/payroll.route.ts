@@ -155,7 +155,10 @@ router.get("/cycles/:id/payslips", requireOwner, async (req, res) => {
 
   const { data, error } = await db
     .from("payslips")
-    .select("id, employee_id, gross, deductions, net, pdf_url, sent_at, created_at, employees!inner(name, org_id)")
+    .select(
+      "id, employee_id, gross, deductions, net, pdf_url, sent_at, created_at, " +
+        "employees!inner(name, org_id, workplace:workplaces(name))"
+    )
     .eq("cycle_id", idParse.data)
     .eq("employees.org_id", orgId)
     .order("created_at", { ascending: false });
@@ -189,10 +192,12 @@ router.get("/payslips", requireOwner, async (req, res) => {
 function shapePayslip(p: any) {
   const emp = Array.isArray(p.employees) ? p.employees[0] : p.employees;
   const cyc = Array.isArray(p.pay_cycles) ? p.pay_cycles[0] : p.pay_cycles;
+  const wp = emp ? (Array.isArray(emp.workplace) ? emp.workplace[0] : emp.workplace) : null;
   return {
     id: p.id,
     employee_id: p.employee_id,
     employee_name: emp?.name ?? null,
+    workplace_name: wp?.name ?? "Unassigned",
     cycle_id: p.cycle_id ?? null,
     cycle_label: cyc?.label ?? null,
     pay_date: cyc?.pay_date ?? null,
