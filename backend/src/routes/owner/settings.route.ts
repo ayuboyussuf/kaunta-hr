@@ -18,7 +18,7 @@ const router = Router();
 const ORG_SELECT =
   "id, name, phone, workplace_mode, rules_mode, onboarding_complete, created_at, " +
   "presence_checks_per_shift, presence_check_window_min, presence_sms_fallback, " +
-  "payroll_cadence, payroll_pay_day";
+  "payroll_cadence, payroll_pay_day, payroll_pay_month, absence_policy";
 
 /** Normalise a raw phone to E.164 with a leading '+', Kenya-aware. */
 function normPhone(raw: string): string {
@@ -48,6 +48,8 @@ const patchInput = z.object({
   presence_sms_fallback: z.boolean().optional(),
   payroll_cadence: z.enum(["off", "weekly", "biweekly", "monthly"]).optional(),
   payroll_pay_day: z.number().int().min(0).max(31).nullable().optional(),
+  payroll_pay_month: z.enum(["previous", "current"]).optional(),
+  absence_policy: z.enum(["flat", "prorate"]).optional(),
 });
 
 router.patch("/", requireOwner, async (req, res) => {

@@ -44,6 +44,9 @@ export interface PayrollFlag {
   code: "missing_clockins" | "flagged_attendance" | "incomplete_session" | "no_pay_config";
   message: string;
   resolved: boolean;
+  // Only blocking flags gate approval. Informational ones (e.g. absence already
+  // reflected in pay) are shown but don't block.
+  blocking: boolean;
 }
 
 /** Compute + persist a draft payroll for a cycle. */
@@ -58,18 +61,23 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
   if (cErr || !cycle) throw new Error(cErr?.message ?? "pay cycle not found");
   if (cycle.locked) throw new Error("this run is approved and locked");
 
+  // How monthly absence is treated: 'flat' (pay full, absence is a blocking flag +
+  // a suggested deduction) or 'prorate' (auto-deduct absent days, non-blocking).
+  const { data: org } = await db.from("orgs").select("absence_policy").eq("id", cycle.org_id).maybeSingle();
+  const absencePolicy = (org?.absence_policy as string) ?? "flat";
+
   const startBoundary = `${cycle.start_date}T00:00:00.000Z`;
   const endD = new Date(`${cycle.end_date}T00:00:00.000Z`);
   endD.setUTCDate(endD.getUTCDate() + 1);
   const endBoundary = endD.toISOString();
-  const rangeDates = datesInRange(cycle.start_date, cycle.end_date);
+  const todayYmd = nairobiDate(new Date().toISOString());
 
   await db.from("pay_cycles").update({ status: "processing" }).eq("id", cycleId);
 
   const { data: employees, error: empErr } = await db
     .from("employees")
     .select(
-      "id, name, base_salary, pay_type, pay_rate, workplace_id, " +
+      "id, name, base_salary, pay_type, pay_rate, workplace_id, start_date, created_at, " +
         "workplace:workplaces(name), shift:shifts(days_of_week)"
     )
     .eq("org_id", cycle.org_id)
@@ -80,6 +88,13 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
     const wp = Array.isArray((emp as any).workplace) ? (emp as any).workplace[0] : (emp as any).workplace;
     const shift = Array.isArray((emp as any).shift) ? (emp as any).shift[0] : (emp as any).shift;
     const daysOfWeek: number[] = shift?.days_of_week ?? [];
+    const payType = (emp.pay_type as string) ?? "monthly";
+    // Only measure from when the employee joined (hire date, else the day they
+    // were added) and no further than today — so a late-added employee isn't
+    // flagged for days before they existed, and future days aren't "missing".
+    const employmentStart = (emp.start_date as string) ?? (emp.created_at ? nairobiDate(emp.created_at) : cycle.start_date);
+    const effStart = employmentStart > cycle.start_date ? employmentStart : cycle.start_date;
+    const effEnd = cycle.end_date < todayYmd ? cycle.end_date : todayYmd;
 
     // All entries in window (asc) for day counting, hourly pairing, flag checks.
     const { data: entries } = await db
@@ -105,28 +120,32 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
     }
     const daysPresent = presentDates.size;
 
-    // Expected working days from the shift schedule (only if a shift is assigned).
-    const expectedDates = daysOfWeek.length
-      ? rangeDates.filter((d) => daysOfWeek.includes(weekdayOf(d)))
-      : [];
+    // Expected working days from the shift schedule, within the employment window.
+    const effRange = effStart <= effEnd ? datesInRange(effStart, effEnd) : [];
+    const expectedDates = daysOfWeek.length ? effRange.filter((d) => daysOfWeek.includes(weekdayOf(d))) : [];
     const missingDates = expectedDates.filter((d) => !presentDates.has(d));
     if (missingDates.length > 0) {
+      // Blocks approval only when it affects pay in a way the owner must confirm:
+      // a monthly-flat employee paid full despite absence. Where pay already
+      // reflects attendance (daily/hourly, or monthly-prorate), it's informational.
+      const blocking = payType === "monthly" && absencePolicy === "flat";
       flags.push({
         code: "missing_clockins",
         message: `No clock-in on ${missingDates.length} scheduled day(s): ${missingDates.join(", ")}`,
         resolved: false,
+        blocking,
       });
     }
     if (anyFlaggedAttendance) {
       flags.push({
         code: "flagged_attendance",
+        blocking: true,
         message: "One or more scans in this period were flagged for review.",
         resolved: false,
       });
     }
 
     // Gross by pay model.
-    const payType = (emp.pay_type as string) ?? "monthly";
     const payRate = emp.pay_rate == null ? null : Number(emp.pay_rate);
     const baseSalary = emp.base_salary == null ? null : Number(emp.base_salary);
     let gross = 0;
@@ -135,20 +154,20 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
 
     if (payType === "monthly") {
       if (baseSalary == null || baseSalary <= 0) {
-        flags.push({ code: "no_pay_config", message: "No monthly salary set for this employee.", resolved: false });
+        flags.push({ code: "no_pay_config", message: "No monthly salary set for this employee.", resolved: false, blocking: true });
       }
       gross = round2(baseSalary ?? 0);
       grossBasis = "Monthly salary";
     } else if (payType === "daily") {
       if (payRate == null) {
-        flags.push({ code: "no_pay_config", message: "No daily rate set for this employee.", resolved: false });
+        flags.push({ code: "no_pay_config", message: "No daily rate set for this employee.", resolved: false, blocking: true });
       }
       gross = round2((payRate ?? 0) * daysPresent);
       grossBasis = `${daysPresent} day(s) × ${payRate ?? 0}/day`;
     } else {
       // hourly — pair in→out chronologically.
       if (payRate == null) {
-        flags.push({ code: "no_pay_config", message: "No hourly rate set for this employee.", resolved: false });
+        flags.push({ code: "no_pay_config", message: "No hourly rate set for this employee.", resolved: false, blocking: true });
       }
       let ms = 0;
       let openIn: string | null = null;
@@ -170,6 +189,7 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
           code: "incomplete_session",
           message: "A clock-in has no matching clock-out — hours can't be computed for it.",
           resolved: false,
+          blocking: true,
         });
       }
       hoursWorked = round2(ms / 3_600_000);
@@ -198,23 +218,42 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
       await db.from("violations").update({ pay_cycle_id: cycleId }).in("id", penaltyLines.map((p) => p.violation_id));
     }
     const penaltyTotal = round2(penaltyLines.reduce((s, p) => s + p.amount, 0));
-    const netComputed = round2(gross - penaltyTotal);
+
+    // Absence (monthly only). Daily/hourly already pay per day/hour, so absence is
+    // already reflected in gross. Everything below is derived from recorded
+    // attendance + the salary + the schedule — nothing invented.
+    const expectedDays = expectedDates.length;
+    const absentDays = Math.max(0, expectedDays - daysPresent);
+    let absenceAmount = 0; // applied deduction (prorate)
+    let absenceSuggestion = 0; // suggested-only (flat)
+    if (payType === "monthly" && expectedDays > 0 && (baseSalary ?? 0) > 0 && absentDays > 0) {
+      const amt = round2(((baseSalary as number) / expectedDays) * absentDays);
+      if (absencePolicy === "prorate") absenceAmount = amt;
+      else absenceSuggestion = amt;
+    }
+    const absenceLines = absenceAmount > 0
+      ? [{ source: "absence" as const, label: `Absence (${absentDays} day(s))`, amount: absenceAmount }]
+      : [];
+    const allDeductions = [...penaltyLines, ...absenceLines];
+    const netComputed = round2(gross - penaltyTotal - absenceAmount);
 
     const breakdown = {
       pay_type: payType,
       pay_rate: payRate,
       base_salary: baseSalary,
       days_present: daysPresent,
-      expected_days: expectedDates.length,
+      expected_days: expectedDays,
+      absent_days: absentDays,
       present_dates: [...presentDates].sort(),
       missing_dates: missingDates,
       attendance_entry_ids: inEntryIds,
       hours_worked: hoursWorked,
       gross_basis: grossBasis,
       gross,
-      deductions: penaltyLines, // penalties; adjustments are merged in recomputeNet
+      deductions: allDeductions, // penalties + absence (prorate); adjustments merged in recomputeNet
       additions: [] as unknown[],
       manual_deductions: [] as unknown[],
+      absence_suggestion: absenceSuggestion || null,
       override_net: null as number | null,
       net_computed: netComputed,
       workplace_name: wp?.name ?? "Unassigned",
@@ -229,7 +268,7 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
           employee_id: emp.id,
           cycle_id: cycleId,
           gross,
-          deductions: penaltyLines,
+          deductions: allDeductions,
           net: netComputed,
           breakdown,
           flags,
@@ -297,8 +336,10 @@ export async function recomputeCycle(db: SupabaseClient, cycleId: string): Promi
       total = round2(total + Number(s.net ?? 0));
       count += 1;
     }
-    const flags = Array.isArray(s.flags) ? (s.flags as { resolved?: boolean }[]) : [];
-    if (flags.some((f) => !f.resolved)) flaggedLines += 1;
+    // Only unresolved BLOCKING flags gate approval. (Flags from before this field
+    // existed are treated as blocking for safety: blocking !== false.)
+    const flags = Array.isArray(s.flags) ? (s.flags as { resolved?: boolean; blocking?: boolean }[]) : [];
+    if (flags.some((f) => !f.resolved && f.blocking !== false)) flaggedLines += 1;
   }
 
   const patch: Record<string, unknown> = {
