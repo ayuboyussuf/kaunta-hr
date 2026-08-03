@@ -97,3 +97,17 @@ services:
         sync: false
       - key: CRON_SECRET
         sync: false
+
+  # ── Cron: monthly review on the 1st — bonus suggestions + patterns ─────────
+  - type: cron
+    name: kaunta-hr-monthly-review
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    schedule: "0 6 1 * *"
+    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/monthly-review',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false

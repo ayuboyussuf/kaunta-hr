@@ -19,6 +19,7 @@ const NAV = [
   { href: "/dashboard/shifts", label: "Shifts" },
   { href: "/dashboard/workplaces", label: "Workplaces" },
   { href: "/dashboard/qr", label: "QR codes" },
+  { href: "/dashboard/leave", label: "Leave" },
   { href: "/dashboard/violations", label: "Penalties" },
   { href: "/dashboard/rules", label: "Rules" },
   { href: "/dashboard/payroll", label: "Payroll" },
