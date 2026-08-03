@@ -193,6 +193,12 @@ export const SHOTS = {
     height: 1333,
     alt: "The Rules screen on a phone showing a shared default ruleset with a late-arrival penalty of KES 200 and a phone-use penalty of KES 500, each with a 24-hour appeal window.",
   },
+  violationOutcome: {
+    src: "/shots/violation-outcome.png",
+    width: 900,
+    height: 1317,
+    alt: "A locked Violation Outcome PDF: the employee and site, the reason recorded as late arrival, a KES 200 deduction, status upheld, the appeal the employee submitted, and the time the outcome was logged.",
+  },
 } as const;
 
 export function Shot({

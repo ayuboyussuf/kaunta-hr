@@ -4,6 +4,8 @@ import {
   SectionHead,
   SpecList,
   Eyebrow,
+  Shot,
+  SHOTS,
 } from "@/components/site/SiteUI";
 import {
   PageHero,
@@ -159,7 +161,7 @@ export default function CompliancePage() {
                   tone="dark"
                   eyebrow="The audit trail"
                   title="What a single disputed deduction leaves behind."
-                  lede="Take one KES 250 lateness penalty that a staff member objected to. Here is everything Kaunta HR can produce about it, months later, without anyone having to remember anything."
+                  lede="Take one KES 200 lateness penalty that a staff member objected to — the document beside this is the real one. Here is everything Kaunta HR can produce about that case, months later, without anyone having to remember anything."
                 />
               </>
               <div className="mt-12">
@@ -204,12 +206,12 @@ export default function CompliancePage() {
               </div>
             </div>
 
-            <>
-              <div className="lg:sticky lg:top-28">
-                <div className="text-white/70">
-                </div>
-              </div>
-            </>
+            <div className="lg:sticky lg:top-28 lg:self-start">
+              <Shot
+                shot={SHOTS.violationOutcome}
+                caption="A real outcome document, produced when the case closed"
+              />
+            </div>
           </div>
         </Container>
       </section>

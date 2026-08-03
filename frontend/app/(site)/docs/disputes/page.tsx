@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Shot, SHOTS } from "@/components/site/SiteUI";
 import {
   DocPage,
   H2,
@@ -85,6 +86,11 @@ export default function DisputesDocPage() {
 
 
       <H2 id="document">What the locked document contains</H2>
+      <Shot
+        shot={SHOTS.violationOutcome}
+        caption="A closed case, upheld"
+        className="mt-6 max-w-sm"
+      />
       <CodeBlock
         label="Outcome document — fields"
         lines={[
