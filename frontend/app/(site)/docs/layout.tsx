@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: "%s | Kaunta HR docs",
   },
   description:
-    "Kaunta HR documentation — getting started, onboarding staff over WhatsApp OTP, setting penalty rules, running disputes, generating payslips, roles and permissions, and SMS setup.",
+    "Kaunta HR documentation — getting started, onboarding staff by SMS, setting penalty rules, running disputes, generating payslips, roles and permissions, and SMS setup.",
 };
 
 export default function DocsLayout({

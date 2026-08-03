@@ -127,7 +127,7 @@ const BEATS: Beat[] = [
   },
   {
     time: "End of month",
-    actor: "Accountant",
+    actor: "Owner",
     shot: "teamCalendar",
     title: "The payslip already knows all of it",
     body: (

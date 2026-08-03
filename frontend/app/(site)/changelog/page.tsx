@@ -98,7 +98,7 @@ const RELEASES: Release[] = [
     changes: [
       { tag: "Added", text: "One dashboard across all sites, built around exceptions rather than raw logs." },
       { tag: "Added", text: "Missed shift, out-of-fence and late-sync exception types." },
-      { tag: "Added", text: "Accountant role, separated from owner." },
+      { tag: "Added", text: "Staff sessions separated from owner sessions." },
       { tag: "Improved", text: "Scans that sync after a gap are marked as late sync rather than late arrival." },
     ],
   },
@@ -106,12 +106,12 @@ const RELEASES: Release[] = [
     version: "1.0",
     date: "January 2026",
     title: "Attendance, first release",
-    summary: "QR clock-in with geofencing, selfie and GPS, and onboarding over WhatsApp OTP.",
+    summary: "QR clock-in with geofencing, selfie and GPS, and onboarding over SMS code.",
 
     changes: [
       { tag: "Added", text: "Signed QR code per site, with a geofence radius set on a map." },
       { tag: "Added", text: "Selfie and GPS reading captured with every accepted scan." },
-      { tag: "Added", text: "Staff onboarding by phone number, verified over WhatsApp OTP." },
+      { tag: "Added", text: "Staff onboarding by phone number, verified with an SMS code." },
       { tag: "Added", text: "Configurable grace period and lateness bands." },
     ],
   },
@@ -207,7 +207,7 @@ export default function ChangelogPage() {
               {[
                 "Shift templates, so a roster can be applied to a site rather than built each week.",
                 "Consolidated payroll export across all sites in one file.",
-                "Bulk record export for audits, on Network plans.",
+                "A single-file record export for audits.",
               ].map((t) => (
                 <li
                   key={t}

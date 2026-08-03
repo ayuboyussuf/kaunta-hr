@@ -54,7 +54,7 @@ const SEGMENTS = [
 const MULTI_FAQ = [
   {
     q: "Can I run different rules at different sites?",
-    a: "Yes. Penalty policies live on the site, so a station on a bad commuter road can carry more grace than a branch staff walk to. On the Multi-Site plan each site has its own policy; you can also apply one policy everywhere and only vary the exceptions.",
+    a: "Yes. Penalty policies live on the site, so a station on a bad commuter road can carry more grace than a branch staff walk to. Each site can carry its own policy, or you can apply one policy everywhere and vary only the exceptions.",
   },
   {
     q: "What about staff who move between sites?",
@@ -62,7 +62,7 @@ const MULTI_FAQ = [
   },
   {
     q: "Can my supervisor at each site see the dashboard?",
-    a: "Supervisors are staff — they see their own record only. If you want someone running payroll or settling appeals without the ability to rewrite rules, that is the accountant role, and on Multi-Site it can be scoped to specific sites.",
+    a: "No. Supervisors are staff — they see their own record only. There are two roles, owner and staff, and the dashboard belongs to the owner. That is deliberate: the person a late arrival reflects on should not be the person reporting it.",
   },
   {
     q: "How long does it take to add a fourth site?",

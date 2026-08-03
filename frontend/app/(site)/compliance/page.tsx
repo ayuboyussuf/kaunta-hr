@@ -37,7 +37,7 @@ const RECORD_FAQ = [
   },
   {
     q: "Can I export everything?",
-    a: "Yes. Attendance, penalties, appeal outcomes and payslips export per site and per period. On Network plans this includes a bulk export intended for audits.",
+    a: "Attendance exports per employee per month as a PDF report, with the selfie captured at each scan included. Appeal outcomes and payslips are individually downloadable documents. A single-file export of an entire period across all sites is on the list, not shipped.",
   },
   {
     q: "What if the employer is the one acting badly?",

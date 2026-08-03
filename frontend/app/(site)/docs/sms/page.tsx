@@ -45,7 +45,7 @@ export default function SmsDocPage() {
           Every message that needs a response carries a link instead.
         </LI>
         <LI>
-          Staff verification on first sign-in uses WhatsApp OTP, not SMS. See{" "}
+          Staff verification on first sign-in uses the same SMS channel. See{" "}
           <DocLink href="/docs/onboarding">onboarding staff</DocLink>.
         </LI>
       </UL>
@@ -58,7 +58,7 @@ export default function SmsDocPage() {
           ["Appeal outcome", "An appeal is decided", "Upheld or waived, and a link to the locked document"],
           ["Payslip link", "A payroll period is sent", "A signed, expiring link to their own payslip"],
           ["Announcement", "An owner sends one", "Free text to a site or the whole business"],
-          ["Fallback code", "WhatsApp is unavailable for a staff member", "A one-time verification code"],
+          ["Fallback code", "A code needs resending", "A one-time verification code"],
         ]}
       />
 
@@ -134,7 +134,7 @@ export default function SmsDocPage() {
       <P>
         SMS is billed separately from your plan and passed through at cost,
         because volume depends entirely on how many notices and payslip links you
-        send. WhatsApp OTP for staff verification is included in the plan.
+        send. Verification codes are ordinary SMS and are billed the same way as any other message.
       </P>
       <H3>Keeping volume down</H3>
       <UL>

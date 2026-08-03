@@ -11,7 +11,7 @@ import { SealedRecord } from "@/components/site/Engravings";
 export const metadata: Metadata = {
   title: "Security & data",
   description:
-    "Where Kaunta HR data is held, how access is separated between owners, accountants and staff, how payslip links are signed, and what document integrity means in practice.",
+    "Where Kaunta HR data is held, how access is separated between the owner and staff, how payslip links are signed, and what document integrity means in practice.",
 };
 
 const SECURITY_FAQ = [
@@ -21,7 +21,7 @@ const SECURITY_FAQ = [
   },
   {
     q: "Is the selfie stored, and who can see it?",
-    a: "Yes, it is stored against the scan — a clock-in without it would be an unverifiable timestamp. Owners and accountants can see it in the context of that scan or an appeal. Other staff never can. It is captured at the moment of the scan and nowhere else.",
+    a: "Yes, it is stored against the scan — a clock-in without it would be an unverifiable timestamp. The owner can see it in the context of that scan or an appeal. Other staff never can. It is captured at the moment of the scan and nowhere else.",
   },
   {
     q: "Are staff tracked between clock-ins?",
@@ -123,7 +123,7 @@ export default function SecurityPage() {
               {
                 n: "02",
                 t: "Between roles",
-                b: "Owner, accountant and staff sessions are authenticated as different kinds of principal, not as the same user with a flag. An accountant cannot rewrite penalty rules; staff reach one record, their own.",
+                b: "Owner and staff sessions are authenticated as different kinds of principal, not as the same user with a flag. Staff reach one record, their own.",
               },
               {
                 n: "03",

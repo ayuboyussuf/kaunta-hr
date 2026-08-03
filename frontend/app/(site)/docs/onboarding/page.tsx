@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "Onboarding staff",
   description:
-    "Add staff to Kaunta HR by phone number and verify them with a WhatsApp one-time code. No app to install and no staff passwords.",
+    "Add staff to Kaunta HR by phone number and verify them with an SMS code. No app to install and no staff passwords.",
 };
 
 export default function OnboardingDocPage() {
@@ -27,7 +27,7 @@ export default function OnboardingDocPage() {
     <DocPage
       href="/docs/onboarding"
       title="Onboarding staff"
-      lede="Staff join with a phone number and a one-time code over WhatsApp. There is no app to install, no password to issue and nothing for anyone to forget on a busy morning."
+      lede="Staff join with a phone number and a one-time code by SMS. There is no app to install, no password to issue and nothing for anyone to forget on a busy morning."
     >
       <H2 id="model">How it works</H2>
       <P>
@@ -41,7 +41,7 @@ export default function OnboardingDocPage() {
           site assignment.
         </LI>
         <LI>
-          Verification happens over <strong className="text-white/80">WhatsApp OTP</strong>.
+          Verification happens over <strong className="text-white/80">SMS</strong>.
           Operational messages afterwards — penalty notices, appeal outcomes,
           payslip links — go over SMS under the sender ID{" "}
           <Code>KAUNTAHR</Code>.
@@ -64,7 +64,7 @@ export default function OnboardingDocPage() {
           them.
         </StepItem>
         <StepItem n={3} title="Send the invitation">
-          They receive a WhatsApp message with a link and a one-time code. The
+          They receive an SMS with a link and a one-time code. The
           code is valid for a short window; you can resend as often as needed.
         </StepItem>
         <StepItem n={4} title="They confirm">
@@ -96,31 +96,12 @@ export default function OnboardingDocPage() {
         in two.
       </Callout>
 
-      <H2 id="bulk">Adding a whole site at once</H2>
-      <P>
-        On Multi-Site plans you can add staff in bulk rather than one at a time.
-        Prepare the list in this shape and paste it in:
-      </P>
-      <CodeBlock
-        label="Bulk staff list"
-        lines={[
-          "Name,                 Phone,          Site,          Role",
-          "Grace Wanjiru,        0712345678,     Ruiru Station, Attendant",
-          "Peter Otieno,         0723456789,     Juja Station,  Attendant",
-          "Mary Achieng,         0734567890,     Ruiru Station, Supervisor",
-        ]}
-      />
-      <P>
-        Every person on the list receives their own WhatsApp code. Nobody is
-        activated until they confirm it themselves.
-      </P>
-
       <H2 id="states">Staff record states</H2>
       <DocTable
         head={["State", "What it means", "Can they scan?"]}
         rows={[
           ["Invited", "Added, invitation sent, code not yet entered", "No"],
-          ["Active", "Verified over WhatsApp and assigned to a site", "Yes"],
+          ["Active", "Verified by SMS and assigned to a site", "Yes"],
           ["Suspended", "Temporarily blocked by an owner", "No"],
           ["Left", "Deactivated. History and past payslips are retained", "No"],
         ]}
@@ -135,10 +116,10 @@ export default function OnboardingDocPage() {
 
       <H3>If a staff member is not receiving the code</H3>
       <UL>
-        <LI>Check the number is the one actually running WhatsApp on their phone.</LI>
+        <LI>Check the number is the one that can actually receive SMS.</LI>
         <LI>Resend from their record — the previous code is invalidated.</LI>
         <LI>
-          If WhatsApp is unavailable on that handset, an owner can fall back to
+          If SMS is unavailable on that handset, an owner can fall back to
           an SMS code from the same screen.
         </LI>
       </UL>

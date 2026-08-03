@@ -33,7 +33,7 @@ export default function DocsIndexPage() {
       <P>You will need three things to hand:</P>
       <UL>
         <LI>
-          A phone number for yourself that can receive WhatsApp, for verifying
+          A phone number for yourself that can receive SMS, for verifying
           the owner account.
         </LI>
         <LI>
@@ -49,7 +49,7 @@ export default function DocsIndexPage() {
 
       <Callout title="A note on devices" tone="note">
         Staff need a phone with a camera and a browser. There is nothing to
-        install, and no staff passwords to reset. Owners and accountants can work
+        install, and no staff passwords to reset. Owners can work
         from a phone but the dashboard is easier on a laptop.
       </Callout>
 
@@ -132,7 +132,7 @@ export default function DocsIndexPage() {
       <H2 id="staff">4. Add the staff</H2>
       <P>
         Add each person with their name, phone number and the site they work at.
-        They verify themselves over WhatsApp the first time they open the link —
+        They verify themselves by SMS the first time they open the link —
         you do not create passwords for anyone. The full procedure is in{" "}
         <DocLink href="/docs/onboarding">onboarding staff</DocLink>.
       </P>

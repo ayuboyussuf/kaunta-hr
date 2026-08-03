@@ -42,13 +42,13 @@ const CAPABILITIES = [
   },
   {
     index: "06",
-    title: "Owner and accountant, separately",
-    body: "Role-based access separates who can change rules from who can read payroll. Staff only ever see their own record.",
+    title: "Owner and staff, separated",
+    body: "Two roles and no more: you, and the people who work for you. Staff only ever see their own record.",
   },
   {
     index: "07",
     title: "Onboarding by phone number",
-    body: "Add staff with a phone number and they verify over WhatsApp OTP. Notices and payslip links go out by SMS under the sender ID KAUNTAHR.",
+    body: "Add staff with a phone number and they verify with an SMS code. Notices and payslip links go out by SMS under the sender ID KAUNTAHR.",
   },
 ];
 
@@ -77,11 +77,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Who can see payroll figures?",
-    a: "Owners and any accountant you invite. Staff see their own attendance, their own penalties and their own payslips, and nothing belonging to anyone else. Roles are set per person, not per site.",
+    a: "Only you. Staff see their own attendance, their own penalties and their own payslips, and nothing belonging to anyone else.",
   },
   {
     q: "What do staff need on their phones?",
-    a: "A camera and a browser. There is no app to install. Staff verify once over WhatsApp OTP and then use a link.",
+    a: "A camera and a browser. There is no app to install. Staff verify once with an SMS code and then use a link.",
   },
   {
     q: "Is the PDF actually tamper-evident?",
@@ -175,7 +175,7 @@ export default function HomePage() {
           <dl className="grid grid-cols-2 gap-px bg-white/10 lg:grid-cols-4">
             {[
               ["Clock-in", "QR + geofence + selfie"],
-              ["Onboarding", "WhatsApp OTP"],
+              ["Onboarding", "SMS code"],
               ["Payslips", "Signed PDF links"],
               ["SMS sender ID", "KAUNTAHR"],
             ].map(([k, v]) => (

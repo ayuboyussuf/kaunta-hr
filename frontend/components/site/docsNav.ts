@@ -29,14 +29,14 @@ export const DOCS_NAV: DocGroup[] = [
       {
         href: "/docs/onboarding",
         title: "Onboarding staff",
-        summary: "Add staff by phone number and verify them over WhatsApp OTP.",
-        keywords: ["whatsapp", "otp", "employees", "invite", "phone number", "verify", "staff"],
+        summary: "Add staff by phone number and verify them with an SMS code.",
+        keywords: ["sms", "otp", "code", "employees", "invite", "phone number", "verify", "staff"],
       },
       {
         href: "/docs/roles",
         title: "Roles & permissions",
-        summary: "What owners, accountants and staff can each reach.",
-        keywords: ["owner", "accountant", "access", "permissions", "rbac", "security"],
+        summary: "What an owner can reach, and what a staff member can.",
+        keywords: ["owner", "staff", "access", "permissions", "roles", "security"],
       },
     ],
   },
