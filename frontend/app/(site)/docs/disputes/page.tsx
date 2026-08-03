@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Screenshot } from "@/components/site/SiteUI";
 import {
   DocPage,
   H2,
@@ -84,12 +83,6 @@ export default function DisputesDocPage() {
         </StepItem>
       </Steps>
 
-      <Screenshot
-        label="dispute appeal PDF"
-        ratio="16 / 10"
-        tone="dark"
-        className="mt-8 max-w-2xl"
-      />
 
       <H2 id="document">What the locked document contains</H2>
       <CodeBlock

@@ -8,7 +8,6 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
     links: [
       { href: "/features", label: "Features" },
       { href: "/how-it-works", label: "How it works" },
-      { href: "/pricing", label: "Pricing" },
       { href: "/changelog", label: "Changelog" },
     ],
   },
@@ -47,7 +46,7 @@ export function SiteFooter() {
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.1fr)]">
           <div>
             {/* logo slot — footer */}
-            <BrandLogo size="md" tone="light" />
+            <BrandLogo size="md" tone="dark" />
             <p className="mt-5 max-w-xs text-[0.875rem] leading-relaxed text-white/45">
               Attendance, penalties, disputes and payslips for Kenyan businesses
               running staff across more than one site.

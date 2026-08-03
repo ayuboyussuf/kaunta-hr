@@ -10,7 +10,6 @@ const NAV = [
   { href: "/features", label: "Product" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/multi-site", label: "Multi-site" },
-  { href: "/pricing", label: "Pricing" },
   { href: "/docs", label: "Docs" },
 ];
 
@@ -63,7 +62,7 @@ export function SiteHeader() {
       >
         <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-5 sm:h-18 sm:px-8">
           <Link href="/" aria-label="Kaunta HR — home" className="shrink-0">
-            <BrandLogo size="md" tone="light" />
+            <BrandLogo size="md" tone="dark" />
           </Link>
 
           {/* desktop nav */}

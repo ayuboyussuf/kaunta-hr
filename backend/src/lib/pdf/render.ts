@@ -5,15 +5,19 @@
 import PDFDocument from "pdfkit";
 import { getServiceClient } from "../supabase";
 
-// Kaunta brand palette (mirrors the design system).
+// Kaunta-HR brand palette — mirrors frontend/app/globals.css.
+// `copper` is kept as a key so existing call sites keep compiling; it now
+// carries the ultramarine primary, which is what the brand actually is.
 export const BRAND = {
-  ink: "#0F1923",
-  slate: "#1C2B3A",
-  copper: "#C4622D",
-  sage: "#3D6B5E",
-  stone: "#F7F4F0",
-  mist: "#EAE6E1",
-  red: "#B83232",
+  ink: "#0B1120",
+  slate: "#1B2540",
+  ultra: "#1E3FD8",
+  /** @deprecated alias for `ultra` — retained so older templates still build */
+  copper: "#1E3FD8",
+  sage: "#176B58",
+  stone: "#F5F6FA",
+  mist: "#E3E7F2",
+  red: "#C0362F",
   muted: "#6B7280",
 };
 

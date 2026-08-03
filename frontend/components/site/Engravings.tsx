@@ -1,472 +1,404 @@
-/* Fine-line engravings for the Kaunta-HR site.
+/* Engraved illustration for the Kaunta-HR site.
  *
- * Every scene is drawn from the product's own subject matter — forecourts,
- * shopfronts, geofence rings, rule ladders, sealed documents — in the
- * hairline-etched register of an architectural elevation. Strokes use
- * `currentColor` so a parent can tint the whole scene.
- *
- * Node counts are kept low deliberately: `.draw-in` animates
- * stroke-dashoffset, which repaints, so only the small scenes opt into it.
+ * These are pictures, not diagrams. Tone is built the way an engraver
+ * builds it — parallel hatch at varying density, cross-hatch in the
+ * darks, stipple in the foliage — rather than with fills or gradients.
+ * Everything is deterministic (seeded PRNG, no Math.random) so server
+ * and client render identical markup.
  */
 
 type SvgProps = {
   className?: string;
-  /** Unique per page instance — prevents <defs> id collisions. */
+  /** unique per page instance — keeps <defs> ids from colliding */
   uid?: string;
 };
 
+/* Deterministic PRNG so SSR and CSR agree. */
+function rng(seed: number) {
+  let t = seed >>> 0;
+  return () => {
+    t += 0x6d2b79f5;
+    let x = t;
+    x = Math.imul(x ^ (x >>> 15), x | 1);
+    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
+const r2 = (n: number) => Math.round(n * 100) / 100;
 
-/* ── Shared defs ────────────────────────────────────────────────── */
+/* ── Tonal hatch patterns ───────────────────────────────────────── */
 
-function Hatch({ id, angle = 45, gap = 4 }: { id: string; angle?: number; gap?: number }) {
+function HatchDefs({ uid }: { uid: string }) {
+  const specs: [string, number, number, number][] = [
+    // id suffix, gap, angle, stroke width
+    ["light", 7, 45, 0.6],
+    ["mid", 4, 45, 0.7],
+    ["dark", 2.6, 45, 0.8],
+    ["vert", 3.4, 90, 0.6],
+    ["cross", 3.2, 0, 0.6],
+  ];
   return (
-    <pattern
-      id={id}
-      width={gap}
-      height={gap}
-      patternUnits="userSpaceOnUse"
-      patternTransform={`rotate(${angle})`}
-    >
-      <line x1="0" y1="0" x2="0" y2={gap} stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
-    </pattern>
+    <>
+      {specs.map(([name, gap, angle, w]) => (
+        <pattern
+          key={name}
+          id={`${uid}-${name}`}
+          width={gap}
+          height={gap}
+          patternUnits="userSpaceOnUse"
+          patternTransform={`rotate(${angle})`}
+        >
+          <line x1="0" y1="0" x2="0" y2={gap} stroke="currentColor" strokeWidth={w} />
+        </pattern>
+      ))}
+      <pattern
+        id={`${uid}-crosshatch`}
+        width="4"
+        height="4"
+        patternUnits="userSpaceOnUse"
+        patternTransform="rotate(45)"
+      >
+        <line x1="0" y1="0" x2="0" y2="4" stroke="currentColor" strokeWidth="0.7" />
+        <line x1="0" y1="0" x2="4" y2="0" stroke="currentColor" strokeWidth="0.7" />
+      </pattern>
+    </>
   );
 }
 
-/* ── Hero: three sites on one ground line ───────────────────────────
- * Fuel station forecourt, restaurant front, retail branch — each ringed
- * by its own geofence, one staff member clocking in at the first gate.
+/* ── Foliage: stippled clumps, the way an engraver renders a canopy ── */
+
+function Foliage({
+  cx,
+  cy,
+  rx,
+  ry,
+  seed,
+  density = 90,
+  opacity = 1,
+}: {
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+  seed: number;
+  density?: number;
+  opacity?: number;
+}) {
+  const rand = rng(seed);
+  const marks = range(density).map(() => {
+    const a = rand() * Math.PI * 2;
+    // bias toward the rim so the clump reads as a mass with a lit edge
+    const d = Math.pow(rand(), 0.55);
+    const x = cx + Math.cos(a) * rx * d;
+    const y = cy + Math.sin(a) * ry * d;
+    const s = 2.4 + rand() * 5.2;
+    const rot = rand() * 60 - 30;
+    return { x: r2(x), y: r2(y), s: r2(s), rot: r2(rot) };
+  });
+  return (
+    <g opacity={opacity} strokeLinecap="round" fill="none">
+      {marks.map((m, i) => (
+        <path
+          key={i}
+          d={`M${m.x} ${m.y}a${m.s} ${m.s * 0.72} ${m.rot} 0 1 ${m.s * 1.5} 0`}
+          strokeWidth={0.7}
+        />
+      ))}
+    </g>
+  );
+}
+
+/* ── Hero: a fuel forecourt at night ────────────────────────────────
+ * The most Kaunta-HR image there is — the gate a shift actually starts
+ * at. Canopy, pumps, price totem, the shop behind, an attendant
+ * scanning in, and the geofence laid on the apron.
  * ------------------------------------------------------------------ */
-export function SiteRowEngraving({ className, uid = "hero" }: SvgProps) {
-  const skyLines = range(16);
-  const shutter = range(9);
+export function ForecourtEngraving({ className, uid = "court" }: SvgProps) {
+  const GROUND = 560;
+  const rand = rng(9137);
+  const stars = range(70).map(() => ({
+    x: r2(rand() * 1600),
+    y: r2(rand() * 330),
+    r: r2(0.5 + rand() * 0.9),
+    o: r2(0.18 + rand() * 0.5),
+  }));
 
   return (
     <svg
-      viewBox="0 0 1440 560"
+      viewBox="0 0 1600 700"
       fill="none"
       className={className}
       aria-hidden="true"
       preserveAspectRatio="xMidYMax slice"
     >
       <defs>
-        <Hatch id={`${uid}-hatch`} angle={45} gap={5} />
-        <linearGradient id={`${uid}-fade`} x1="0" y1="0" x2="0" y2="1">
+        <HatchDefs uid={uid} />
+        <linearGradient id={`${uid}-sky`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="white" stopOpacity="0" />
-          <stop offset="30%" stopColor="white" stopOpacity="0.85" />
+          <stop offset="55%" stopColor="white" stopOpacity="0.55" />
           <stop offset="100%" stopColor="white" stopOpacity="1" />
         </linearGradient>
-        <mask id={`${uid}-mask`}>
-          <rect width="1440" height="560" fill={`url(#${uid}-fade)`} />
+        <mask id={`${uid}-topfade`}>
+          <rect width="1600" height="700" fill={`url(#${uid}-sky)`} />
         </mask>
       </defs>
 
-      <g mask={`url(#${uid}-mask)`} stroke="currentColor" strokeWidth="1">
-        {/* Sky — horizontal engraver's hatch, densest at the horizon */}
+      <g stroke="currentColor" mask={`url(#${uid}-topfade)`}>
+        {/* ── sky ── */}
         <g>
-          {skyLines.map((i) => (
+          {stars.map((s, i) => (
+            <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="currentColor" stroke="none" opacity={s.o} />
+          ))}
+          {range(13).map((i) => (
             <line
               key={i}
               x1="0"
-              x2="1440"
-              y1={430 - Math.pow(i, 1.62) * 2.1}
-              y2={430 - Math.pow(i, 1.62) * 2.1}
+              x2="1600"
+              y1={GROUND - 210 + i * 15}
+              y2={GROUND - 210 + i * 15}
               strokeWidth="0.5"
-              opacity={0.20 - i * 0.011}
+              opacity={0.05 + i * 0.012}
             />
           ))}
         </g>
 
-        {/* Geofence rings — one per site, drawn on the ground plane */}
-        <g opacity="0.5" strokeDasharray="3 6">
-          <ellipse cx="268" cy="430" rx="232" ry="46" strokeWidth="0.75" />
-          <ellipse cx="690" cy="430" rx="212" ry="42" strokeWidth="0.75" />
-          <ellipse cx="1150" cy="430" rx="232" ry="46" strokeWidth="0.75" />
-        </g>
-        <g opacity="0.75" strokeDasharray="2 5">
-          <ellipse cx="268" cy="430" rx="150" ry="30" strokeWidth="0.75" />
-          <ellipse cx="690" cy="430" rx="138" ry="27" strokeWidth="0.75" />
-          <ellipse cx="1150" cy="430" rx="150" ry="30" strokeWidth="0.75" />
-        </g>
+        {/* ── treeline behind everything ── */}
+        <Foliage cx={90} cy={505} rx={130} ry={62} seed={11} density={150} opacity={0.5} />
+        <Foliage cx={1540} cy={495} rx={140} ry={70} seed={23} density={160} opacity={0.5} />
+        <Foliage cx={1290} cy={470} rx={95} ry={48} seed={31} density={90} opacity={0.35} />
 
-        {/* ── Site 1 — fuel station forecourt ── */}
+        {/* ── shop building, right ── */}
         <g>
-          {/* price board */}
-          <path d="M60 196h84v66H60z" strokeWidth="0.9" />
-          <line x1="60" y1="216" x2="144" y2="216" strokeWidth="0.6" opacity="0.7" />
-          <line x1="102" y1="262" x2="102" y2="430" strokeWidth="0.9" />
-          {/* canopy */}
-          <path d="M158 150h296v30H158z" strokeWidth="1" />
-          <path d="M158 180h296v9H158z" strokeWidth="0.6" opacity="0.6" />
-          <line x1="196" y1="189" x2="196" y2="430" strokeWidth="1" />
-          <line x1="204" y1="189" x2="204" y2="430" strokeWidth="0.5" opacity="0.55" />
-          <line x1="410" y1="189" x2="410" y2="430" strokeWidth="1" />
-          <line x1="418" y1="189" x2="418" y2="430" strokeWidth="0.5" opacity="0.55" />
-          {/* pumps */}
-          <path d="M242 356h34v74h-34z" strokeWidth="0.9" />
-          <path d="M242 356h34v22h-34z" strokeWidth="0.5" opacity="0.7" fill={`url(#${uid}-hatch)`} />
-          <path d="M330 356h34v74h-34z" strokeWidth="0.9" />
-          <path d="M330 356h34v22h-34z" strokeWidth="0.5" opacity="0.7" fill={`url(#${uid}-hatch)`} />
-          <path d="M276 372c18 6 36 2 54-8" strokeWidth="0.6" opacity="0.7" />
-        </g>
-
-        {/* Staff member clocking in at the forecourt gate */}
-        <g strokeWidth="1.1" strokeLinecap="round">
-          <circle cx="492" cy="366" r="8" />
-          <line x1="492" y1="374" x2="492" y2="402" />
-          <line x1="492" y1="402" x2="484" y2="430" />
-          <line x1="492" y1="402" x2="501" y2="430" />
-          <line x1="492" y1="382" x2="506" y2="374" />
-          <path d="M504 366h9v13h-9z" strokeWidth="0.9" />
-        </g>
-
-        {/* ── Site 2 — restaurant / eatery ── */}
-        <g>
-          <path d="M548 128h284v302H548z" strokeWidth="1" />
-          <path d="M548 128h284v40H548z" strokeWidth="0.9" />
-          {/* upper windows */}
-          {range(3).map((i) => (
-            <path
+          {/* mass */}
+          <path d="M980 330h420v230H980z" strokeWidth="1.3" />
+          <rect x="980" y="330" width="420" height="230" fill={`url(#${uid}-light)`} stroke="none" opacity="0.5" />
+          {/* shaded right return */}
+          <path d="M1400 330l64 34v196h-64z" strokeWidth="1.2" />
+          <path d="M1400 330l64 34v196h-64z" fill={`url(#${uid}-crosshatch)`} stroke="none" opacity="0.85" />
+          {/* roof + fascia */}
+          <path d="M958 330h464l-22-30H980z" strokeWidth="1.2" />
+          <path d="M958 330h464l-22-30H980z" fill={`url(#${uid}-mid)`} stroke="none" opacity="0.7" />
+          {/* signage band */}
+          <path d="M1010 352h360v46h-360z" strokeWidth="1.1" />
+          {range(7).map((i) => (
+            <line
               key={i}
-              d={`M${582 + i * 86} 196h56v58h-56z`}
-              strokeWidth="0.75"
-              opacity="0.85"
+              x1={1030 + i * 48}
+              y1="375"
+              x2={1064 + i * 48}
+              y2="375"
+              strokeWidth="4"
+              opacity="0.75"
             />
           ))}
-          {/* scalloped awning */}
-          <path
-            d="M556 292h268l-14 30H570z"
-            strokeWidth="0.9"
-          />
+          {/* brick courses */}
           {range(9).map((i) => (
             <line
               key={i}
-              x1={570 + i * 30}
-              y1="292"
-              x2={562 + i * 30}
-              y2="322"
+              x1="980"
+              x2="1400"
+              y1={420 + i * 16}
+              y2={420 + i * 16}
               strokeWidth="0.5"
-              opacity="0.6"
+              opacity="0.35"
             />
           ))}
-          {/* door + frontage */}
-          <path d="M660 344h60v86h-60z" strokeWidth="0.9" />
-          <line x1="690" y1="344" x2="690" y2="430" strokeWidth="0.5" opacity="0.6" />
-          <path d="M572 356h60v50h-60z" strokeWidth="0.7" opacity="0.8" />
-          <path d="M748 356h60v50h-60z" strokeWidth="0.7" opacity="0.8" />
+          {/* windows */}
+          {[1020, 1180].map((x) => (
+            <g key={x}>
+              <path d={`M${x} 424h120v78H${x}z`} strokeWidth="1.1" />
+              <rect x={x} y="424" width="120" height="78" fill={`url(#${uid}-dark)`} stroke="none" opacity="0.55" />
+              <line x1={x + 60} y1="424" x2={x + 60} y2="502" strokeWidth="0.8" opacity="0.8" />
+              <line x1={x} y1="463" x2={x + 120} y2="463" strokeWidth="0.8" opacity="0.8" />
+            </g>
+          ))}
+          {/* door */}
+          <path d="M1320 452h56v108h-56z" strokeWidth="1.2" />
+          <rect x="1320" y="452" width="56" height="108" fill={`url(#${uid}-mid)`} stroke="none" opacity="0.6" />
         </g>
 
-        {/* ── Site 3 — retail branch, shutters half down ── */}
+        {/* ── price totem, left ── */}
         <g>
-          <path d="M978 186h344v244H978z" strokeWidth="1" />
-          <path d="M978 186h344v44H978z" strokeWidth="0.9" />
-          <line x1="1010" y1="208" x2="1290" y2="208" strokeWidth="0.6" opacity="0.55" />
-          {/* rolling shutter slats */}
-          <path d="M1010 254h280v104h-280z" strokeWidth="0.8" />
-          {shutter.map((i) => (
+          <path d="M58 214h134v128H58z" strokeWidth="1.3" />
+          <rect x="58" y="214" width="134" height="128" fill={`url(#${uid}-light)`} stroke="none" opacity="0.45" />
+          <line x1="58" y1="252" x2="192" y2="252" strokeWidth="1" opacity="0.8" />
+          {range(3).map((i) => (
+            <g key={i}>
+              <line x1="74" y1={274 + i * 22} x2="120" y2={274 + i * 22} strokeWidth="3.4" opacity="0.55" />
+              <line x1="136" y1={274 + i * 22} x2="176" y2={274 + i * 22} strokeWidth="3.4" opacity="0.85" />
+            </g>
+          ))}
+          <path d="M112 342h26v218h-26z" strokeWidth="1.2" />
+          <rect x="112" y="342" width="26" height="218" fill={`url(#${uid}-vert)`} stroke="none" opacity="0.5" />
+        </g>
+
+        {/* ── canopy ── */}
+        <g>
+          {/* fascia */}
+          <path d="M196 150h724v58H196z" strokeWidth="1.4" />
+          <line x1="196" y1="192" x2="920" y2="192" strokeWidth="0.9" opacity="0.7" />
+          {/* underside, ribbed — the deepest tone in the picture */}
+          <path d="M212 208h692v26H212z" strokeWidth="1" />
+          <rect x="212" y="208" width="692" height="26" fill={`url(#${uid}-dark)`} stroke="none" opacity="0.9" />
+          {range(34).map((i) => (
             <line
               key={i}
-              x1="1010"
-              y1={264 + i * 11}
-              x2="1290"
-              y2={264 + i * 11}
-              strokeWidth="0.5"
-              opacity="0.55"
+              x1={222 + i * 20}
+              y1="208"
+              x2={222 + i * 20}
+              y2="234"
+              strokeWidth="0.6"
+              opacity="0.5"
             />
           ))}
-          <line x1="1010" y1="358" x2="1290" y2="358" strokeWidth="1.2" />
-          {/* frontage below the shutter */}
-          <path d="M1040 380h96v50h-96z" strokeWidth="0.7" opacity="0.8" />
-          <path d="M1168 380h96v50h-96z" strokeWidth="0.7" opacity="0.8" />
+          {/* lamps */}
+          {[330, 480, 630, 780].map((x) => (
+            <g key={x}>
+              <path d={`M${x - 22} 234h44v9h-44z`} strokeWidth="0.9" />
+              <path
+                d={`M${x - 60} 560l38 -317h44l38 317z`}
+                fill={`url(#${uid}-light)`}
+                stroke="none"
+                opacity="0.16"
+              />
+            </g>
+          ))}
+          {/* columns */}
+          {[268, 836].map((x) => (
+            <g key={x}>
+              <path d={`M${x} 234h46v326h-46z`} strokeWidth="1.3" />
+              <rect x={x + 28} y="234" width="18" height="326" fill={`url(#${uid}-mid)`} stroke="none" opacity="0.8" />
+              <path d={`M${x - 12} 548h70v14h-70z`} strokeWidth="1.1" />
+            </g>
+          ))}
         </g>
 
-        {/* Ground line + foreground hatch */}
-        <line x1="0" y1="430" x2="1440" y2="430" strokeWidth="1.2" />
-        {range(22).map((i) => (
+        {/* ── pumps ── */}
+        {[404, 600].map((x, i) => (
+          <g key={x}>
+            <path d={`M${x} 396h74v164h-74z`} strokeWidth="1.3" />
+            <rect x={x + 46} y="396" width="28" height="164" fill={`url(#${uid}-mid)`} stroke="none" opacity="0.75" />
+            {/* display */}
+            <path d={`M${x + 10} 412h44v40h-44z`} strokeWidth="1" />
+            <rect x={x + 10} y="412" width="44" height="40" fill={`url(#${uid}-dark)`} stroke="none" opacity="0.6" />
+            {range(3).map((j) => (
+              <line
+                key={j}
+                x1={x + 16}
+                y1={422 + j * 11}
+                x2={x + 48}
+                y2={422 + j * 11}
+                strokeWidth="1.6"
+                opacity="0.75"
+              />
+            ))}
+            {/* nozzle + hose */}
+            <path
+              d={`M${x + 74} 470c26 6 34 26 30 48`}
+              strokeWidth="1.1"
+              opacity="0.85"
+            />
+            <path d={`M${x + 98} 516h12v22h-12z`} strokeWidth="1" opacity="0.85" />
+            {/* base shadow */}
+            <ellipse cx={x + 37} cy="562" rx="58" ry="7" strokeWidth="0" fill={`url(#${uid}-mid)`} opacity={0.5 - i * 0.1} />
+          </g>
+        ))}
+
+        {/* ── attendant scanning in at the column ── */}
+        <g strokeWidth="1.3" strokeLinecap="round">
+          <circle cx="880" cy="452" r="11" />
+          <path d="M880 463v42" />
+          <path d="M880 505l-9 55M880 505l10 55" />
+          <path d="M880 474l17 -9" />
+          <path d="M895 456h13v19h-13z" strokeWidth="1" />
+          <rect x="895" y="456" width="13" height="19" fill={`url(#${uid}-light)`} stroke="none" opacity="0.7" />
+          {/* the QR plate on the column */}
+          <path d="M842 430h22v22h-22z" strokeWidth="1" />
+          <rect x="842" y="430" width="22" height="22" fill={`url(#${uid}-cross)`} stroke="none" opacity="0.9" />
+        </g>
+
+        {/* ── geofence on the apron ── */}
+        <g opacity="0.55">
+          <ellipse cx="620" cy="596" rx="470" ry="62" strokeWidth="0.9" strokeDasharray="5 9" />
+          <ellipse cx="620" cy="588" rx="300" ry="40" strokeWidth="0.8" strokeDasharray="3 7" opacity="0.8" />
+        </g>
+
+        {/* ── apron ── */}
+        <line x1="0" y1={GROUND} x2="1600" y2={GROUND} strokeWidth="1.4" />
+        {range(26).map((i) => (
           <line
             key={i}
             x1="0"
-            x2="1440"
-            y1={438 + i * 5.6}
-            y2={438 + i * 5.6}
-            strokeWidth="0.5"
-            opacity={0.16 - i * 0.006}
+            x2="1600"
+            y1={GROUND + 8 + i * 5.4}
+            y2={GROUND + 8 + i * 5.4}
+            strokeWidth="0.55"
+            opacity={0.2 - i * 0.007}
           />
         ))}
+        {/* forecourt bay markings */}
+        {[300, 520, 740].map((x) => (
+          <line key={x} x1={x} y1={GROUND + 6} x2={x - 34} y2={GROUND + 58} strokeWidth="0.7" opacity="0.28" />
+        ))}
 
-        {/* Registration ticks — technical-drawing furniture */}
-        <g opacity="0.35" strokeWidth="0.75">
-          <line x1="0" y1="430" x2="0" y2="452" />
-          <line x1="268" y1="430" x2="268" y2="446" />
-          <line x1="690" y1="430" x2="690" y2="446" />
-          <line x1="1150" y1="430" x2="1150" y2="446" />
-          <line x1="1440" y1="430" x2="1440" y2="452" />
-        </g>
+        {/* foreground scrub */}
+        <Foliage cx={1470} cy={600} rx={120} ry={40} seed={57} density={80} opacity={0.4} />
+        <Foliage cx={70} cy={612} rx={100} ry={34} seed={71} density={60} opacity={0.32} />
       </g>
     </svg>
   );
 }
 
-/* ── Geofence, plan view ────────────────────────────────────────── */
-export function GeofencePlan({ className, uid = "geo" }: SvgProps) {
+/* ── A sealed record: the locked outcome document ───────────────── */
+export function SealedRecord({ className, uid = "seal" }: SvgProps) {
   return (
-    <svg viewBox="0 0 320 320" fill="none" className={className} aria-hidden="true">
+    <svg viewBox="0 0 420 340" fill="none" className={className} aria-hidden="true">
       <defs>
-        <Hatch id={`${uid}-hatch`} angle={45} gap={6} />
+        <HatchDefs uid={uid} />
       </defs>
       <g stroke="currentColor">
-        <circle cx="160" cy="160" r="128" strokeWidth="0.75" strokeDasharray="4 7" opacity="0.45" />
-        <circle cx="160" cy="160" r="94" strokeWidth="0.75" strokeDasharray="3 5" opacity="0.7" />
-        <circle cx="160" cy="160" r="58" strokeWidth="1" />
-        {/* site footprint */}
-        <path d="M126 138h68v52h-68z" strokeWidth="1" />
-        <path d="M126 138h68v14h-68z" strokeWidth="0.6" fill={`url(#${uid}-hatch)`} />
-        {/* radius call-out */}
-        <line x1="160" y1="160" x2="288" y2="160" strokeWidth="0.75" opacity="0.6" />
-        <line x1="288" y1="152" x2="288" y2="168" strokeWidth="0.75" opacity="0.6" />
-        {/* crosshair */}
-        <line x1="160" y1="18" x2="160" y2="46" strokeWidth="0.75" opacity="0.5" />
-        <line x1="160" y1="274" x2="160" y2="302" strokeWidth="0.75" opacity="0.5" />
-        <line x1="18" y1="160" x2="46" y2="160" strokeWidth="0.75" opacity="0.5" />
-        {/* the pin, inside the ring */}
-        <path d="M160 206c-11-16-17-25-17-33a17 17 0 1 1 34 0c0 8-6 17-17 33z" strokeWidth="1.2" />
-        <circle cx="160" cy="173" r="5" strokeWidth="1" />
-      </g>
-    </svg>
-  );
-}
-
-/* ── Penalty rule ladder ────────────────────────────────────────── */
-export function RuleLadder({ className, uid = "rule" }: SvgProps) {
-  const steps = [
-    { t: 0, label: "grace" },
-    { t: 1, label: "" },
-    { t: 2, label: "" },
-    { t: 3, label: "" },
-  ];
-  return (
-    <svg viewBox="0 0 320 260" fill="none" className={className} aria-hidden="true">
-      <defs>
-        <Hatch id={`${uid}-hatch`} angle={-45} gap={5} />
-      </defs>
-      <g stroke="currentColor">
-        {/* time axis */}
-        <line x1="28" y1="216" x2="296" y2="216" strokeWidth="1" />
-        {steps.map((s, i) => (
+        {/* the sheets beneath */}
+        <path d="M64 60h198l40 40v208H64z" strokeWidth="1" opacity="0.35" />
+        <path d="M52 48h198l40 40v208H52z" strokeWidth="1.1" opacity="0.6" />
+        {/* the top sheet */}
+        <path d="M40 36h198l40 40v208H40z" strokeWidth="1.5" />
+        <rect x="40" y="36" width="238" height="248" fill={`url(#${uid}-light)`} stroke="none" opacity="0.28" />
+        <path d="M238 36v40h40" strokeWidth="1.2" />
+        {/* the fold's cast shadow */}
+        <path d="M238 76h40l-40 -40z" fill={`url(#${uid}-dark)`} stroke="none" opacity="0.5" />
+        {/* ruled content */}
+        {range(9).map((i) => (
           <line
             key={i}
-            x1={28 + i * 68}
-            y1="216"
-            x2={28 + i * 68}
-            y2="224"
-            strokeWidth="0.75"
-            opacity="0.6"
+            x1="66"
+            y1={110 + i * 17}
+            x2={i % 3 === 2 ? 190 : 250}
+            y2={110 + i * 17}
+            strokeWidth="1"
+            opacity="0.45"
           />
         ))}
-        {/* deduction steps, rising left to right */}
-        {steps.map((_, i) => (
-          <g key={i}>
-            <path
-              d={`M${28 + i * 68} ${216 - i * 44}h68`}
-              strokeWidth={i === 0 ? 0.9 : 1.3}
-              opacity={i === 0 ? 0.5 : 1}
-              strokeDasharray={i === 0 ? "3 4" : undefined}
-            />
-            {i > 0 && (
-              <line
-                x1={28 + i * 68}
-                y1={216 - (i - 1) * 44}
-                x2={28 + i * 68}
-                y2={216 - i * 44}
-                strokeWidth="1.3"
-              />
-            )}
-            {i > 0 && (
-              <rect
-                x={28 + i * 68}
-                y={216 - i * 44}
-                width="68"
-                height={i * 44}
-                strokeWidth="0"
-                fill={`url(#${uid}-hatch)`}
-                opacity="0.5"
-              />
-            )}
-          </g>
-        ))}
-        {/* threshold marker */}
-        <line x1="96" y1="36" x2="96" y2="216" strokeWidth="0.6" strokeDasharray="2 5" opacity="0.55" />
-        <circle cx="96" cy="172" r="4" strokeWidth="1.2" />
+        {/* wax seal, cross-hatched to read as raised */}
+        <circle cx="300" cy="252" r="52" strokeWidth="1.6" />
+        <circle cx="300" cy="252" r="52" fill={`url(#${uid}-crosshatch)`} stroke="none" opacity="0.55" />
+        <circle cx="300" cy="252" r="40" strokeWidth="0.8" strokeDasharray="3 5" opacity="0.8" />
+        <path
+          d="M280 252l14 15 28 -31"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* ribbon */}
+        <path d="M268 296l-16 40 26 -12 22 14z" strokeWidth="1.2" />
+        <path d="M268 296l-16 40 26 -12 22 14z" fill={`url(#${uid}-mid)`} stroke="none" opacity="0.6" />
       </g>
     </svg>
   );
 }
 
-/* ── Sealed, tamper-evident document ────────────────────────────── */
-export function SealedDocument({ className, uid = "seal" }: SvgProps) {
-  return (
-    <svg viewBox="0 0 260 320" fill="none" className={`draw-in ${className ?? ""}`} aria-hidden="true">
-      <defs>
-        <Hatch id={`${uid}-hatch`} angle={45} gap={5} />
-      </defs>
-      <g stroke="currentColor">
-        {/* sheet with folded corner */}
-        <path d="M42 26h136l40 40v228H42z" strokeWidth="1.2" />
-        <path d="M178 26v40h40" strokeWidth="1" />
-        {/* text rules */}
-        {range(7).map((i) => (
-          <line
-            key={i}
-            x1="68"
-            y1={104 + i * 18}
-            x2={i % 3 === 2 ? 150 : 192}
-            y2={104 + i * 18}
-            strokeWidth="0.75"
-            opacity="0.55"
-          />
-        ))}
-        {/* seal */}
-        <circle cx="182" cy="248" r="30" strokeWidth="1.2" />
-        <circle cx="182" cy="248" r="23" strokeWidth="0.6" strokeDasharray="2 4" opacity="0.7" />
-        <path d="M170 248l8 9 17-18" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-        {/* lock */}
-        <path d="M62 236h34v28H62z" strokeWidth="1.1" />
-        <path d="M69 236v-9a10 10 0 0 1 20 0v9" strokeWidth="1.1" />
-      </g>
-    </svg>
-  );
-}
-
-/* ── Payslip ────────────────────────────────────────────────────── */
-export function PayslipSheet({ className, uid = "slip" }: SvgProps) {
-  return (
-    <svg viewBox="0 0 260 320" fill="none" className={`draw-in ${className ?? ""}`} aria-hidden="true">
-      <defs>
-        <Hatch id={`${uid}-hatch`} angle={45} gap={6} />
-      </defs>
-      <g stroke="currentColor">
-        <path d="M38 22h184v276H38z" strokeWidth="1.2" />
-        <path d="M38 22h184v42H38z" strokeWidth="0.9" />
-        <rect x="38" y="22" width="184" height="42" strokeWidth="0" fill={`url(#${uid}-hatch)`} opacity="0.45" />
-        {/* line items */}
-        {range(5).map((i) => (
-          <g key={i}>
-            <line x1="60" y1={98 + i * 30} x2="140" y2={98 + i * 30} strokeWidth="0.75" opacity="0.55" />
-            <line x1="164" y1={98 + i * 30} x2="200" y2={98 + i * 30} strokeWidth="0.75" opacity="0.8" />
-          </g>
-        ))}
-        {/* total rule */}
-        <line x1="60" y1="256" x2="200" y2="256" strokeWidth="1.2" />
-        <line x1="150" y1="272" x2="200" y2="272" strokeWidth="1.6" />
-      </g>
-    </svg>
-  );
-}
-
-/* ── Phone clock-in: selfie frame + GPS lock ────────────────────── */
-export function PhoneClockIn({ className }: SvgProps) {
-  return (
-    <svg viewBox="0 0 220 340" fill="none" className={`draw-in ${className ?? ""}`} aria-hidden="true">
-      <g stroke="currentColor">
-        <rect x="34" y="14" width="152" height="312" rx="20" strokeWidth="1.3" />
-        <line x1="94" y1="30" x2="126" y2="30" strokeWidth="1.4" strokeLinecap="round" />
-        {/* selfie viewfinder */}
-        <circle cx="110" cy="132" r="52" strokeWidth="1" strokeDasharray="5 6" opacity="0.75" />
-        <circle cx="110" cy="116" r="18" strokeWidth="1.1" />
-        <path d="M80 168c6-18 16-27 30-27s24 9 30 27" strokeWidth="1.1" />
-        {/* corner brackets */}
-        <path d="M52 92v-14h14M168 92v-14h-14M52 176v14h14M168 176v14h-14" strokeWidth="1.1" />
-        {/* GPS readout */}
-        <line x1="58" y1="222" x2="162" y2="222" strokeWidth="0.75" opacity="0.5" />
-        <line x1="58" y1="240" x2="130" y2="240" strokeWidth="0.75" opacity="0.5" />
-        <circle cx="110" cy="284" r="22" strokeWidth="1.2" />
-        <path d="M110 272v24M98 284h24" strokeWidth="0.9" opacity="0.7" />
-      </g>
-    </svg>
-  );
-}
-
-/* ── Multi-site plan — sites tied to one ledger ─────────────────── */
-export function MultiSitePlan({ className, uid = "multi" }: SvgProps) {
-  const sites = [
-    { x: 62, y: 74 },
-    { x: 190, y: 44 },
-    { x: 292, y: 108 },
-    { x: 116, y: 176 },
-    { x: 248, y: 196 },
-  ];
-  return (
-    <svg viewBox="0 0 360 250" fill="none" className={className} aria-hidden="true">
-      <defs>
-        <Hatch id={`${uid}-hatch`} angle={45} gap={6} />
-      </defs>
-      <g stroke="currentColor">
-        {sites.map((s, i) => (
-          <g key={i}>
-            <circle cx={s.x} cy={s.y} r="26" strokeWidth="0.75" strokeDasharray="3 5" opacity="0.5" />
-            <rect x={s.x - 11} y={s.y - 9} width="22" height="18" strokeWidth="1" />
-            <rect
-              x={s.x - 11}
-              y={s.y - 9}
-              width="22"
-              height="6"
-              strokeWidth="0"
-              fill={`url(#${uid}-hatch)`}
-              opacity="0.6"
-            />
-          </g>
-        ))}
-        {/* hairlines converging on the ledger */}
-        {sites.map((s, i) => (
-          <line
-            key={i}
-            x1={s.x}
-            y1={s.y}
-            x2="180"
-            y2="124"
-            strokeWidth="0.5"
-            opacity="0.3"
-            strokeDasharray="2 4"
-          />
-        ))}
-        <circle cx="180" cy="124" r="7" strokeWidth="1.4" />
-      </g>
-    </svg>
-  );
-}
-
-/* ── Dispute: claim, review, outcome ────────────────────────────── */
-export function DisputeFlow({ className, uid = "dispute" }: SvgProps) {
-  return (
-    <svg viewBox="0 0 360 200" fill="none" className={className} aria-hidden="true">
-      <defs>
-        <Hatch id={`${uid}-hatch`} angle={-45} gap={5} />
-      </defs>
-      <g stroke="currentColor">
-        {/* staff */}
-        <circle cx="52" cy="80" r="13" strokeWidth="1.1" />
-        <path d="M32 124c4-16 11-24 20-24s16 8 20 24" strokeWidth="1.1" />
-        {/* appeal travelling */}
-        <path d="M88 100h74" strokeWidth="0.75" strokeDasharray="3 5" opacity="0.7" />
-        <path d="M156 94l8 6-8 6" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-        {/* the case file */}
-        <path d="M148 58h64l16 16v88h-80z" strokeWidth="1.2" />
-        <path d="M212 58v16h16" strokeWidth="0.9" />
-        <rect x="148" y="58" width="80" height="0" strokeWidth="0" fill={`url(#${uid}-hatch)`} />
-        {[0, 1, 2].map((i) => (
-          <line key={i} x1="162" y1={96 + i * 16} x2="212" y2={96 + i * 16} strokeWidth="0.7" opacity="0.55" />
-        ))}
-        {/* owner decision */}
-        <path d="M244 100h50" strokeWidth="0.75" strokeDasharray="3 5" opacity="0.7" />
-        <path d="M288 94l8 6-8 6" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="322" cy="100" r="24" strokeWidth="1.2" />
-        <path d="M310 100l8 9 17-19" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-      </g>
-    </svg>
-  );
-}
-
-/* ── Small mark used as a section divider ───────────────────────── */
+/* ── Section rule ───────────────────────────────────────────────── */
 export function RuleMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 120 8" fill="none" className={className} aria-hidden="true">

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Container, SectionHead, SiteButton, ArrowRight, Eyebrow } from "./SiteUI";
-import { Reveal } from "./Reveal";
 
 /* ── FAQ — native <details>, so open/close costs no JS at all ───── */
 
@@ -15,14 +14,14 @@ export function FAQ({
   const dark = tone === "dark";
   return (
     <div className={cn("border-t", dark ? "border-white/10" : "border-kaunta-mist")}>
-      {items.map((item, i) => (
-        <Reveal key={item.q} delay={i * 45} variant="fade">
-          <details
-            className={cn(
-              "group border-b",
-              dark ? "border-white/10" : "border-kaunta-mist"
-            )}
-          >
+      {items.map((item) => (
+        <details
+          key={item.q}
+          className={cn(
+            "group border-b",
+            dark ? "border-white/10" : "border-kaunta-mist"
+          )}
+        >
             <summary
               className={cn(
                 "flex cursor-pointer list-none items-start justify-between gap-6 py-5 text-left text-[0.975rem] leading-snug transition-colors duration-200 sm:text-[1.05rem]",
@@ -57,8 +56,7 @@ export function FAQ({
             >
               {item.a}
             </div>
-          </details>
-        </Reveal>
+        </details>
       ))}
     </div>
   );
@@ -76,7 +74,7 @@ export function CTASection({
   return (
     <section className="ultra-glow border-t border-white/10 bg-kaunta-void">
       <Container className="py-20 sm:py-28">
-        <Reveal>
+        <>
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-[2rem] leading-[1.08] tracking-[-0.02em] text-white sm:text-[2.75rem]">
               {title}
@@ -93,7 +91,7 @@ export function CTASection({
               </SiteButton>
             </div>
           </div>
-        </Reveal>
+        </>
       </Container>
     </section>
   );
@@ -115,8 +113,8 @@ export function PageHero({
   return (
     <section className="ultra-glow-top relative overflow-hidden border-b border-white/10 bg-kaunta-void">
       <Container className="pb-16 pt-14 sm:pb-24 sm:pt-20">
-        <Reveal>
-          <Eyebrow tone="light">{eyebrow}</Eyebrow>
+        <>
+          <Eyebrow tone="dark">{eyebrow}</Eyebrow>
           <h1 className="font-display mt-5 max-w-3xl text-[2.35rem] leading-[1.04] tracking-[-0.025em] text-white sm:text-[3.4rem] lg:text-[4rem]">
             {title}
           </h1>
@@ -126,7 +124,7 @@ export function PageHero({
             </p>
           )}
           {children}
-        </Reveal>
+        </>
       </Container>
     </section>
   );
@@ -199,11 +197,11 @@ export function NextLinks({
   return (
     <section className="border-t border-white/10 bg-kaunta-void">
       <Container className="py-16 sm:py-20">
-        <SectionHead eyebrow="Keep reading" title="Related" tone="light" />
+        <SectionHead eyebrow="Keep reading" title="Related" tone="dark" />
         <div className="mt-10 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
-          {links.map((l, i) => (
-            <Reveal key={l.href} delay={i * 60}>
+          {links.map((l) => (
               <Link
+                key={l.href}
                 href={l.href}
                 className="flex h-full flex-col bg-kaunta-void p-6 transition-colors duration-300 hover:bg-white/[0.03]"
               >
@@ -215,7 +213,6 @@ export function NextLinks({
                   Open <ArrowRight className="h-3 w-3" />
                 </span>
               </Link>
-            </Reveal>
           ))}
         </div>
       </Container>

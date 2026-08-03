@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { cn } from "@/lib/utils";
 import { Container, SectionHead, Eyebrow } from "@/components/site/SiteUI";
-import { Reveal } from "@/components/site/Reveal";
 import { PageHero, NextLinks } from "@/components/site/Blocks";
 
 export const metadata: Metadata = {
@@ -63,7 +62,7 @@ export default function StatusPage() {
       {/* ── Overall ───────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-14 sm:py-16">
-          <Reveal>
+          <>
             <div className="flex flex-col gap-4 rounded-xl border border-kaunta-sage/35 bg-kaunta-sage/[0.08] p-7 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3.5">
                 <span className="relative flex h-2.5 w-2.5">
@@ -78,17 +77,17 @@ export default function StatusPage() {
                 [SLOT: last checked timestamp]
               </p>
             </div>
-          </Reveal>
+          </>
         </Container>
       </section>
 
       {/* ── Per service ───────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-16 sm:py-20">
-          <Reveal>
-            <SectionHead tone="light" eyebrow="Services" title="Component by component" />
-          </Reveal>
-          <Reveal delay={80}>
+          <>
+            <SectionHead tone="dark" eyebrow="Services" title="Component by component" />
+          </>
+          <>
             <ul className="mt-10 border-t border-white/10">
               {SERVICES.map((s) => {
                 const style = STATE_STYLE[s.state];
@@ -118,44 +117,44 @@ export default function StatusPage() {
                 );
               })}
             </ul>
-          </Reveal>
+          </>
         </Container>
       </section>
 
       {/* ── Incidents ─────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-16 sm:py-20">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               eyebrow="History"
               title="Recent incidents"
               lede="Every incident that affected a customer gets an entry here, including the ones that were our fault and short."
             />
-          </Reveal>
-          <Reveal delay={80}>
+          </>
+          <>
             <div className="mt-10 rounded-xl border border-dashed border-white/15 p-10 text-center">
-              <Eyebrow tone="light">Incident feed</Eyebrow>
+              <Eyebrow tone="dark">Incident feed</Eyebrow>
               <p className="mx-auto mt-4 max-w-md text-[0.9rem] leading-relaxed text-white/50">
                 [SLOT: incident history. Each entry should carry a date, the
                 components affected, the duration, and what was done about it.]
               </p>
             </div>
-          </Reveal>
+          </>
         </Container>
       </section>
 
       {/* ── What to do ────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="prose" className="py-16 sm:py-20">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               eyebrow="During an incident"
               title="If staff cannot clock in"
             />
-          </Reveal>
-          <Reveal delay={80}>
+          </>
+          <>
             <ul className="mt-8 space-y-4">
               {[
                 "Have supervisors record arrival times as they normally would on paper. Scans can be entered afterwards by an owner, and they are marked as manually entered so the record stays honest about it.",
@@ -175,7 +174,7 @@ export default function StatusPage() {
                 </li>
               ))}
             </ul>
-          </Reveal>
+          </>
         </Container>
       </section>
 

@@ -1,6 +1,12 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { RuleMark } from "./Engravings";
+
+/* `tone` always describes the SURFACE a component sits on:
+ *   tone="dark"  → dark surface, light text   (the marketing site)
+ *   tone="dark" → light surface, dark text   (the app UI)
+ * Every component in this file and in Blocks.tsx follows that. */
 
 /* ── Layout ─────────────────────────────────────────────────────── */
 
@@ -41,7 +47,7 @@ export function Eyebrow({
     <p
       className={cn(
         "eyebrow",
-        tone === "dark" ? "text-kaunta-slate/50" : "text-white/45",
+        tone === "dark" ? "text-white/45" : "text-kaunta-slate/50",
         className
       )}
     >
@@ -76,7 +82,7 @@ export function SectionHead({
       <h2
         className={cn(
           "font-display mt-4 text-[2rem] leading-[1.08] tracking-[-0.02em] sm:text-[2.75rem] lg:text-[3.25rem]",
-          tone === "dark" ? "text-kaunta-ink" : "text-white"
+          tone === "dark" ? "text-white" : "text-kaunta-ink"
         )}
       >
         {title}
@@ -85,7 +91,7 @@ export function SectionHead({
         <p
           className={cn(
             "mt-5 text-[0.975rem] leading-relaxed sm:text-lg",
-            tone === "dark" ? "text-kaunta-slate/70" : "text-white/60",
+            tone === "dark" ? "text-white/60" : "text-kaunta-slate/70",
             align === "center" ? "mx-auto max-w-xl" : "max-w-xl"
           )}
         >
@@ -133,7 +139,7 @@ export function SiteButton({
         variant === "light" &&
           "bg-white text-kaunta-ink hover:bg-white/88",
         variant === "outline" &&
-          "border border-white/20 text-white hover:border-white/45 hover:bg-white/5",
+          "border border-white/25 bg-white/[0.06] text-white backdrop-blur-sm hover:border-white/50 hover:bg-white/[0.12]",
         variant === "ghost" &&
           "border border-kaunta-mist bg-white text-kaunta-ink hover:border-kaunta-slate/25",
         className
@@ -163,61 +169,74 @@ export function ArrowRight({ className }: { className?: string }) {
   );
 }
 
-/* ── Screenshot slots ───────────────────────────────────────────────
- * Drop the real capture in by replacing the inner block with an
- * <Image src="…" />. The label is kept visible on purpose so an empty
- * slot never reads as a broken image.
+/* ── Product screenshots ────────────────────────────────────────────
+ * Real captures only. There is no placeholder variant on purpose: an
+ * empty slot on a live page is worse than no image at all.
  * ------------------------------------------------------------------ */
 
-export function Screenshot({
-  label,
-  ratio = "16 / 10",
-  tone = "dark",
+export const SHOTS = {
+  teamCalendar: {
+    src: "/shots/team-calendar.png",
+    width: 1400,
+    height: 1302,
+    alt: "The Team screen with an employee's attendance calendar open for July, days marked late, absent and flagged, and a button to download the month's report with photos.",
+  },
+  overview: {
+    src: "/shots/overview-mobile.png",
+    width: 760,
+    height: 1333,
+    alt: "The site overview on a phone: counts for clocked in, late, absent and flagged, above today's attendance list.",
+  },
+  rules: {
+    src: "/shots/rules-mobile.png",
+    width: 760,
+    height: 1333,
+    alt: "The Rules screen on a phone showing a shared default ruleset with a late-arrival penalty of KES 200 and a phone-use penalty of KES 500, each with a 24-hour appeal window.",
+  },
+} as const;
+
+export function Shot({
+  shot,
+  caption,
   className,
+  frame = "screen",
+  priority = false,
 }: {
-  label: string;
-  ratio?: string;
-  tone?: "dark" | "light";
+  shot: (typeof SHOTS)[keyof typeof SHOTS];
+  caption?: string;
   className?: string;
+  /** "screen" = browser-ish plate, "device" = phone plate */
+  frame?: "screen" | "device";
+  priority?: boolean;
 }) {
-  const dark = tone === "dark";
   return (
-    <figure
-      className={cn(
-        "relative w-full overflow-hidden rounded-xl border",
-        dark
-          ? "border-white/12 bg-white/[0.025]"
-          : "border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(11,17,32,0.06)]",
-        className
-      )}
-      style={{ aspectRatio: ratio }}
-    >
-      {/* corner registration ticks */}
-      <span
-        aria-hidden
+    <figure className={cn("w-full", className)}>
+      <div
         className={cn(
-          "pointer-events-none absolute inset-3 rounded-lg border border-dashed",
-          dark ? "border-white/12" : "border-kaunta-slate/12"
+          "overflow-hidden border border-white/12 bg-white/[0.03]",
+          frame === "device"
+            ? "mx-auto max-w-[280px] rounded-[1.75rem] p-1.5"
+            : "rounded-xl p-1.5"
         )}
-      />
-      <figcaption className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
-        <span
+      >
+        <Image
+          src={shot.src}
+          width={shot.width}
+          height={shot.height}
+          alt={shot.alt}
+          priority={priority}
+          sizes={frame === "device" ? "280px" : "(max-width: 1024px) 100vw, 720px"}
           className={cn(
-            "font-mono text-[0.625rem] uppercase tracking-[0.18em]",
-            dark ? "text-white/35" : "text-kaunta-slate/40"
+            "h-auto w-full",
+            frame === "device" ? "rounded-[1.35rem]" : "rounded-lg"
           )}
-        >
-          Screenshot
-        </span>
-        <span
-          className={cn(
-            "font-mono text-[0.7rem] leading-relaxed sm:text-xs",
-            dark ? "text-white/60" : "text-kaunta-slate/65"
-          )}
-        >
-          [SCREENSHOT: {label}]
-        </span>
-      </figcaption>
+        />
+      </div>
+      {caption && (
+        <figcaption className="mt-3 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-white/35">
+          {caption}
+        </figcaption>
+      )}
     </figure>
   );
 }

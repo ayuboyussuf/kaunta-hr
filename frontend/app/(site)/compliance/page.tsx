@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import {
   Container,
   SectionHead,
-  Screenshot,
   SpecList,
   Eyebrow,
 } from "@/components/site/SiteUI";
-import { Reveal, DrawReveal } from "@/components/site/Reveal";
 import {
   PageHero,
   CTASection,
@@ -14,7 +12,7 @@ import {
   Step,
   FAQ,
 } from "@/components/site/Blocks";
-import { SealedDocument, DisputeFlow } from "@/components/site/Engravings";
+import { SealedRecord } from "@/components/site/Engravings";
 
 export const metadata: Metadata = {
   title: "Compliance & records",
@@ -58,15 +56,15 @@ export default function CompliancePage() {
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-20 sm:py-28">
           <div className="grid gap-14 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
-            <Reveal variant="left">
+            <>
               <SectionHead
-                tone="light"
+                tone="dark"
                 eyebrow="The gap"
                 title="A notebook is a record until someone questions it."
                 lede="Kenyan employers are expected to keep records of the hours their staff work and the deductions they make. The trouble is not usually that no record exists — it is that the record is a book, written by hand, by an interested party, after the fact, with corrections in it."
               />
               <SpecList
-                tone="light"
+                tone="dark"
                 className="mt-10"
                 items={[
                   {
@@ -87,14 +85,14 @@ export default function CompliancePage() {
                   },
                 ]}
               />
-            </Reveal>
-            <Reveal variant="right" delay={100}>
-              <div className="text-kaunta-ultra-br/85">
-                <DrawReveal length={1200}>
-                  <SealedDocument className="mx-auto h-auto w-[190px]" />
-                </DrawReveal>
+            </>
+            <>
+              <div className="text-white/70">
+                <>
+                  <SealedRecord className="mx-auto h-auto w-full max-w-[330px]" />
+                </>
               </div>
-            </Reveal>
+            </>
           </div>
         </Container>
       </section>
@@ -102,15 +100,15 @@ export default function CompliancePage() {
       {/* ── What makes a record hold ──────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="wide" className="py-20 sm:py-28">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               align="center"
               eyebrow="Four properties"
               title="What makes an attendance record worth anything."
               lede="These are the qualities that separate a record someone can rely on from a book someone wrote. Kaunta HR is built around all four."
             />
-          </Reveal>
+          </>
 
           <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -134,8 +132,8 @@ export default function CompliancePage() {
                 t: "Tamper-evident",
                 b: "A closed outcome is written to a locked PDF and its hash recorded against the case. An altered copy no longer matches the record.",
               },
-            ].map((c, i) => (
-              <Reveal key={c.n} delay={i * 70}>
+            ].map((c) => (
+              <div key={c.n}>
                 <div className="h-full rounded-xl border border-white/10 bg-white/[0.02] p-6">
                   <span className="font-mono text-[0.625rem] tracking-[0.16em] text-kaunta-ultra-br/70">
                     {c.n}
@@ -145,7 +143,7 @@ export default function CompliancePage() {
                     {c.b}
                   </p>
                 </div>
-              </Reveal>
+              </div>
             ))}
           </div>
         </Container>
@@ -156,14 +154,14 @@ export default function CompliancePage() {
         <Container className="py-20 sm:py-28">
           <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-20">
             <div>
-              <Reveal>
+              <>
                 <SectionHead
-                  tone="light"
+                  tone="dark"
                   eyebrow="The audit trail"
                   title="What a single disputed deduction leaves behind."
                   lede="Take one KES 250 lateness penalty that a staff member objected to. Here is everything Kaunta HR can produce about it, months later, without anyone having to remember anything."
                 />
-              </Reveal>
+              </>
               <div className="mt-12">
                 {[
                   {
@@ -196,29 +194,22 @@ export default function CompliancePage() {
                     t: "The locked document",
                     b: "A PDF containing all of the above, with its hash recorded against the case at the moment it closed.",
                   },
-                ].map((s, i) => (
-                  <Reveal key={s.n} delay={i * 50}>
+                ].map((s) => (
+                  <div key={s.n}>
                     <Step n={s.n} title={s.t} tone="dark">
                       {s.b}
                     </Step>
-                  </Reveal>
+                  </div>
                 ))}
               </div>
             </div>
 
-            <Reveal variant="right" delay={100}>
+            <>
               <div className="lg:sticky lg:top-28">
-                <div className="text-kaunta-ultra-br/85">
-                  <DisputeFlow className="h-auto w-full" />
+                <div className="text-white/70">
                 </div>
-                <Screenshot
-                  label="dispute appeal PDF"
-                  ratio="3 / 4"
-                  tone="dark"
-                  className="mt-10"
-                />
               </div>
-            </Reveal>
+            </>
           </div>
         </Container>
       </section>
@@ -226,17 +217,17 @@ export default function CompliancePage() {
       {/* ── Integrity mechanics ───────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-20 sm:py-24">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               eyebrow="Document integrity"
               title="What “locked” actually means here."
               lede="Not a password on a PDF. Locking is about the relationship between the file and the record it came from."
             />
-          </Reveal>
-          <Reveal delay={90}>
+          </>
+          <>
             <SpecList
-              tone="light"
+              tone="dark"
               className="mt-10"
               items={[
                 {
@@ -266,16 +257,16 @@ export default function CompliancePage() {
                 },
               ]}
             />
-          </Reveal>
+          </>
         </Container>
       </section>
 
       {/* ── Disclaimer ────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="prose" className="py-16 sm:py-20">
-          <Reveal>
+          <>
             <div className="rounded-xl border border-kaunta-amber/35 bg-kaunta-amber/[0.07] p-7">
-              <Eyebrow tone="light" className="text-kaunta-amber">
+              <Eyebrow tone="dark" className="text-kaunta-amber">
                 Please read
               </Eyebrow>
               <p className="mt-4 text-[0.9rem] leading-relaxed text-white/70">
@@ -289,20 +280,20 @@ export default function CompliancePage() {
                 advisor.
               </p>
             </div>
-          </Reveal>
+          </>
         </Container>
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="prose" className="py-20 sm:py-24">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               eyebrow="Questions"
               title="About records and retention"
             />
-          </Reveal>
+          </>
           <div className="mt-10">
             <FAQ items={RECORD_FAQ} tone="dark" />
           </div>

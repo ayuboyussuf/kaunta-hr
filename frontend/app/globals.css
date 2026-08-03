@@ -108,94 +108,11 @@ body {
   font-family: var(--font-mono);
 }
 
-/* ── Scroll motion ───────────────────────────────────────────────
-   Driven entirely by IntersectionObserver toggling `.is-in`.
-   No scroll event handlers, no per-frame JS, compositor-only
-   properties (opacity/transform) — so it cannot stall the scroller.
+/* ── Motion ──────────────────────────────────────────────────────
+   Scroll-driven motion was removed: content must never depend on an
+   observer firing in order to be legible. What remains is interaction
+   feedback only (hover, focus, disclosure), which is handled inline.
    ---------------------------------------------------------------- */
-.reveal {
-  opacity: 0;
-  transform: translate3d(0, 16px, 0);
-  transition:
-    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--reveal-delay, 0ms);
-}
-.reveal-rise  { transform: translate3d(0, 28px, 0); }
-.reveal-left  { transform: translate3d(-20px, 0, 0); }
-.reveal-right { transform: translate3d(20px, 0, 0); }
-.reveal-scale { transform: scale(0.975); }
-.reveal.is-in {
-  opacity: 1;
-  transform: none;
-}
-
-/* Engraved line art draws itself in */
-.draw-in path,
-.draw-in line,
-.draw-in circle,
-.draw-in rect,
-.draw-in polyline {
-  stroke-dasharray: var(--len, 1400);
-  stroke-dashoffset: var(--len, 1400);
-  transition: stroke-dashoffset 1.8s cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: var(--reveal-delay, 0ms);
-}
-.draw-in.is-in path,
-.draw-in.is-in line,
-.draw-in.is-in circle,
-.draw-in.is-in rect,
-.draw-in.is-in polyline {
-  stroke-dashoffset: 0;
-}
-
-/* Scroll-linked drift — CSS scroll-driven animation only. Browsers
-   without support simply render the static (final) state. */
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .drift {
-      animation: drift-y linear both;
-      animation-timeline: view();
-      animation-range: entry 0% exit 100%;
-      will-change: transform;
-    }
-    .drift-slow { --drift-to: -3%; }
-    .drift-fast { --drift-to: -9%; }
-  }
-}
-@keyframes drift-y {
-  from { transform: translate3d(0, 4%, 0); }
-  to   { transform: translate3d(0, var(--drift-to, -6%), 0); }
-}
-
-/* Ticker — pure CSS, GPU only */
-@keyframes ticker {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(-50%, 0, 0); }
-}
-.ticker-track {
-  animation: ticker 42s linear infinite;
-  will-change: transform;
-}
-.ticker-mask {
-  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .reveal,
-  .draw-in path,
-  .draw-in line,
-  .draw-in circle,
-  .draw-in rect,
-  .draw-in polyline {
-    transition: none !important;
-    opacity: 1;
-    transform: none;
-    stroke-dashoffset: 0;
-  }
-  .ticker-track { animation: none; }
-}
 
 /* ── Accordion animations ───────────────────────────────────────── */
 @keyframes accordion-down {
