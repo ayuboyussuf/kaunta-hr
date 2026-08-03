@@ -15,7 +15,7 @@ import { Router } from "express";
 import { env } from "../../lib/env";
 import { getServiceClient } from "../../lib/supabase";
 import { pushToEmployee } from "../../lib/push";
-import { sendText } from "../../lib/messaging";
+import { enqueue } from "../../lib/queue";
 
 const router = Router();
 const TZ = "Africa/Nairobi";
@@ -131,15 +131,19 @@ router.post("/", async (req, res) => {
 
       // Fire one.
       const respondBy = new Date(now.getTime() + windowMin * 60 * 1000).toISOString();
-      const { error: insErr } = await db.from("presence_checks").insert({
-        employee_id: emp.id,
-        session_entry_id: last.id,
-        due_at: nowIso,
-        respond_by: respondBy,
-        status: "pending",
-      });
-      if (insErr) {
-        console.error(`[cron] presence insert failed for ${emp.id}:`, insErr.message);
+      const { data: check, error: insErr } = await db
+        .from("presence_checks")
+        .insert({
+          employee_id: emp.id,
+          session_entry_id: last.id,
+          due_at: nowIso,
+          respond_by: respondBy,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+      if (insErr || !check) {
+        console.error(`[cron] presence insert failed for ${emp.id}:`, insErr?.message);
         continue;
       }
       fired++;
@@ -153,12 +157,14 @@ router.post("/", async (req, res) => {
       const delivered = await pushToEmployee(emp.id, payload).catch(() => 0);
       if (delivered === 0 && smsFallback && emp.phone) {
         try {
-          await sendText(
-            emp.phone,
-            `Kaunta HR: please open the app and scan within ${windowMin} minutes to confirm you're at work.`
+          // Background job, deduped per presence check so a re-run never re-sends.
+          await enqueue(
+            "sms",
+            { to: emp.phone, body: `Kaunta HR: please open the app and scan within ${windowMin} minutes to confirm you're at work.` },
+            `sms:presence:${check.id}`
           );
         } catch (err) {
-          console.warn(`[cron] presence SMS failed for ${emp.id}:`, (err as Error).message);
+          console.warn(`[cron] presence SMS enqueue failed for ${emp.id}:`, (err as Error).message);
         }
       }
     }

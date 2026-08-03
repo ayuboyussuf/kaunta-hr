@@ -11,7 +11,7 @@ import { Router } from "express";
 import { env } from "../../lib/env";
 import { getServiceClient } from "../../lib/supabase";
 import { runPayrollDraft } from "../../lib/payroll/run";
-import { sendText } from "../../lib/messaging";
+import { enqueue } from "../../lib/queue";
 import { lastDayOfMonth, ymdMinus, nairobiTodayParts } from "../../lib/time";
 
 const router = Router();
@@ -147,12 +147,14 @@ router.post("/", async (req, res) => {
 
       if (org.phone) {
         try {
-          await sendText(
-            org.phone,
-            `Kaunta HR: draft payroll for ${trig.label} is ready (${totalStr}).${flaggedNote} Review and approve at ${env.appUrl}/dashboard/payroll`
+          // Deduped per (org, period): re-running the cron won't re-send.
+          await enqueue(
+            "sms",
+            { to: org.phone, body: `Kaunta HR: draft payroll for ${trig.label} is ready (${totalStr}).${flaggedNote} Review and approve at ${env.appUrl}/dashboard/payroll` },
+            `sms:payroll:${org.id}:${trig.period}`
           );
         } catch (err) {
-          console.warn(`[cron][payroll] SMS to owner failed for org ${org.id}:`, (err as Error).message);
+          console.warn(`[cron][payroll] SMS enqueue to owner failed for org ${org.id}:`, (err as Error).message);
         }
       }
 

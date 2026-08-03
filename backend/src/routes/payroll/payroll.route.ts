@@ -11,10 +11,9 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getServiceClient } from "../../lib/supabase";
 import { requireOwner } from "../../lib/auth";
-import { payslipPdf } from "../../lib/pdf/templates";
-import { uploadPdf } from "../../lib/pdf/render";
 import { runPayrollDraft, recomputeNet, recomputeCycle } from "../../lib/payroll/run";
 import { toDb, toNum } from "../../lib/money";
+import { enqueue } from "../../lib/queue";
 
 const router = Router();
 
@@ -316,35 +315,25 @@ router.post("/cycles/:id/approve", requireOwner, async (req, res) => {
 
   const { data: slips } = await db
     .from("payslips")
-    .select("id, employee_id, gross, net, held, breakdown, employees!inner(name, org_id)")
+    .select("id, employee_id, held")
     .eq("cycle_id", idParse.data)
     .eq("employees.org_id", orgId)
     .order("created_at", { ascending: true });
 
+  // Assign the payment reference synchronously (the payment list/CSV needs it
+  // immediately), then enqueue the heavy payslip-PDF generation as background
+  // jobs so approval returns fast. Each PDF job is idempotent (deterministic
+  // jobId + a no-op when pdf_url is already set), so a retry never duplicates.
   let i = 0;
   for (const s of slips ?? []) {
     if (s.held) continue;
     i += 1;
-    const emp = Array.isArray((s as any).employees) ? (s as any).employees[0] : (s as any).employees;
-    const bd = (s.breakdown ?? {}) as any;
-    const deductions = [
-      ...((bd.deductions ?? []) as any[]).map((d) => ({ reason: d.label, amount: toNum(d.amount) })),
-      ...((bd.manual_deductions ?? []) as any[]).map((d) => ({ reason: d.label, amount: toNum(d.amount) })),
-    ];
     const paymentRef = `PY-${String(idParse.data).slice(0, 4).toUpperCase()}-${String(i).padStart(3, "0")}`;
+    await db.from("payslips").update({ payment_ref: paymentRef }).eq("id", s.id);
     try {
-      const pdf = await payslipPdf({
-        employeeName: emp?.name ?? "Employee",
-        cycleLabel: cycle.label,
-        gross: toNum(s.gross),
-        deductions,
-        net: toNum(s.net),
-      });
-      const { signedUrl } = await uploadPdf(`payslips/${s.id}.pdf`, pdf);
-      await db.from("payslips").update({ pdf_url: signedUrl, payment_ref: paymentRef }).eq("id", s.id);
+      await enqueue("pdf", { payslipId: s.id }, `pdf:${s.id}`);
     } catch (err) {
-      console.error(`[payroll] payslip PDF failed for ${s.id}:`, (err as Error).message);
-      await db.from("payslips").update({ payment_ref: paymentRef }).eq("id", s.id);
+      console.error(`[payroll] could not enqueue payslip PDF for ${s.id}:`, (err as Error).message);
     }
   }
 
