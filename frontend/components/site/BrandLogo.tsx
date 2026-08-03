@@ -18,15 +18,15 @@ import { KauntaBell } from "@/components/KauntaLogo";
 export function BrandLogo({
   className,
   size = "md",
-  tone = "light",
+  tone = "dark",
 }: {
   className?: string;
   size?: "sm" | "md" | "lg";
-  tone?: "light" | "dark";
+  tone?: "dark" | "light";
 }) {
   const mark = { sm: 22, md: 27, lg: 34 }[size];
   const text = { sm: "text-[1.05rem]", md: "text-[1.3rem]", lg: "text-[1.65rem]" }[size];
-  const markColor = tone === "light" ? "#FFFFFF" : "#1E3FD8";
+  const markColor = tone === "dark" ? "#FFFFFF" : "#1E3FD8";
 
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
@@ -36,14 +36,14 @@ export function BrandLogo({
         className={cn(
           "font-display leading-none tracking-[-0.015em]",
           text,
-          tone === "light" ? "text-white" : "text-kaunta-ink"
+          tone === "dark" ? "text-white" : "text-kaunta-ink"
         )}
       >
         Kaunta
         <span
           className={cn(
             "ml-1 font-sans text-[0.5em] font-medium uppercase tracking-[0.2em] align-middle",
-            tone === "light" ? "text-white/55" : "text-kaunta-ultra"
+            tone === "dark" ? "text-white/55" : "text-kaunta-ultra"
           )}
         >
           HR

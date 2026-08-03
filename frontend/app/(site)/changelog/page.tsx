@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { cn } from "@/lib/utils";
-import { Container, SectionHead, Screenshot } from "@/components/site/SiteUI";
-import { Reveal } from "@/components/site/Reveal";
+import { Container, SectionHead, Shot, SHOTS } from "@/components/site/SiteUI";
 import { PageHero, CTASection, NextLinks } from "@/components/site/Blocks";
 
 export const metadata: Metadata = {
@@ -17,7 +16,7 @@ type Release = {
   date: string;
   title: string;
   summary?: string;
-  screenshot?: { label: string; ratio?: string };
+  shot?: keyof typeof SHOTS;
   changes: { tag: Tag; text: string }[];
 };
 
@@ -34,7 +33,7 @@ const RELEASES: Release[] = [
     title: "Attendance calendar and downloadable site reports",
     summary:
       "A month at a glance for a single site, and a report an owner can take away from the screen.",
-    screenshot: { label: "attendance calendar view", ratio: "16 / 10" },
+    shot: "teamCalendar",
     changes: [
       { tag: "Added", text: "Calendar view of attendance per site, with exceptions marked on the day they occurred." },
       { tag: "Added", text: "Owner-only downloadable attendance report, including the selfie captured with each scan." },
@@ -48,7 +47,7 @@ const RELEASES: Release[] = [
     title: "Per-site penalty policies",
     summary:
       "Rules moved from the business onto the site, so a station on a bad commuter road can differ from a branch staff walk to.",
-    screenshot: { label: "penalty rules config" },
+    shot: "rules",
     changes: [
       { tag: "Added", text: "A separate penalty policy per site, with the option to copy an existing policy across." },
       { tag: "Added", text: "Validation that rejects overlapping or gapped lateness bands before a policy can save." },
@@ -62,7 +61,7 @@ const RELEASES: Release[] = [
     title: "Locked outcome documents",
     summary:
       "Appeals now close into a tamper-evident PDF with its hash recorded against the case.",
-    screenshot: { label: "dispute appeal PDF" },
+
     changes: [
       { tag: "Added", text: "Locked PDF written at the moment an appeal is decided, sent to the staff member by secure link." },
       { tag: "Added", text: "Document hash recorded against the case at close." },
@@ -95,7 +94,7 @@ const RELEASES: Release[] = [
     version: "1.1",
     date: "February 2026",
     title: "Multi-site exception dashboard",
-    screenshot: { label: "dashboard exception view", ratio: "16 / 9" },
+    shot: "overview",
     changes: [
       { tag: "Added", text: "One dashboard across all sites, built around exceptions rather than raw logs." },
       { tag: "Added", text: "Missed shift, out-of-fence and late-sync exception types." },
@@ -108,7 +107,7 @@ const RELEASES: Release[] = [
     date: "January 2026",
     title: "Attendance, first release",
     summary: "QR clock-in with geofencing, selfie and GPS, and onboarding over WhatsApp OTP.",
-    screenshot: { label: "mobile clock-in selfie+GPS", ratio: "4 / 3" },
+
     changes: [
       { tag: "Added", text: "Signed QR code per site, with a geofence radius set on a map." },
       { tag: "Added", text: "Selfie and GPS reading captured with every accepted scan." },
@@ -134,7 +133,7 @@ export default function ChangelogPage() {
               key={r.version}
               className="grid gap-8 border-t border-white/10 py-12 first:border-t-0 first:pt-0 lg:grid-cols-[9rem_minmax(0,1fr)] lg:gap-14 lg:py-16"
             >
-              <Reveal variant="fade">
+              <>
                 <div className="lg:sticky lg:top-28">
                   <p className="font-display text-2xl text-white">
                     {r.version}
@@ -148,9 +147,9 @@ export default function ChangelogPage() {
                     </span>
                   )}
                 </div>
-              </Reveal>
+              </>
 
-              <Reveal variant="left" delay={60}>
+              <>
                 <h2 className="font-display text-[1.6rem] leading-snug tracking-[-0.015em] text-white sm:text-[2rem]">
                   {r.title}
                 </h2>
@@ -178,16 +177,15 @@ export default function ChangelogPage() {
                   ))}
                 </ul>
 
-                {r.screenshot && (
+                {r.shot && (
                   <div className="mt-10 max-w-xl">
-                    <Screenshot
-                      label={r.screenshot.label}
-                      ratio={r.screenshot.ratio ?? "16 / 10"}
-                      tone="dark"
+                    <Shot
+                      shot={SHOTS[r.shot]}
+                      frame={r.shot === "teamCalendar" ? "screen" : "device"}
                     />
                   </div>
                 )}
-              </Reveal>
+              </>
             </div>
           ))}
         </Container>
@@ -195,16 +193,16 @@ export default function ChangelogPage() {
 
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="prose" className="py-16 sm:py-20">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               align="center"
               eyebrow="Coming next"
               title="On the bench"
               lede="Not promises with dates on them — just what is being worked on now."
             />
-          </Reveal>
-          <Reveal delay={90}>
+          </>
+          <>
             <ul className="mx-auto mt-10 max-w-lg space-y-3.5">
               {[
                 "Shift templates, so a roster can be applied to a site rather than built each week.",
@@ -223,7 +221,7 @@ export default function ChangelogPage() {
                 </li>
               ))}
             </ul>
-          </Reveal>
+          </>
         </Container>
       </section>
 

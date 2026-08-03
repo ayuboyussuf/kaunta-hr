@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Screenshot } from "@/components/site/SiteUI";
+import { Shot, SHOTS } from "@/components/site/SiteUI";
 import {
   DocPage,
   H2,
@@ -84,14 +84,13 @@ export default function DisputesDocPage() {
         </StepItem>
       </Steps>
 
-      <Screenshot
-        label="dispute appeal PDF"
-        ratio="16 / 10"
-        tone="dark"
-        className="mt-8 max-w-2xl"
-      />
 
       <H2 id="document">What the locked document contains</H2>
+      <Shot
+        shot={SHOTS.violationOutcome}
+        caption="A closed case, upheld"
+        className="mt-6 max-w-sm"
+      />
       <CodeBlock
         label="Outcome document — fields"
         lines={[

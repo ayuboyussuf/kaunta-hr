@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import {
   Container,
   SectionHead,
-  Screenshot,
+  Shot,
+  SHOTS,
   SpecList,
   SiteButton,
   ArrowRight,
   FeatureCard,
 } from "@/components/site/SiteUI";
-import { Reveal } from "@/components/site/Reveal";
 import { PageHero, CTASection, NextLinks, FAQ } from "@/components/site/Blocks";
-import { MultiSitePlan, GeofencePlan } from "@/components/site/Engravings";
+import { SealedRecord } from "@/components/site/Engravings";
 
 export const metadata: Metadata = {
   title: "For multi-site owners",
@@ -86,8 +86,8 @@ export default function MultiSitePage() {
           <SiteButton href="/signup" variant="light" size="lg">
             Start with one site <ArrowRight />
           </SiteButton>
-          <SiteButton href="/pricing" variant="outline" size="lg">
-            See per-site pricing
+          <SiteButton href="/how-it-works" variant="outline" size="lg">
+            See a day across two sites
           </SiteButton>
         </div>
       </PageHero>
@@ -96,15 +96,15 @@ export default function MultiSitePage() {
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-20 sm:py-28">
           <div className="grid gap-14 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
-            <Reveal variant="left">
+            <>
               <SectionHead
-                tone="light"
+                tone="dark"
                 eyebrow="The second site"
                 title="One location you manage. Two, you supervise a supervisor."
                 lede="At one site you know who came in because you were there. The moment there is a second, your attendance record becomes a report from someone who has a relationship with the people in it — and every payroll dispute afterwards is your word against a page in a book."
               />
               <SpecList
-                tone="light"
+                tone="dark"
                 className="mt-10"
                 items={[
                   {
@@ -121,12 +121,10 @@ export default function MultiSitePage() {
                   },
                 ]}
               />
-            </Reveal>
-            <Reveal variant="right" delay={100}>
-              <div className="text-kaunta-ultra-br/85">
-                <MultiSitePlan className="h-auto w-full" />
-              </div>
-            </Reveal>
+            </>
+            <div className="text-white/70">
+              <SealedRecord className="mx-auto h-auto w-full max-w-[320px]" />
+            </div>
           </div>
         </Container>
       </section>
@@ -134,18 +132,18 @@ export default function MultiSitePage() {
       {/* ── The morning ───────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="wide" className="py-20 sm:py-28">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               align="center"
               eyebrow="Your morning"
               title="Eight sites, one screen, about a minute."
               lede="The dashboard does not show you eight sites' worth of clock-ins. It shows you the handful of things that did not go to plan, and stays quiet about the rest."
             />
-          </Reveal>
-          <Reveal delay={100} variant="scale" className="mt-12">
-            <Screenshot label="dashboard exception view" ratio="16 / 9" tone="dark" />
-          </Reveal>
+          </>
+          <div className="mt-12">
+            <Shot shot={SHOTS.overview} frame="device" caption="Site overview on a phone" />
+          </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
@@ -168,15 +166,15 @@ export default function MultiSitePage() {
                 title: "The other five sites",
                 body: "Opened on time, nothing to report, nothing shown. That silence is the feature.",
               },
-            ].map((c, i) => (
-              <Reveal key={c.title} delay={i * 70}>
+            ].map((c) => (
+              <div key={c.title}>
                 <FeatureCard
                   index={c.index}
                   title={c.title}
                   body={c.body}
                   tone="dark"
                 />
-              </Reveal>
+              </div>
             ))}
           </div>
         </Container>
@@ -185,17 +183,17 @@ export default function MultiSitePage() {
       {/* ── Segments ──────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="wide" className="py-20 sm:py-28">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               eyebrow="By business"
               title="What this looks like at your kind of site."
             />
-          </Reveal>
+          </>
 
           <div className="mt-12 grid gap-4 lg:grid-cols-3">
-            {SEGMENTS.map((s, i) => (
-              <Reveal key={s.tag} delay={i * 80}>
+            {SEGMENTS.map((s) => (
+              <div key={s.tag}>
                 <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/[0.02] p-7">
                   <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/70">
                     {s.tag}
@@ -221,7 +219,7 @@ export default function MultiSitePage() {
                     Typical fence · {s.radius}
                   </p>
                 </div>
-              </Reveal>
+              </div>
             ))}
           </div>
         </Container>
@@ -231,20 +229,17 @@ export default function MultiSitePage() {
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-20 sm:py-28">
           <div className="grid gap-14 lg:grid-cols-2 lg:items-center lg:gap-20">
-            <Reveal variant="left" delay={80} className="order-2 lg:order-1">
-              <div className="text-kaunta-ultra-br/85">
-                <GeofencePlan className="mx-auto h-auto w-full max-w-[300px]" />
-              </div>
-            </Reveal>
-            <Reveal variant="right" className="order-1 lg:order-2">
+            <div className="order-2 lg:order-1">
+            </div>
+            <div className="order-1 lg:order-2">
               <SectionHead
-                tone="light"
+                tone="dark"
                 eyebrow="Rolling out"
                 title="Do one site first. Do not do all of them."
                 lede="The owners who get this working start at their most difficult location — the one furthest away, or the one they trust the record from least — and run it alone for a few weeks."
               />
               <SpecList
-                tone="light"
+                tone="dark"
                 className="mt-10"
                 items={[
                   {
@@ -265,7 +260,7 @@ export default function MultiSitePage() {
                   },
                 ]}
               />
-            </Reveal>
+            </div>
           </div>
         </Container>
       </section>
@@ -273,13 +268,13 @@ export default function MultiSitePage() {
       {/* ── FAQ ───────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="prose" className="py-20 sm:py-24">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               eyebrow="Questions"
               title="Running more than one"
             />
-          </Reveal>
+          </>
           <div className="mt-10">
             <FAQ items={MULTI_FAQ} tone="dark" />
           </div>
@@ -294,9 +289,9 @@ export default function MultiSitePage() {
             blurb: "A full day across two stations, start to finish.",
           },
           {
-            href: "/pricing",
-            label: "Pricing",
-            blurb: "Per-site plans, and a worked example at four sites.",
+            href: "/docs",
+            label: "Documentation",
+            blurb: "Setting up sites, fences, rules and staff.",
           },
           {
             href: "/compliance",

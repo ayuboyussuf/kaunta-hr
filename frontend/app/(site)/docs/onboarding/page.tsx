@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Screenshot } from "@/components/site/SiteUI";
 import {
   DocPage,
   H2,
@@ -74,12 +73,6 @@ export default function OnboardingDocPage() {
         </StepItem>
       </Steps>
 
-      <Screenshot
-        label="staff onboarding + OTP"
-        ratio="16 / 10"
-        tone="dark"
-        className="mt-8 max-w-2xl"
-      />
 
       <H2 id="numbers">Phone number formats</H2>
       <P>

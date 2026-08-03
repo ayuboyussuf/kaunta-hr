@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Screenshot } from "@/components/site/SiteUI";
 import {
   DocPage,
   H2,
@@ -129,12 +128,6 @@ export default function DocsIndexPage() {
         <LI>A4 is enough for a wall. A5 is enough for a counter.</LI>
       </UL>
 
-      <Screenshot
-        label="site QR code generation"
-        ratio="16 / 10"
-        tone="dark"
-        className="mt-8 max-w-2xl"
-      />
 
       <H2 id="staff">4. Add the staff</H2>
       <P>

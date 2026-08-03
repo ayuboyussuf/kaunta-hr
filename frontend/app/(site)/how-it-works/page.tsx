@@ -2,20 +2,12 @@ import type { Metadata } from "next";
 import {
   Container,
   SectionHead,
-  Screenshot,
+  Shot,
+  SHOTS,
   SpecList,
   Eyebrow,
 } from "@/components/site/SiteUI";
-import { Reveal, DrawReveal } from "@/components/site/Reveal";
 import { PageHero, CTASection, NextLinks } from "@/components/site/Blocks";
-import {
-  GeofencePlan,
-  RuleLadder,
-  SealedDocument,
-  PayslipSheet,
-  PhoneClockIn,
-  DisputeFlow,
-} from "@/components/site/Engravings";
 
 export const metadata: Metadata = {
   title: "How it works",
@@ -29,8 +21,7 @@ type Beat = {
   title: string;
   body: React.ReactNode;
   detail?: { term: string; value: React.ReactNode }[];
-  art?: React.ReactNode;
-  screenshot?: { label: string; ratio?: string };
+  shot?: keyof typeof SHOTS;
 };
 
 const BEATS: Beat[] = [
@@ -44,11 +35,6 @@ const BEATS: Beat[] = [
         camera, scans, and the page loads in the browser — there is nothing to
         install and no password to remember. Her shift is rostered for 07:00.
       </>
-    ),
-    art: (
-      <DrawReveal length={1000}>
-        <PhoneClockIn className="h-auto w-[128px]" />
-      </DrawReveal>
     ),
   },
   {
@@ -70,16 +56,11 @@ const BEATS: Beat[] = [
       { term: "Captured", value: "Selfie, GPS reading, device time" },
       { term: "Result", value: "Accepted — on time, 2 minutes early" },
     ],
-    art: (
-      <DrawReveal length={900}>
-        <GeofencePlan className="h-auto w-full max-w-[260px]" />
-      </DrawReveal>
-    ),
-    screenshot: { label: "mobile clock-in selfie+GPS", ratio: "4 / 3" },
   },
   {
     time: "07:41",
     actor: "System",
+    shot: "overview",
     title: "At the second station, nobody has scanned",
     body: (
       <>
@@ -89,11 +70,11 @@ const BEATS: Beat[] = [
         of three things asking for attention this morning.
       </>
     ),
-    screenshot: { label: "dashboard exception view", ratio: "16 / 9" },
   },
   {
     time: "07:52",
     actor: "System",
+    shot: "rules",
     title: "Peter scans 52 minutes late, and the rule does the arithmetic",
     body: (
       <>
@@ -110,8 +91,6 @@ const BEATS: Beat[] = [
       { term: "Band matched", value: "Over 30 minutes" },
       { term: "Applied", value: "Deduction recorded against the period, with a notice by SMS" },
     ],
-    art: <RuleLadder className="h-auto w-full max-w-[280px]" />,
-    screenshot: { label: "penalty rules config" },
   },
   {
     time: "09:15",
@@ -125,7 +104,6 @@ const BEATS: Beat[] = [
         the penalty, not sent as a message that can be lost.
       </>
     ),
-    art: <DisputeFlow className="h-auto w-full max-w-[300px]" />,
   },
   {
     time: "13:30",
@@ -146,16 +124,11 @@ const BEATS: Beat[] = [
       { term: "Output", value: "Locked PDF, hash recorded at close" },
       { term: "Sent to", value: "Peter, as a secure link" },
     ],
-    art: (
-      <DrawReveal length={1200}>
-        <SealedDocument className="h-auto w-[128px]" />
-      </DrawReveal>
-    ),
-    screenshot: { label: "dispute appeal PDF" },
   },
   {
     time: "End of month",
     actor: "Accountant",
+    shot: "teamCalendar",
     title: "The payslip already knows all of it",
     body: (
       <>
@@ -166,12 +139,6 @@ const BEATS: Beat[] = [
         Both go out as signed links over SMS.
       </>
     ),
-    art: (
-      <DrawReveal length={1100}>
-        <PayslipSheet className="h-auto w-[128px]" />
-      </DrawReveal>
-    ),
-    screenshot: { label: "payslip", ratio: "3 / 4" },
   },
 ];
 
@@ -186,13 +153,13 @@ export default function HowItWorksPage() {
 
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="wide" className="py-16 sm:py-24">
-          {BEATS.map((beat, i) => (
+          {BEATS.map((beat) => (
             <div
-              key={i}
+              key={beat.title}
               className="grid gap-8 border-t border-white/10 py-12 first:border-t-0 first:pt-0 lg:grid-cols-[7rem_minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-12 lg:py-16"
             >
               {/* time rail */}
-              <Reveal variant="fade">
+              <>
                 <div className="lg:sticky lg:top-28">
                   <p className="font-mono text-[0.8125rem] tracking-[0.08em] text-kaunta-ultra-br">
                     {beat.time}
@@ -201,10 +168,10 @@ export default function HowItWorksPage() {
                     {beat.actor}
                   </p>
                 </div>
-              </Reveal>
+              </>
 
               {/* narrative */}
-              <Reveal variant="left" delay={60}>
+              <>
                 <h2 className="font-display text-[1.6rem] leading-[1.15] tracking-[-0.015em] text-white sm:text-[2rem]">
                   {beat.title}
                 </h2>
@@ -212,25 +179,17 @@ export default function HowItWorksPage() {
                   {beat.body}
                 </div>
                 {beat.detail && (
-                  <SpecList tone="light" className="mt-8" items={beat.detail} />
+                  <SpecList tone="dark" className="mt-8" items={beat.detail} />
                 )}
-              </Reveal>
+              </>
 
               {/* visual */}
-              <Reveal variant="right" delay={120}>
-                <div className="flex flex-col gap-8">
-                  {beat.art && (
-                    <div className="text-kaunta-ultra-br/85">{beat.art}</div>
-                  )}
-                  {beat.screenshot && (
-                    <Screenshot
-                      label={beat.screenshot.label}
-                      ratio={beat.screenshot.ratio ?? "16 / 10"}
-                      tone="dark"
-                    />
-                  )}
-                </div>
-              </Reveal>
+              {beat.shot && (
+                <Shot
+                  shot={SHOTS[beat.shot]}
+                  frame={beat.shot === "teamCalendar" ? "screen" : "device"}
+                />
+              )}
             </div>
           ))}
         </Container>
@@ -239,16 +198,16 @@ export default function HowItWorksPage() {
       {/* What the owner actually did all day */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-20 sm:py-28">
-          <Reveal>
+          <>
             <SectionHead
               align="center"
-              tone="light"
+              tone="dark"
               eyebrow="The point"
               title="The owner touched this twice."
               lede="Once to look at three exceptions in the morning, once to settle an appeal after lunch. Everything else — the scans, the fence checks, the arithmetic, the notices, the documents — happened without anyone being asked to remember it."
             />
-          </Reveal>
-          <Reveal delay={100}>
+          </>
+          <>
             <div className="mx-auto mt-12 grid max-w-3xl gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
               {[
                 ["11", "scans recorded"],
@@ -263,10 +222,10 @@ export default function HowItWorksPage() {
                 </div>
               ))}
             </div>
-          </Reveal>
-          <Reveal delay={160}>
+          </>
+          <>
             <div className="mx-auto mt-12 max-w-2xl text-center">
-              <Eyebrow tone="light">A note on signal</Eyebrow>
+              <Eyebrow tone="dark">A note on signal</Eyebrow>
               <p className="mt-4 text-[0.9rem] leading-relaxed text-white/55">
                 Both stations in this walkthrough had usable data. Kaunta HR is
                 built for low-connectivity sites: a scan taken where the signal is
@@ -275,7 +234,7 @@ export default function HowItWorksPage() {
                 sync delay is never mistaken for a late arrival.
               </p>
             </div>
-          </Reveal>
+          </>
         </Container>
       </section>
 

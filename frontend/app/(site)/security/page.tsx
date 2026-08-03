@@ -5,9 +5,8 @@ import {
   SpecList,
   Eyebrow,
 } from "@/components/site/SiteUI";
-import { Reveal, DrawReveal } from "@/components/site/Reveal";
 import { PageHero, CTASection, NextLinks, FAQ } from "@/components/site/Blocks";
-import { SealedDocument, GeofencePlan } from "@/components/site/Engravings";
+import { SealedRecord } from "@/components/site/Engravings";
 
 export const metadata: Metadata = {
   title: "Security & data",
@@ -54,17 +53,17 @@ export default function SecurityPage() {
       {/* ── Where it lives ────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-20 sm:py-28">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               eyebrow="Where the data lives"
               title="One managed database, one storage bucket, both encrypted."
               lede="Attendance records, penalties, appeals and staff details are held in managed PostgreSQL. Generated PDFs are held in object storage and served only through signed links."
             />
-          </Reveal>
-          <Reveal delay={90}>
+          </>
+          <>
             <SpecList
-              tone="light"
+              tone="dark"
               className="mt-10"
               items={[
                 {
@@ -99,21 +98,21 @@ export default function SecurityPage() {
                 },
               ]}
             />
-          </Reveal>
+          </>
         </Container>
       </section>
 
       {/* ── Access ────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="wide" className="py-20 sm:py-28">
-          <Reveal>
+          <>
             <SectionHead
-              tone="light"
+              tone="dark"
               align="center"
               eyebrow="Access control"
               title="Three separations, each enforced on the server."
             />
-          </Reveal>
+          </>
           <div className="mt-14 grid gap-4 lg:grid-cols-3">
             {[
               {
@@ -131,8 +130,8 @@ export default function SecurityPage() {
                 t: "Between interface and API",
                 b: "Permissions are checked on every request rather than applied by hiding controls. A session that asks for something outside its role is refused at the API regardless of what was rendered.",
               },
-            ].map((c, i) => (
-              <Reveal key={c.n} delay={i * 80}>
+            ].map((c) => (
+              <div key={c.n}>
                 <div className="h-full rounded-xl border border-white/10 bg-white/[0.02] p-7">
                   <span className="font-mono text-[0.625rem] tracking-[0.16em] text-kaunta-ultra-br/70">
                     {c.n}
@@ -142,7 +141,7 @@ export default function SecurityPage() {
                     {c.b}
                   </p>
                 </div>
-              </Reveal>
+              </div>
             ))}
           </div>
         </Container>
@@ -152,15 +151,15 @@ export default function SecurityPage() {
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-20 sm:py-28">
           <div className="grid gap-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
-            <Reveal variant="left">
+            <>
               <SectionHead
-                tone="light"
+                tone="dark"
                 eyebrow="Document integrity"
                 title="Signed links, and files that can be checked."
                 lede="Two different problems: making sure only the right person opens a document, and making sure the document they open is the one that was produced."
               />
               <SpecList
-                tone="light"
+                tone="dark"
                 className="mt-10"
                 items={[
                   {
@@ -185,14 +184,14 @@ export default function SecurityPage() {
                   },
                 ]}
               />
-            </Reveal>
-            <Reveal variant="right" delay={100}>
-              <div className="text-kaunta-ultra-br/85">
-                <DrawReveal length={1200}>
-                  <SealedDocument className="mx-auto h-auto w-[200px]" />
-                </DrawReveal>
+            </>
+            <>
+              <div className="text-white/70">
+                <>
+                  <SealedRecord className="mx-auto h-auto w-full max-w-[340px]" />
+                </>
               </div>
-            </Reveal>
+            </>
           </div>
         </Container>
       </section>
@@ -201,15 +200,15 @@ export default function SecurityPage() {
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-20 sm:py-28">
           <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-center lg:gap-20">
-            <Reveal variant="left">
+            <>
               <SectionHead
-                tone="light"
+                tone="dark"
                 eyebrow="Staff data"
                 title="What is collected about a staff member, and what is not."
                 lede="A clock-in system that reads position is worth being precise about. Here is the whole list."
               />
               <SpecList
-                tone="light"
+                tone="dark"
                 className="mt-10"
                 items={[
                   { term: "Collected", value: "Name, phone number, assigned site, and pay details you enter." },
@@ -220,14 +219,9 @@ export default function SecurityPage() {
                   { term: "Not collected", value: "Anything at all while the staff member is off shift." },
                 ]}
               />
-            </Reveal>
-            <Reveal variant="right" delay={100}>
-              <div className="text-kaunta-ultra-br/85">
-                <DrawReveal length={900}>
-                  <GeofencePlan className="mx-auto h-auto w-full max-w-[280px]" />
-                </DrawReveal>
-              </div>
-            </Reveal>
+            </>
+            <>
+            </>
           </div>
         </Container>
       </section>
@@ -235,9 +229,9 @@ export default function SecurityPage() {
       {/* ── Reporting ─────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="prose" className="py-16 sm:py-20">
-          <Reveal>
+          <>
             <div className="rounded-xl border border-white/10 bg-white/[0.02] p-7">
-              <Eyebrow tone="light">Reporting a vulnerability</Eyebrow>
+              <Eyebrow tone="dark">Reporting a vulnerability</Eyebrow>
               <p className="mt-4 text-[0.9rem] leading-relaxed text-white/65">
                 If you believe you have found a security issue in Kaunta HR, tell
                 us before you tell anyone else and we will work the fix with you.
@@ -249,16 +243,16 @@ export default function SecurityPage() {
                 addressed, and credit you if you would like to be credited.
               </p>
             </div>
-          </Reveal>
+          </>
         </Container>
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="prose" className="py-20 sm:py-24">
-          <Reveal>
-            <SectionHead tone="light" eyebrow="Questions" title="The ones we get asked" />
-          </Reveal>
+          <>
+            <SectionHead tone="dark" eyebrow="Questions" title="The ones we get asked" />
+          </>
           <div className="mt-10">
             <FAQ items={SECURITY_FAQ} tone="dark" />
           </div>

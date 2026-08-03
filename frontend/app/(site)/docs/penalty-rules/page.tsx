@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Screenshot } from "@/components/site/SiteUI";
+import { Shot, SHOTS } from "@/components/site/SiteUI";
 import {
   DocPage,
   H2,
@@ -105,11 +105,11 @@ export default function PenaltyRulesDocPage() {
         exactly one band.
       </Callout>
 
-      <Screenshot
-        label="penalty rules config"
-        ratio="16 / 10"
-        tone="dark"
-        className="mt-8 max-w-2xl"
+      <Shot
+        shot={SHOTS.rules}
+        frame="device"
+        caption="Rulesets, as staff-facing rules with appeal windows"
+        className="mt-8"
       />
 
       <H2 id="absence">3. Set the absence rule</H2>

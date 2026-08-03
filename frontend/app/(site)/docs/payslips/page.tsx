@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Screenshot } from "@/components/site/SiteUI";
 import {
   DocPage,
   H2,
@@ -70,12 +69,6 @@ export default function PayslipsDocPage() {
         </StepItem>
       </Steps>
 
-      <Screenshot
-        label="payslip"
-        ratio="3 / 4"
-        tone="dark"
-        className="mt-8 max-w-sm"
-      />
 
       <H2 id="contents">What is on the payslip</H2>
       <CodeBlock

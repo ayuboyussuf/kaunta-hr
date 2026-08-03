@@ -13,7 +13,6 @@ import {
   DocLink,
   SeeAlso,
 } from "@/components/site/DocsUI";
-import { Screenshot } from "@/components/site/SiteUI";
 
 export const metadata: Metadata = {
   title: "Roles & permissions",
@@ -94,12 +93,6 @@ export default function RolesDocPage() {
         colleague is visible to them at any point, including at their own site.
       </P>
 
-      <Screenshot
-        label="roles and permissions"
-        ratio="16 / 10"
-        tone="dark"
-        className="mt-8 max-w-2xl"
-      />
 
       <H2 id="enforcement">How access is enforced</H2>
       <P>

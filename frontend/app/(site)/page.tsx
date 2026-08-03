@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   Container,
@@ -5,32 +6,13 @@ import {
   Eyebrow,
   SiteButton,
   ArrowRight,
-  Screenshot,
+  Shot,
+  SHOTS,
   FeatureCard,
   SpecList,
 } from "@/components/site/SiteUI";
-import { Reveal, DrawReveal } from "@/components/site/Reveal";
 import { FAQ, CTASection } from "@/components/site/Blocks";
-import {
-  SiteRowEngraving,
-  GeofencePlan,
-  RuleLadder,
-  SealedDocument,
-  PayslipSheet,
-  PhoneClockIn,
-  MultiSitePlan,
-} from "@/components/site/Engravings";
-
-const SITE_TYPES = [
-  "Fuel stations",
-  "Restaurants",
-  "Retail branches",
-  "Hardware yards",
-  "Car washes",
-  "Security posts",
-  "Pharmacies",
-  "Distribution depots",
-];
+import { SealedRecord } from "@/components/site/Engravings";
 
 const CAPABILITIES = [
   {
@@ -41,7 +23,7 @@ const CAPABILITIES = [
   {
     index: "02",
     title: "Penalty rules you write yourself",
-    body: "Set the grace period, the lateness bands and what each one costs. The rules run against every scan, so nobody has to remember who was late on the 14th.",
+    body: "Set the grace period, what lateness costs, what absence costs. The rules run against every scan, so nobody has to remember who was late on the 14th.",
   },
   {
     index: "03",
@@ -121,53 +103,54 @@ export default function HomePage() {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="relative isolate -mt-16 flex min-h-[92svh] flex-col justify-end overflow-hidden bg-kaunta-void pt-16 sm:-mt-18 sm:min-h-[94svh] sm:pt-18">
-        {/* engraved forecourt, drifting slowly as the hero leaves */}
+      <section className="relative isolate -mt-16 flex min-h-[94svh] flex-col bg-kaunta-void pt-16 sm:-mt-18 sm:pt-18">
+        {/* The forecourt engraving. Full-bleed on desktop, a band anchored to
+            the fold on narrow screens so the station is never half-shown. */}
         <div
           aria-hidden
-          className="drift drift-slow pointer-events-none absolute inset-x-0 bottom-0 h-[34%] overflow-hidden text-white/55 lg:h-[62%]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[48%] overflow-hidden sm:h-[54%] lg:inset-0 lg:h-auto"
         >
-          <SiteRowEngraving className="h-full w-full" />
+          <Image
+            src="/art/forecourt.png"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[64%_center] lg:object-center"
+          />
         </div>
+        {/* scrim — the copy column has to stay readable over the engraving */}
         <div
           aria-hidden
-          className="ultra-glow pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(6,9,15,0.96)_0%,rgba(6,9,15,0.90)_38%,rgba(6,9,15,0.52)_60%,rgba(6,9,15,0.10)_84%,transparent_100%)] lg:bg-[linear-gradient(to_right,rgba(6,9,15,0.95)_0%,rgba(6,9,15,0.86)_32%,rgba(6,9,15,0.38)_56%,transparent_76%)]"
         />
-        {/* scrim — keeps the copy column legible over the line art */}
+        {/* top scrim — the nav sits over the lit canopy on wide screens */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(6,9,15,0.97)_0%,rgba(6,9,15,0.95)_52%,rgba(6,9,15,0.72)_74%,rgba(6,9,15,0.25)_92%,transparent_100%)] lg:bg-[linear-gradient(to_right,rgba(6,9,15,0.94)_0%,rgba(6,9,15,0.82)_34%,rgba(6,9,15,0.30)_62%,transparent_82%)]"
+          className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[linear-gradient(to_bottom,rgba(6,9,15,0.85)_0%,rgba(6,9,15,0.45)_55%,transparent_100%)]"
         />
         <div
           aria-hidden
           className="grain-overlay pointer-events-none absolute inset-0"
         />
 
-        <Container width="wide" className="relative z-10 pb-16 pt-24 sm:pb-24 sm:pt-28">
-          <Reveal variant="fade">
-            <Eyebrow tone="light">
-              Attendance · Penalties · Payslips
-            </Eyebrow>
-          </Reveal>
+        <Container width="wide" className="relative z-20 pb-24 pt-12 sm:pb-28 sm:pt-20">
+          <div className="max-w-3xl">
+            <Eyebrow tone="dark">Attendance · Penalties · Payslips</Eyebrow>
 
-          <Reveal delay={90}>
-            <h1 className="font-display mt-6 max-w-[19ch] text-[2.6rem] leading-[1.02] tracking-[-0.028em] text-white sm:text-[4rem] lg:text-[5rem]">
+            <h1 className="font-display mt-6 text-[2.6rem] leading-[1.02] tracking-[-0.028em] text-white sm:text-[3.9rem] lg:text-[4.6rem]">
               The attendance record for businesses running staff across several
               sites.
             </h1>
-          </Reveal>
 
-          <Reveal delay={180}>
-            <p className="mt-7 max-w-xl text-[1rem] leading-relaxed text-white/65 sm:text-[1.15rem]">
+            <p className="mt-7 max-w-xl text-[1rem] leading-relaxed text-white/65 sm:text-[1.1rem]">
               Kaunta HR is built for Kenyan fuel stations, restaurants and branch
               networks. Staff clock in at the gate by QR, with a selfie and a GPS
               fix. The lateness rules you set apply on their own, staff appeal
               from their phones, and every outcome lands as a locked PDF and a
               payslip you can send.
             </p>
-          </Reveal>
 
-          <Reveal delay={260}>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <SiteButton href="/signup" variant="light" size="lg">
                 Start free <ArrowRight />
@@ -176,8 +159,9 @@ export default function HomePage() {
                 See a day, start to finish
               </SiteButton>
             </div>
-          </Reveal>
+          </div>
         </Container>
+
       </section>
 
       {/* ── Spec strip ───────────────────────────────────────────── */}
@@ -189,235 +173,162 @@ export default function HomePage() {
               ["Onboarding", "WhatsApp OTP"],
               ["Payslips", "Signed PDF links"],
               ["SMS sender ID", "KAUNTAHR"],
-            ].map(([k, v], i) => (
-              <Reveal key={k} delay={i * 60} variant="fade">
-                <div className="bg-kaunta-void px-5 py-7 sm:px-7">
-                  <dt className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
-                    {k}
-                  </dt>
-                  <dd className="mt-2 text-[0.9rem] text-white/75 sm:text-[0.975rem]">
-                    {v}
-                  </dd>
-                </div>
-              </Reveal>
+            ].map(([k, v]) => (
+              <div key={k} className="bg-kaunta-void px-5 py-7 sm:px-7">
+                <dt className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
+                  {k}
+                </dt>
+                <dd className="mt-2 text-[0.9rem] text-white/75 sm:text-[0.975rem]">
+                  {v}
+                </dd>
+              </div>
             ))}
           </dl>
         </Container>
       </section>
 
-      {/* ── Ticker of site types ─────────────────────────────────── */}
-      <section className="ticker-mask overflow-hidden border-b border-white/10 bg-kaunta-void py-5">
-        <div className="ticker-track flex w-max gap-10 whitespace-nowrap">
-          {[...SITE_TYPES, ...SITE_TYPES].map((t, i) => (
-            <span
-              key={i}
-              className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-white/30"
-            >
-              {t}
-              <span className="ml-10 text-white/15">/</span>
-            </span>
-          ))}
-        </div>
-      </section>
-
       {/* ── The premise ──────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
-            <div>
-              <Reveal>
-                <SectionHead
-                  eyebrow="The problem"
-                  tone="light"
-                  title="One site you can watch. Four, you are taking someone's word for it."
-                  lede="Once staff are spread across sites, the attendance book stops being a record and starts being a report from whoever is holding the pen. Payroll arguments follow, and there is nothing to settle them with."
-                />
-              </Reveal>
-              <Reveal delay={100}>
-                <SpecList
-                  tone="light"
-                  className="mt-10"
-                  items={[
-                    {
-                      term: "Today",
-                      value:
-                        "A supervisor writes the times down. You find out about the 8:40 arrival at the end of the month, if at all.",
-                    },
-                    {
-                      term: "Disputes",
-                      value:
-                        "A deduction is challenged. Neither side has anything to point at, so the loudest version wins.",
-                    },
-                    {
-                      term: "Records",
-                      value:
-                        "If the matter goes further than the office, the attendance book is a notebook with corrections in it.",
-                    },
-                  ]}
-                />
-              </Reveal>
-            </div>
-            <Reveal delay={120} variant="scale">
-              <div className="text-kaunta-ultra-br/85">
-                <MultiSitePlan className="h-auto w-full" />
-              </div>
-            </Reveal>
-          </div>
+          <SectionHead
+            eyebrow="The problem"
+            tone="dark"
+            title="One site you can watch. Four, you are taking someone's word for it."
+            lede="Once staff are spread across sites, the attendance book stops being a record and starts being a report from whoever is holding the pen. Payroll arguments follow, and there is nothing to settle them with."
+          />
+          <SpecList
+            tone="dark"
+            className="mt-12 max-w-3xl"
+            items={[
+              {
+                term: "Today",
+                value:
+                  "A supervisor writes the times down. You find out about the 8:40 arrival at the end of the month, if at all.",
+              },
+              {
+                term: "Disputes",
+                value:
+                  "A deduction is challenged. Neither side has anything to point at, so the loudest version wins.",
+              },
+              {
+                term: "Records",
+                value:
+                  "If the matter goes further than the office, the attendance book is a notebook with corrections in it.",
+              },
+            ]}
+          />
         </Container>
       </section>
 
       {/* ── Exception dashboard ──────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="wide" className="py-20 sm:py-28">
-          <Reveal>
-            <SectionHead
-              eyebrow="Multi-site dashboard"
-              tone="light"
-              align="center"
-              title="It opens on what went wrong, not on everything that happened."
-              lede="Every site reports in. The dashboard shows you the exceptions — missed shifts, scans outside the fence, appeals waiting on a decision — and leaves the ordinary days alone."
-            />
-          </Reveal>
-          <Reveal delay={120} variant="scale" className="mt-12">
-            <Screenshot label="dashboard exception view" ratio="16 / 9" tone="dark" />
-          </Reveal>
-          <div className="mt-10 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
-            {[
-              ["Missed", "Nobody scanned at a site that had a shift rostered."],
-              ["Out of fence", "A scan came from beyond the radius you set."],
-              ["Waiting on you", "An appeal has been open longer than a day."],
-            ].map(([k, v], i) => (
-              <Reveal key={k} delay={i * 70}>
-                <div className="h-full bg-kaunta-void p-6">
-                  <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/70">
-                    {k}
-                  </p>
-                  <p className="mt-3 text-[0.875rem] leading-relaxed text-white/55">
-                    {v}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      {/* ── Clock-in ─────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
-            <Reveal variant="left">
+          <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.72fr)] lg:items-center lg:gap-20">
+            <div>
               <SectionHead
-                eyebrow="Clock-in"
-                tone="light"
-                title="A scan that proves where it happened."
-                lede="Print the QR and put it at the gate. When a staff member scans it, the phone checks its own position against the fence you drew around that site, takes a selfie, and stamps the time. A code photographed and carried home does not work."
+                eyebrow="Multi-site dashboard"
+                tone="dark"
+                title="It opens on what went wrong, not on everything that happened."
+                lede="Every site reports in. The screen shows the exceptions — who missed, who was late, what is flagged — and leaves the ordinary days alone."
               />
-              <div className="mt-8">
-                <SiteButton href="/features" variant="outline">
-                  How the geofence works <ArrowRight />
-                </SiteButton>
+              <div className="mt-10 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
+                {[
+                  ["Late", "Arrived after the grace period you set."],
+                  ["Absent", "A rostered shift with no scan against it."],
+                  ["Flagged", "A scan that needs a person to look at it."],
+                ].map(([k, v]) => (
+                  <div key={k} className="h-full bg-kaunta-void p-6">
+                    <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/80">
+                      {k}
+                    </p>
+                    <p className="mt-3 text-[0.875rem] leading-relaxed text-white/55">
+                      {v}
+                    </p>
+                  </div>
+                ))}
               </div>
-            </Reveal>
-            <Reveal delay={100} variant="right">
-              <div className="grid grid-cols-[1fr_auto] items-center gap-6 text-kaunta-ultra-br/85">
-                <DrawReveal length={900}>
-                  <GeofencePlan className="h-auto w-full max-w-[300px]" />
-                </DrawReveal>
-                <DrawReveal length={900} delay={200}>
-                  <PhoneClockIn className="h-auto w-[110px] sm:w-[140px]" />
-                </DrawReveal>
-              </div>
-            </Reveal>
-          </div>
-          <Reveal delay={80} className="mt-14">
-            <Screenshot
-              label="mobile clock-in selfie+GPS"
-              ratio="4 / 3"
-              tone="dark"
-              className="mx-auto max-w-md"
+            </div>
+            <Shot
+              shot={SHOTS.overview}
+              frame="device"
+              caption="Site overview — the day in four numbers"
             />
-          </Reveal>
+          </div>
         </Container>
       </section>
 
-      {/* ── Rules + disputes ─────────────────────────────────────── */}
+      {/* ── Rules ────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="wide" className="py-20 sm:py-28">
-          <Reveal>
-            <SectionHead
-              eyebrow="Rules and appeals"
-              tone="light"
-              title="The deduction is calculated once, and it can be argued with."
+          <div className="grid gap-14 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
+            <Shot
+              shot={SHOTS.rules}
+              frame="device"
+              caption="Rulesets — shared or per site"
             />
-          </Reveal>
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-2">
-            <Reveal variant="left">
-              <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/[0.02] p-7 sm:p-9">
-                <div className="text-kaunta-ultra-br/85">
-                  <RuleLadder className="h-auto w-full max-w-[300px]" />
-                </div>
-                <h3 className="font-display mt-8 text-2xl text-white">
-                  You write the rules
-                </h3>
-                <p className="mt-3 max-w-md text-[0.9rem] leading-relaxed text-white/55">
-                  Grace period, lateness bands, what absence costs, whether
-                  weekends count differently. Set it per site or apply one policy
-                  across all of them. Nothing is applied that you did not
-                  configure.
-                </p>
-                <div className="mt-8">
-                  <Screenshot label="penalty rules config" ratio="16 / 10" tone="dark" />
-                </div>
+            <div>
+              <SectionHead
+                eyebrow="Penalty rules"
+                tone="dark"
+                title="The deduction is decided once, in advance, by you."
+                lede="Write the rules for your business — what lateness costs, what phone use on the forecourt costs, how long someone has to appeal. Every scan is measured against them the moment it lands, so nothing is decided from memory at month end."
+              />
+              <SpecList
+                tone="dark"
+                className="mt-10"
+                items={[
+                  { term: "Set by", value: "The owner, per site or shared across all of them." },
+                  { term: "Applied", value: "Automatically, against the scan that triggered it." },
+                  { term: "Appeal window", value: "Configured per rule — 24 hours by default." },
+                  { term: "Optional", value: "Deductions can be switched off entirely; the attendance record still stands." },
+                ]}
+              />
+              <div className="mt-8">
+                <SiteButton href="/docs/penalty-rules" variant="outline">
+                  How rules are matched <ArrowRight />
+                </SiteButton>
               </div>
-            </Reveal>
-
-            <Reveal variant="right" delay={90}>
-              <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/[0.02] p-7 sm:p-9">
-                <div className="text-kaunta-ultra-br/85">
-                  <DrawReveal length={1200}>
-                    <SealedDocument className="h-auto w-[150px]" />
-                  </DrawReveal>
-                </div>
-                <h3 className="font-display mt-8 text-2xl text-white">
-                  Staff can appeal it
-                </h3>
-                <p className="mt-3 max-w-md text-[0.9rem] leading-relaxed text-white/55">
-                  A penalty can be disputed from the phone it was applied to,
-                  with a reason attached. You uphold or waive. Either way the
-                  case closes into a locked PDF that records what was claimed,
-                  what was decided and when.
-                </p>
-                <div className="mt-8">
-                  <Screenshot label="dispute appeal PDF" ratio="16 / 10" tone="dark" />
-                </div>
-              </div>
-            </Reveal>
+            </div>
           </div>
         </Container>
       </section>
 
-      {/* ── Payslips ─────────────────────────────────────────────── */}
+      {/* ── The record ───────────────────────────────────────────── */}
+      <section className="border-b border-white/10 bg-kaunta-void">
+        <Container width="wide" className="py-20 sm:py-28">
+          <SectionHead
+            eyebrow="The record"
+            tone="dark"
+            align="center"
+            title="A month you can hand to somebody."
+            lede="Every day carries its own state, every state traces back to a scan, and the whole month exports as a report with the selfies attached."
+          />
+          <div className="mt-12">
+            <Shot shot={SHOTS.teamCalendar} caption="One employee's month, with the report export" />
+          </div>
+        </Container>
+      </section>
+
+      {/* ── Appeals + locked documents ───────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container className="py-20 sm:py-28">
           <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
-            <Reveal delay={80} variant="left" className="order-2 lg:order-1">
-              <Screenshot label="payslip" ratio="3 / 4" tone="dark" className="max-w-xs" />
-            </Reveal>
-            <Reveal variant="right" className="order-1 lg:order-2">
+            <div>
               <SectionHead
-                eyebrow="Payslips"
-                tone="light"
-                title="The deductions on the payslip are the ones you can trace."
-                lede="Every line on a Kaunta HR payslip goes back to a scan, a rule and — where it was challenged — a closed appeal. Send it as a signed link over SMS; it opens for that employee and expires."
+                eyebrow="Appeals"
+                tone="dark"
+                title="A penalty a staff member can argue with, and a file that closes."
+                lede="Staff dispute from the phone the penalty landed on, with a reason attached. You uphold or waive. Either way the case closes into a locked PDF recording what was claimed, what was decided, by whom and when — and its hash is kept against the case."
               />
-              <div className="mt-8 text-kaunta-ultra-br/85">
-                <DrawReveal length={1100}>
-                  <PayslipSheet className="h-auto w-[130px]" />
-                </DrawReveal>
+              <div className="mt-8">
+                <SiteButton href="/compliance" variant="outline">
+                  What the record is worth <ArrowRight />
+                </SiteButton>
               </div>
-            </Reveal>
+            </div>
+            <div className="text-white/70">
+              <SealedRecord className="mx-auto h-auto w-full max-w-[340px]" />
+            </div>
           </div>
         </Container>
       </section>
@@ -425,117 +336,32 @@ export default function HomePage() {
       {/* ── Capability grid ──────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="wide" className="py-20 sm:py-28">
-          <Reveal>
-            <SectionHead
-              eyebrow="Everything in the box"
-              tone="light"
-              title="Seven things it does, and nothing it doesn't."
-            />
-          </Reveal>
+          <SectionHead
+            eyebrow="Everything in the box"
+            tone="dark"
+            title="Seven things it does, and nothing it doesn't."
+          />
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {CAPABILITIES.map((c, i) => (
-              <Reveal key={c.index} delay={(i % 3) * 70}>
-                <FeatureCard
-                  index={c.index}
-                  title={c.title}
-                  body={c.body}
-                  tone="dark"
-                />
-              </Reveal>
-            ))}
-            <Reveal delay={140}>
-              <Link
-                href="/features"
-                className="flex h-full flex-col justify-between rounded-xl border border-dashed border-white/15 p-6 transition-colors duration-300 hover:border-white/35 sm:p-7"
-              >
-                <span className="font-display text-xl text-white/80">
-                  Every capability in detail
-                </span>
-                <span className="mt-6 inline-flex items-center gap-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-white/45">
-                  Product <ArrowRight className="h-3 w-3" />
-                </span>
-              </Link>
-            </Reveal>
-          </div>
-        </Container>
-      </section>
-
-      {/* ── Social proof slot ────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-24">
-          <Reveal>
-            <Eyebrow tone="light" className="text-center">
-              In use at
-            </Eyebrow>
-          </Reveal>
-          <Reveal delay={80}>
-            <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="flex h-24 items-center justify-center bg-kaunta-void"
-                >
-                  <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/25">
-                    [Logo slot {i}]
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-          <Reveal delay={140}>
-            <blockquote className="mx-auto mt-12 max-w-2xl text-center">
-              <p className="font-display text-xl leading-snug text-white/85 sm:text-2xl">
-                [Customer quote slot &mdash; one owner, one specific outcome, with
-                the site count and the month.]
-              </p>
-              <footer className="mt-5 font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-white/35">
-                [Name] · [Business] · [Town]
-              </footer>
-            </blockquote>
-          </Reveal>
-        </Container>
-      </section>
-
-      {/* ── Pricing teaser ───────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center">
-            <Reveal>
-              <SectionHead
-                eyebrow="Pricing"
-                tone="light"
-                title="Priced per site, in shillings."
-                lede="One site or twenty, you pay for the sites you actually run. SMS is billed at cost. No per-scan charges — staff clock in as often as the roster says."
+            {CAPABILITIES.map((c) => (
+              <FeatureCard
+                key={c.index}
+                index={c.index}
+                title={c.title}
+                body={c.body}
+                tone="dark"
               />
-              <div className="mt-8">
-                <SiteButton href="/pricing" variant="light">
-                  See the plans <ArrowRight />
-                </SiteButton>
-              </div>
-            </Reveal>
-            <Reveal delay={100} variant="right">
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-7 sm:p-9">
-                <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
-                  From
-                </p>
-                <p className="font-display mt-3 text-[3rem] leading-none tracking-[-0.02em] text-white">
-                  KES 3,500
-                  <span className="ml-2 font-sans text-sm font-normal tracking-normal text-white/40">
-                    / site / month
-                  </span>
-                </p>
-                <SpecList
-                  tone="light"
-                  className="mt-8"
-                  items={[
-                    { term: "Included", value: "QR clock-in, geofencing, selfie + GPS" },
-                    { term: "Included", value: "Penalty rules, appeals, locked PDFs" },
-                    { term: "Included", value: "Payslips and secure links" },
-                    { term: "Billed at cost", value: "SMS sent under KAUNTAHR" },
-                  ]}
-                />
-              </div>
-            </Reveal>
+            ))}
+            <Link
+              href="/features"
+              className="flex h-full flex-col justify-between rounded-xl border border-dashed border-white/15 p-6 transition-colors duration-300 hover:border-white/35 sm:p-7"
+            >
+              <span className="font-display text-xl text-white/80">
+                Every capability in detail
+              </span>
+              <span className="mt-6 inline-flex items-center gap-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-white/45">
+                Product <ArrowRight className="h-3 w-3" />
+              </span>
+            </Link>
           </div>
         </Container>
       </section>
@@ -543,9 +369,7 @@ export default function HomePage() {
       {/* ── FAQ ──────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
         <Container width="prose" className="py-20 sm:py-28">
-          <Reveal>
-            <SectionHead eyebrow="Questions" tone="light" title="Before you set it up" />
-          </Reveal>
+          <SectionHead eyebrow="Questions" tone="dark" title="Before you set it up" />
           <div className="mt-12">
             <FAQ items={FAQ_ITEMS} tone="dark" />
           </div>
