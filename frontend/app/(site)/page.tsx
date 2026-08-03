@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   Container,
@@ -11,7 +12,7 @@ import {
   SpecList,
 } from "@/components/site/SiteUI";
 import { FAQ, CTASection } from "@/components/site/Blocks";
-import { ForecourtEngraving, SealedRecord } from "@/components/site/Engravings";
+import { SealedRecord } from "@/components/site/Engravings";
 
 const CAPABILITIES = [
   {
@@ -103,21 +104,30 @@ export default function HomePage() {
     <>
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="relative isolate -mt-16 flex min-h-[94svh] flex-col bg-kaunta-void pt-16 sm:-mt-18 sm:pt-18">
-        {/* the forecourt — anchored to the fold so it is never half-shown */}
+        {/* The forecourt engraving. Full-bleed on desktop, a band anchored to
+            the fold on narrow screens so the station is never half-shown. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] overflow-hidden text-white/70 sm:h-[62%]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[48%] overflow-hidden sm:h-[54%] lg:inset-0 lg:h-auto"
         >
-          <ForecourtEngraving className="h-full w-full" />
+          <Image
+            src="/art/forecourt.png"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[64%_center] lg:object-center"
+          />
         </div>
+        {/* scrim — the copy column has to stay readable over the engraving */}
         <div
           aria-hidden
-          className="ultra-glow pointer-events-none absolute inset-x-0 bottom-0 h-[70%]"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(6,9,15,0.96)_0%,rgba(6,9,15,0.90)_38%,rgba(6,9,15,0.52)_60%,rgba(6,9,15,0.10)_84%,transparent_100%)] lg:bg-[linear-gradient(to_right,rgba(6,9,15,0.95)_0%,rgba(6,9,15,0.86)_32%,rgba(6,9,15,0.38)_56%,transparent_76%)]"
         />
-        {/* scrim — the copy column must stay readable over the line work */}
+        {/* top scrim — the nav sits over the lit canopy on wide screens */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(6,9,15,0.97)_0%,rgba(6,9,15,0.93)_42%,rgba(6,9,15,0.55)_66%,rgba(6,9,15,0.12)_86%,transparent_100%)] lg:bg-[linear-gradient(to_right,rgba(6,9,15,0.96)_0%,rgba(6,9,15,0.88)_34%,rgba(6,9,15,0.42)_58%,transparent_78%)]"
+          className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[linear-gradient(to_bottom,rgba(6,9,15,0.85)_0%,rgba(6,9,15,0.45)_55%,transparent_100%)]"
         />
         <div
           aria-hidden
