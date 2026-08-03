@@ -10,6 +10,7 @@
  * check that day adds a small dot.
  */
 import { useEffect, useMemo, useState } from "react";
+import { DateTime } from "luxon";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export interface CalEntry {
@@ -23,9 +24,9 @@ export interface CalCheck {
 }
 
 const TZ = "Africa/Nairobi";
-const ymdInTz = (iso: string) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
-const todayYmd = () => ymdInTz(new Date().toISOString());
+// Nairobi calendar date (YYYY-MM-DD) for an instant — used to bucket scans/checks.
+const ymdInTz = (iso: string) => DateTime.fromISO(iso).setZone(TZ).toISODate()!;
+const todayYmd = () => DateTime.now().setZone(TZ).toISODate()!;
 
 type DayState = "present" | "late" | "flagged" | "absent" | "off" | "future";
 

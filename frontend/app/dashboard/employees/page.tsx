@@ -6,6 +6,7 @@
  * List, edit, reassign, suspend / reactivate. Uses the owner Supabase token.
  */
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { DateTime } from "luxon";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -106,8 +107,7 @@ interface History {
   employment_start: string | null;
 }
 const TZ = "Africa/Nairobi";
-const ymdTz = (iso: string) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+const ymdTz = (iso: string) => DateTime.fromISO(iso).setZone(TZ).toISODate()!;
 
 /** Last-seen badge from days-since-clock-in. */
 function seenBadge(o: Overview | undefined): { label: string; cls: string } {

@@ -12,12 +12,12 @@
  * window, idempotently stamped to the cycle.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { DateTime } from "luxon";
 import Decimal from "decimal.js";
 import { z } from "zod";
 import { getServiceClient } from "../supabase";
 import { D, money, toDb, toNum, maxZero, sum } from "../money";
-
-const TZ = "Africa/Nairobi";
+import { nairobiDate, datesInRange, weekdayOf } from "../time";
 
 // Every computed figure is validated against this before it can be persisted or
 // land on a payslip. A malformed/missing money or attendance value must be caught
@@ -32,29 +32,6 @@ const payslipComputedSchema = z.object({
   absent_days: nonNegInt,
   deductions: z.array(z.object({ amount: finiteMoney }).passthrough()),
 });
-
-/** Nairobi calendar date (YYYY-MM-DD) for an instant. */
-function nairobiDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(iso));
-}
-
-/** Every YYYY-MM-DD from start to end inclusive. */
-function datesInRange(start: string, end: string): string[] {
-  const out: string[] = [];
-  const d = new Date(`${start}T00:00:00Z`);
-  const last = new Date(`${end}T00:00:00Z`);
-  while (d <= last) {
-    out.push(d.toISOString().slice(0, 10));
-    d.setUTCDate(d.getUTCDate() + 1);
-  }
-  return out;
-}
-const weekdayOf = (ymd: string) => new Date(`${ymd}T00:00:00Z`).getUTCDay(); // 0=Sun..6=Sat
 
 export interface PayrollFlag {
   code: "missing_clockins" | "flagged_attendance" | "incomplete_session" | "no_pay_config" | "invalid_computation";
@@ -82,10 +59,9 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
   const { data: org } = await db.from("orgs").select("absence_policy").eq("id", cycle.org_id).maybeSingle();
   const absencePolicy = (org?.absence_policy as string) ?? "flat";
 
-  const startBoundary = `${cycle.start_date}T00:00:00.000Z`;
-  const endD = new Date(`${cycle.end_date}T00:00:00.000Z`);
-  endD.setUTCDate(endD.getUTCDate() + 1);
-  const endBoundary = endD.toISOString();
+  // Attendance-query bounds (unchanged semantics: UTC-midnight of the cycle dates).
+  const startBoundary = DateTime.fromISO(`${cycle.start_date}T00:00:00`, { zone: "utc" }).toISO()!;
+  const endBoundary = DateTime.fromISO(`${cycle.end_date}T00:00:00`, { zone: "utc" }).plus({ days: 1 }).toISO()!;
   const todayYmd = nairobiDate(new Date().toISOString());
 
   await db.from("pay_cycles").update({ status: "processing" }).eq("id", cycleId);
