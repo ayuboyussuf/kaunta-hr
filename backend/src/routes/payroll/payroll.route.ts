@@ -14,9 +14,9 @@ import { requireOwner } from "../../lib/auth";
 import { payslipPdf } from "../../lib/pdf/templates";
 import { uploadPdf } from "../../lib/pdf/render";
 import { runPayrollDraft, recomputeNet, recomputeCycle } from "../../lib/payroll/run";
+import { toDb, toNum } from "../../lib/money";
 
 const router = Router();
-const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 const CYCLE_COLS =
   "id, label, start_date, end_date, pay_date, status, locked, approved_at, approved_by, " +
@@ -140,9 +140,9 @@ router.get("/cycles/:id/payslips", requireOwner, async (req, res) => {
       employee_name: emp?.name ?? null,
       phone: emp?.phone ?? null,
       workplace_name: p.breakdown?.workplace_name ?? "Unassigned",
-      gross: Number(p.gross),
-      net: Number(p.net),
-      override_net: p.override_net == null ? null : Number(p.override_net),
+      gross: toNum(p.gross),
+      net: toNum(p.net),
+      override_net: p.override_net == null ? null : toNum(p.override_net),
       held: !!p.held,
       payment_status: p.payment_status,
       payment_ref: p.payment_ref,
@@ -192,7 +192,8 @@ async function applyAdjustment(
   amount: number | null,
   note: string
 ) {
-  await db.from("payroll_adjustments").insert({ payslip_id: payslipId, type, amount, note, created_by: userId });
+  // Money stored as fixed 2dp (numeric column); null for non-money types (hold).
+  await db.from("payroll_adjustments").insert({ payslip_id: payslipId, type, amount: amount == null ? null : toDb(amount), note, created_by: userId });
   await recomputeNet(db, payslipId);
   await recomputeCycle(db, cycleId);
 }
@@ -203,7 +204,7 @@ router.post("/cycles/:id/lines/:pid/override", requireOwner, async (req, res) =>
   const db = getServiceClient();
   const g = await guardEditable(db, req.params.id, req.owner!.orgId, req.params.pid);
   if (!g.ok) return res.status(g.status).json({ error: g.msg });
-  await applyAdjustment(db, req.params.id, g.slip.id, req.owner!.userId, "override_net", round2(body.data.net), body.data.note);
+  await applyAdjustment(db, req.params.id, g.slip.id, req.owner!.userId, "override_net", body.data.net, body.data.note);
   res.json({ ok: true });
 });
 
@@ -213,7 +214,7 @@ router.post("/cycles/:id/lines/:pid/bonus", requireOwner, async (req, res) => {
   const db = getServiceClient();
   const g = await guardEditable(db, req.params.id, req.owner!.orgId, req.params.pid);
   if (!g.ok) return res.status(g.status).json({ error: g.msg });
-  await applyAdjustment(db, req.params.id, g.slip.id, req.owner!.userId, "bonus", round2(body.data.amount), body.data.note);
+  await applyAdjustment(db, req.params.id, g.slip.id, req.owner!.userId, "bonus", body.data.amount, body.data.note);
   res.json({ ok: true });
 });
 
@@ -223,7 +224,7 @@ router.post("/cycles/:id/lines/:pid/deduction", requireOwner, async (req, res) =
   const db = getServiceClient();
   const g = await guardEditable(db, req.params.id, req.owner!.orgId, req.params.pid);
   if (!g.ok) return res.status(g.status).json({ error: g.msg });
-  await applyAdjustment(db, req.params.id, g.slip.id, req.owner!.userId, "deduction", round2(body.data.amount), body.data.note);
+  await applyAdjustment(db, req.params.id, g.slip.id, req.owner!.userId, "deduction", body.data.amount, body.data.note);
   res.json({ ok: true });
 });
 
@@ -327,17 +328,17 @@ router.post("/cycles/:id/approve", requireOwner, async (req, res) => {
     const emp = Array.isArray((s as any).employees) ? (s as any).employees[0] : (s as any).employees;
     const bd = (s.breakdown ?? {}) as any;
     const deductions = [
-      ...((bd.deductions ?? []) as any[]).map((d) => ({ reason: d.label, amount: Number(d.amount) })),
-      ...((bd.manual_deductions ?? []) as any[]).map((d) => ({ reason: d.label, amount: Number(d.amount) })),
+      ...((bd.deductions ?? []) as any[]).map((d) => ({ reason: d.label, amount: toNum(d.amount) })),
+      ...((bd.manual_deductions ?? []) as any[]).map((d) => ({ reason: d.label, amount: toNum(d.amount) })),
     ];
     const paymentRef = `PY-${String(idParse.data).slice(0, 4).toUpperCase()}-${String(i).padStart(3, "0")}`;
     try {
       const pdf = await payslipPdf({
         employeeName: emp?.name ?? "Employee",
         cycleLabel: cycle.label,
-        gross: Number(s.gross),
+        gross: toNum(s.gross),
         deductions,
-        net: Number(s.net),
+        net: toNum(s.net),
       });
       const { signedUrl } = await uploadPdf(`payslips/${s.id}.pdf`, pdf);
       await db.from("payslips").update({ pdf_url: signedUrl, payment_ref: paymentRef }).eq("id", s.id);
@@ -373,7 +374,7 @@ router.get("/cycles/:id/payment-list.csv", requireOwner, async (req, res) => {
   for (const s of slips ?? []) {
     if (s.held) continue; // held payments are excluded from the payout list
     const emp = Array.isArray((s as any).employees) ? (s as any).employees[0] : (s as any).employees;
-    rows.push([emp?.name ?? "", emp?.phone ?? "", String(round2(Number(s.net ?? 0))), s.payment_ref ?? ""]);
+    rows.push([emp?.name ?? "", emp?.phone ?? "", toDb(s.net), s.payment_ref ?? ""]);
   }
   const csv = rows.map((r) => r.map(esc).join(",")).join("\r\n");
 
@@ -414,8 +415,8 @@ router.get("/payslips", requireOwner, async (req, res) => {
       employee_id: p.employee_id,
       employee_name: emp?.name ?? null,
       cycle_label: cyc?.label ?? null,
-      gross: Number(p.gross),
-      net: Number(p.net),
+      gross: toNum(p.gross),
+      net: toNum(p.net),
       pdf_url: p.pdf_url,
       payment_status: p.payment_status,
       created_at: p.created_at,

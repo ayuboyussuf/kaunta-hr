@@ -119,9 +119,7 @@ export function payslipPdf(d: PayslipData): Promise<Buffer> {
 
     doc.fillColor(BRAND.sage).fontSize(11).font("Helvetica-Bold").text("Deductions");
     doc.fontSize(10).font("Helvetica");
-    let total = 0;
     d.deductions.forEach((ded) => {
-      total += ded.amount;
       doc.fillColor(BRAND.ink).text(ded.reason, { continued: true });
       doc.fillColor(BRAND.red).text(`   -${fmtKes(ded.amount)}`, { align: "right" });
     });
