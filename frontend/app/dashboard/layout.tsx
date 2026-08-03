@@ -68,7 +68,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   href={item.href}
                   className={`whitespace-nowrap px-3 py-2.5 text-sm border-b-2 transition-colors ${
                     active
-                      ? "border-kaunta-copper text-kaunta-ink font-medium"
+                      ? "border-kaunta-ultra text-kaunta-ink font-medium"
                       : "border-transparent text-kaunta-slate/60 hover:text-kaunta-ink"
                   }`}
                 >

@@ -28,7 +28,7 @@ interface Announcement {
 }
 
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper";
+  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
 
 /** Owner announcement composer + posted feed (spec §7). */
 export default function AnnouncementsPage() {
@@ -125,7 +125,7 @@ export default function AnnouncementsPage() {
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
         <div>
           <h1 className="font-display text-3xl text-kaunta-ink mb-1 flex items-center gap-2">
-            <Megaphone className="h-7 w-7 text-kaunta-copper" />
+            <Megaphone className="h-7 w-7 text-kaunta-ultra" />
             Announcements
           </h1>
           <p className="text-kaunta-slate/70 text-sm">
@@ -236,7 +236,7 @@ export default function AnnouncementsPage() {
                 <Card key={a.id}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between gap-3 mb-2">
-                      <span className="text-xs font-medium px-2 py-1 rounded-full border border-kaunta-copper/20 bg-kaunta-copper/10 text-kaunta-copper">
+                      <span className="text-xs font-medium px-2 py-1 rounded-full border border-kaunta-ultra/20 bg-kaunta-ultra/10 text-kaunta-ultra">
                         {ANNOUNCEMENT_TYPES[a.type] ?? "Other"}
                       </span>
                       <span className="text-xs text-kaunta-slate/50 shrink-0">

@@ -95,7 +95,7 @@ const newWorkplace = (rulesetKey: string): Workplace => ({
 // ── Small UI atoms ────────────────────────────────────────────────────────────
 const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper";
+  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
 const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -348,7 +348,7 @@ export default function OnboardingWizard() {
   if (!ready) {
     return (
       <main className="min-h-screen grid place-items-center bg-kaunta-stone">
-        <Loader2 className="h-6 w-6 animate-spin text-kaunta-copper" />
+        <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
       </main>
     );
   }
@@ -407,7 +407,7 @@ export default function OnboardingWizard() {
                   <span
                     className={`grid h-9 w-9 place-items-center rounded-full border ${
                       active
-                        ? "border-kaunta-copper bg-kaunta-copper text-white"
+                        ? "border-kaunta-ultra bg-kaunta-ultra text-white"
                         : complete
                         ? "border-kaunta-sage bg-kaunta-sage-lt text-kaunta-sage"
                         : "border-kaunta-mist bg-white text-kaunta-slate/50"
@@ -530,7 +530,7 @@ function Choice({ active, onClick, title, desc }: { active: boolean; onClick: ()
       type="button"
       onClick={onClick}
       className={`text-left rounded-lg border px-4 py-3 transition-colors ${
-        active ? "border-kaunta-copper bg-kaunta-copper-lt" : "border-kaunta-mist bg-white hover:bg-kaunta-stone"
+        active ? "border-kaunta-ultra bg-kaunta-ultra-lt" : "border-kaunta-mist bg-white hover:bg-kaunta-stone"
       }`}
     >
       <span className="block text-sm font-medium text-kaunta-ink">{title}</span>
@@ -613,7 +613,7 @@ function StepRules({
               <button
                 type="button"
                 onClick={() => update(i, { penalties: [...rs.penalties, newPenalty()] })}
-                className="text-xs text-kaunta-copper hover:underline inline-flex items-center gap-1"
+                className="text-xs text-kaunta-ultra hover:underline inline-flex items-center gap-1"
               >
                 <Plus className="h-3 w-3" /> Add penalty
               </button>
@@ -692,7 +692,7 @@ function StepRules({
         <button
           type="button"
           onClick={() => setRulesets((rs) => [...rs, newRuleset(false, `Ruleset ${rs.length + 1}`)])}
-          className={`${cardCls} w-full p-4 text-sm text-kaunta-copper hover:bg-kaunta-stone inline-flex items-center justify-center gap-2`}
+          className={`${cardCls} w-full p-4 text-sm text-kaunta-ultra hover:bg-kaunta-stone inline-flex items-center justify-center gap-2`}
         >
           <Plus className="h-4 w-4" /> Add another ruleset
         </button>
@@ -820,7 +820,7 @@ function StepWorkplaces({
       <button
         type="button"
         onClick={() => setWorkplaces((ws) => [...ws, newWorkplace(rulesets[0]?.key ?? "")])}
-        className={`${cardCls} w-full p-4 text-sm text-kaunta-copper hover:bg-kaunta-stone inline-flex items-center justify-center gap-2`}
+        className={`${cardCls} w-full p-4 text-sm text-kaunta-ultra hover:bg-kaunta-stone inline-flex items-center justify-center gap-2`}
       >
         <Plus className="h-4 w-4" /> Add workplace
       </button>
@@ -840,7 +840,7 @@ function ShiftEditor({ shifts, onChange }: { shifts: Shift[]; onChange: (s: Shif
     <div>
       <div className="flex items-center justify-between mb-2">
         <span className={labelCls}>Shifts</span>
-        <button type="button" onClick={() => onChange([...shifts, newShift()])} className="text-xs text-kaunta-copper hover:underline inline-flex items-center gap-1">
+        <button type="button" onClick={() => onChange([...shifts, newShift()])} className="text-xs text-kaunta-ultra hover:underline inline-flex items-center gap-1">
           <Plus className="h-3 w-3" /> Add shift
         </button>
       </div>
@@ -898,7 +898,7 @@ function ShiftEditor({ shifts, onChange }: { shifts: Shift[]; onChange: (s: Shif
                     onClick={() => toggleDay(i, di)}
                     className={`h-7 w-9 rounded-md text-xs ${
                       s.days_of_week.includes(di)
-                        ? "bg-kaunta-copper text-white"
+                        ? "bg-kaunta-ultra text-white"
                         : "bg-kaunta-stone text-kaunta-slate/70 hover:bg-kaunta-mist"
                     }`}
                   >
@@ -942,7 +942,7 @@ function StepReview({
         return (
           <div key={i} className={`${cardCls} p-6`}>
             <h3 className="font-display text-xl text-kaunta-ink mb-2 inline-flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-kaunta-copper" /> {w.name || "Untitled"}
+              <MapPin className="h-4 w-4 text-kaunta-ultra" /> {w.name || "Untitled"}
             </h3>
             <p className="text-xs text-kaunta-slate/60 mb-3">
               {w.lat != null && w.lng != null ? `${w.lat}, ${w.lng}` : "No coordinates"} · {w.geofence_radius_m} m ·{" "}

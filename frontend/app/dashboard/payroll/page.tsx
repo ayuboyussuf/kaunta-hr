@@ -16,7 +16,7 @@ import { Loader2, Plus, Wallet, ShieldCheck, AlertTriangle, Lock, FileDown, X, C
 
 const fmtKes = (n: number) => `KES ${Number(n ?? 0).toLocaleString("en-KE", { maximumFractionDigits: 0 })}`;
 const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
-const inputCls = "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper";
+const inputCls = "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
 const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
 
 interface Cycle {
@@ -199,7 +199,7 @@ export default function PayrollPage() {
     return [...m.values()];
   }, [lines]);
 
-  if (loading) return <main className="bg-kaunta-stone grid place-items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-kaunta-copper" /></main>;
+  if (loading) return <main className="bg-kaunta-stone grid place-items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" /></main>;
 
   const locked = !!cycle?.locked;
   const flaggedCount = cycle?.flagged_count ?? 0;
@@ -231,7 +231,7 @@ export default function PayrollPage() {
           <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
             {cycles.map((c) => (
               <button key={c.id} onClick={() => select(c.id)}
-                className={`shrink-0 rounded-full px-4 py-1.5 text-sm border ${selId === c.id ? "border-kaunta-copper bg-white text-kaunta-ink" : "border-kaunta-mist bg-white/60 text-kaunta-slate/70"}`}>
+                className={`shrink-0 rounded-full px-4 py-1.5 text-sm border ${selId === c.id ? "border-kaunta-ultra bg-white text-kaunta-ink" : "border-kaunta-mist bg-white/60 text-kaunta-slate/70"}`}>
                 {c.label}{c.locked && <Lock className="inline h-3 w-3 ml-1 text-kaunta-sage" />}
               </button>
             ))}
@@ -260,7 +260,7 @@ export default function PayrollPage() {
             {/* Totals + actions */}
             <div className={`${cardCls} p-4 mb-4`}>
               <div className="flex flex-wrap items-center gap-4">
-                <div><p className={labelCls}>Total to pay</p><p className="font-display text-2xl text-kaunta-copper tabular-nums">{fmtKes(cycle.total_net ?? 0)}</p></div>
+                <div><p className={labelCls}>Total to pay</p><p className="font-display text-2xl text-kaunta-ultra tabular-nums">{fmtKes(cycle.total_net ?? 0)}</p></div>
                 <div><p className={labelCls}>Staff</p><p className="text-kaunta-ink text-lg">{cycle.employee_count ?? 0}</p></div>
                 <div className="ml-auto flex flex-wrap gap-2">
                   {!locked && <Button variant={cycle.status === "open" ? "default" : "outline"} onClick={run} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : cycle.status === "open" ? "Calculate draft" : "Recalculate"}</Button>}
@@ -404,7 +404,7 @@ function LineDrawer({ line, locked, onClose, onAction, onStatus, onRemove }: {
                 <p className="text-kaunta-slate/80 mt-0.5">{f.message}</p>
                 {/* Blocking flags (can't compute a number) can be acknowledged with a note. */}
                 {!locked && blocks && (
-                  <button onClick={() => onAction("resolve", f.code)} className="mt-1 text-xs text-kaunta-copper hover:underline">Mark resolved (with a note)</button>
+                  <button onClick={() => onAction("resolve", f.code)} className="mt-1 text-xs text-kaunta-ultra hover:underline">Mark resolved (with a note)</button>
                 )}
               </div>
             );
@@ -460,7 +460,7 @@ function LineDrawer({ line, locked, onClose, onAction, onStatus, onRemove }: {
           )}
 
           {/* Net */}
-          <div className="flex justify-between border-t border-kaunta-mist pt-2"><span className="font-medium text-kaunta-ink">Net pay</span><span className="font-display text-lg text-kaunta-copper tabular-nums">{fmtKes(line.net)}</span></div>
+          <div className="flex justify-between border-t border-kaunta-mist pt-2"><span className="font-medium text-kaunta-ink">Net pay</span><span className="font-display text-lg text-kaunta-ultra tabular-nums">{fmtKes(line.net)}</span></div>
 
           {/* Actions */}
           {!locked ? (
@@ -481,7 +481,7 @@ function LineDrawer({ line, locked, onClose, onAction, onStatus, onRemove }: {
                   </Button>
                 ))}
               </div>
-              {line.pdf_url && <a href={line.pdf_url} target="_blank" rel="noreferrer" className="inline-block text-sm text-kaunta-copper hover:underline pt-1">Download payslip PDF</a>}
+              {line.pdf_url && <a href={line.pdf_url} target="_blank" rel="noreferrer" className="inline-block text-sm text-kaunta-ultra hover:underline pt-1">Download payslip PDF</a>}
             </div>
           )}
         </div>

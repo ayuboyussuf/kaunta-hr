@@ -52,14 +52,14 @@ export function KauntaWordmark({
 }: {
   className?: string;
   size?: "sm" | "md" | "lg";
-  theme?: "dark" | "light" | "copper";
+  theme?: "dark" | "light" | "mono";
 }) {
   const sizeMap     = { sm: 22, md: 30, lg: 40 };
   const textSizeMap = { sm: "text-xl", md: "text-2xl", lg: "text-3xl" };
   const colors = {
-    dark:   { bell: "#C4622D", text: "#0F1923" },
-    light:  { bell: "#C4622D", text: "#FFFFFF" },
-    copper: { bell: "#FFFFFF", text: "#FFFFFF" },
+    dark:  { bell: "#1E3FD8", text: "#0B1120" },
+    light: { bell: "#4A6BF5", text: "#FFFFFF" },
+    mono:  { bell: "#FFFFFF", text: "#FFFFFF" },
   };
   const c = colors[theme];
 

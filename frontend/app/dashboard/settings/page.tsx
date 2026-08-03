@@ -31,7 +31,7 @@ interface OrgSettings {
 
 const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper";
+  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
 const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
 
 export default function SettingsPage() {
@@ -221,14 +221,14 @@ export default function SettingsPage() {
 
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-kaunta-copper" />
+            <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
           </div>
         ) : (
           <div className="space-y-6">
             {/* Business profile */}
             <section className={`${cardCls} p-6 space-y-4`}>
               <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-kaunta-copper" /> Business
+                <Building2 className="h-5 w-5 text-kaunta-ultra" /> Business
               </h2>
               <div>
                 <label className={labelCls}>Business name</label>
@@ -270,7 +270,7 @@ export default function SettingsPage() {
             {/* Payroll cadence */}
             <section className={`${cardCls} p-6 space-y-4`}>
               <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-kaunta-copper" /> Payroll
+                <Wallet className="h-5 w-5 text-kaunta-ultra" /> Payroll
               </h2>
               <p className="text-sm text-kaunta-slate/60">
                 How often do you pay staff? When a period ends, Kaunta auto-calculates everyone&apos;s pay and
@@ -375,7 +375,7 @@ export default function SettingsPage() {
             {/* Presence checks */}
             <section className={`${cardCls} p-6 space-y-4`}>
               <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-kaunta-copper" /> Presence checks
+                <ShieldCheck className="h-5 w-5 text-kaunta-ultra" /> Presence checks
               </h2>
               <p className="text-sm text-kaunta-slate/60">
                 Randomly prompt clocked-in staff to re-scan during a shift, so someone can&apos;t clock in and
@@ -414,7 +414,7 @@ export default function SettingsPage() {
                   type="checkbox"
                   checked={smsFallback}
                   onChange={(e) => setSmsFallback(e.target.checked)}
-                  className="h-4 w-4 accent-kaunta-copper"
+                  className="h-4 w-4 accent-kaunta-ultra"
                 />
                 Also send an SMS to staff without push notifications
                 <span className="text-xs text-kaunta-slate/50">(costs money per check)</span>
@@ -431,7 +431,7 @@ export default function SettingsPage() {
             {/* Attendance configuration */}
             <section className={`${cardCls} p-6`}>
               <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2 mb-2">
-                <SlidersHorizontal className="h-5 w-5 text-kaunta-copper" /> Attendance rules &amp; workplaces
+                <SlidersHorizontal className="h-5 w-5 text-kaunta-ultra" /> Attendance rules &amp; workplaces
               </h2>
               <p className="text-sm text-kaunta-slate/60 mb-4">
                 Add or edit these any time — no need to re-run setup. To add a new workplace, open
@@ -456,7 +456,7 @@ export default function SettingsPage() {
               </div>
               <p className="text-xs text-kaunta-slate/50 mt-3">
                 Prefer the guided flow?{" "}
-                <Link href="/dashboard/onboarding" className="text-kaunta-copper hover:underline">
+                <Link href="/dashboard/onboarding" className="text-kaunta-ultra hover:underline">
                   Re-run the setup wizard
                 </Link>
                 .

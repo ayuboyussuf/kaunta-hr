@@ -159,7 +159,7 @@ export default function AttendanceCalendar({
               key={c.ymd}
               type="button"
               onClick={clickable ? () => onSelectDay!(c.ymd) : undefined}
-              className={`relative aspect-square rounded-md text-xs flex items-center justify-center ${STATE_STYLE[st]} ${clickable ? "hover:ring-1 hover:ring-kaunta-copper cursor-pointer" : "cursor-default"}`}
+              className={`relative aspect-square rounded-md text-xs flex items-center justify-center ${STATE_STYLE[st]} ${clickable ? "hover:ring-1 hover:ring-kaunta-ultra cursor-pointer" : "cursor-default"}`}
             >
               {c.day}
               {missedByDay.has(c.ymd) && (

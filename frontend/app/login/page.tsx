@@ -42,7 +42,7 @@ export default function OwnerLoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper"
+              className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
             />
           </div>
           <div>
@@ -52,7 +52,7 @@ export default function OwnerLoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper"
+              className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
             />
           </div>
           {error && <p className="text-sm text-kaunta-red">{error}</p>}
@@ -63,13 +63,13 @@ export default function OwnerLoginPage() {
 
         <p className="text-sm text-kaunta-slate/70 mt-6">
           New here?{" "}
-          <Link href="/signup" className="text-kaunta-copper hover:underline">
+          <Link href="/signup" className="text-kaunta-ultra hover:underline">
             Create an owner account
           </Link>
         </p>
         <p className="text-sm text-kaunta-slate/70 mt-2">
           Employee?{" "}
-          <Link href="/me/login" className="text-kaunta-copper hover:underline">
+          <Link href="/me/login" className="text-kaunta-ultra hover:underline">
             Sign in with your phone
           </Link>
         </p>

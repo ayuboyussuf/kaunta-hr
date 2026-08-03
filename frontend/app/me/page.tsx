@@ -149,7 +149,7 @@ export default function EmployeeHome() {
         </Card>
       )}
 
-      <Card className="bg-kaunta-copper text-white border-none">
+      <Card className="bg-kaunta-ultra text-white border-none">
         <CardContent className="p-6 flex items-center justify-between">
           <div>
             <p className="font-display text-xl mb-1">Ready to clock in?</p>
@@ -192,7 +192,7 @@ export default function EmployeeHome() {
             )}
             <Link
               href="/me/history"
-              className="mt-4 flex items-center gap-1 text-sm text-kaunta-copper hover:underline"
+              className="mt-4 flex items-center gap-1 text-sm text-kaunta-ultra hover:underline"
             >
               View history <ChevronRight className="h-3.5 w-3.5" />
             </Link>
@@ -207,7 +207,7 @@ export default function EmployeeHome() {
           <CardContent>
             {unread > 0 ? (
               <p className="text-sm text-kaunta-ink">
-                <span className="font-display text-2xl text-kaunta-copper mr-1">{unread}</span>
+                <span className="font-display text-2xl text-kaunta-ultra mr-1">{unread}</span>
                 unread announcement{unread === 1 ? "" : "s"}
               </p>
             ) : (
@@ -215,7 +215,7 @@ export default function EmployeeHome() {
             )}
             <Link
               href="/me/announcements"
-              className="mt-4 flex items-center gap-1 text-sm text-kaunta-copper hover:underline"
+              className="mt-4 flex items-center gap-1 text-sm text-kaunta-ultra hover:underline"
             >
               View announcements <ChevronRight className="h-3.5 w-3.5" />
             </Link>
@@ -233,7 +233,7 @@ export default function EmployeeHome() {
             </p>
             <Link
               href="/me/rules"
-              className="mt-4 flex items-center gap-1 text-sm text-kaunta-copper hover:underline"
+              className="mt-4 flex items-center gap-1 text-sm text-kaunta-ultra hover:underline"
             >
               View rules <ChevronRight className="h-3.5 w-3.5" />
             </Link>

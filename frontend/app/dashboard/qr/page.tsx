@@ -86,7 +86,7 @@ export default function QrCodesPage() {
       <header className="border-b border-kaunta-mist bg-white print:hidden">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">
           <span className="font-display text-2xl text-kaunta-ink">QR codes</span>
-          <Link href="/dashboard" className="text-sm text-kaunta-copper hover:underline">
+          <Link href="/dashboard" className="text-sm text-kaunta-ultra hover:underline">
             ← Dashboard
           </Link>
         </div>

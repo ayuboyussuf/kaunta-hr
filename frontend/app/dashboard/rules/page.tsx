@@ -29,7 +29,7 @@ interface Ruleset {
 
 const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper";
+  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
 const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
 
 interface RuleDraft {
@@ -151,7 +151,7 @@ export default function RulesPage() {
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <span className="font-display text-2xl text-kaunta-ink">Rules</span>
-            <Link href="/dashboard" className="text-sm text-kaunta-copper hover:underline ml-3">
+            <Link href="/dashboard" className="text-sm text-kaunta-ultra hover:underline ml-3">
               ← Dashboard
             </Link>
           </div>
@@ -183,7 +183,7 @@ export default function RulesPage() {
 
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-kaunta-copper" />
+            <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
           </div>
         ) : rulesets.length === 0 ? (
           <div className={`${cardCls} p-10 text-center`}>
@@ -196,7 +196,7 @@ export default function RulesPage() {
             <div key={rs.id} className={`${cardCls} p-5`}>
               <div className="flex items-start justify-between">
                 <h3 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
-                  <Scale className="h-4 w-4 text-kaunta-copper" /> {rs.name}
+                  <Scale className="h-4 w-4 text-kaunta-ultra" /> {rs.name}
                   {rs.is_shared && <span className="text-xs text-kaunta-sage">(shared)</span>}
                 </h3>
                 <div className="flex gap-2">
@@ -237,7 +237,7 @@ export default function RulesPage() {
                             appeal_window_hours: r.appeal_window_hours,
                           })
                         }
-                        className="text-kaunta-slate/60 hover:text-kaunta-copper p-1"
+                        className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
                         aria-label="Edit rule"
                       >
                         <Pencil className="h-4 w-4" />

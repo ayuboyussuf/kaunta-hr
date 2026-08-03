@@ -46,7 +46,7 @@ interface Employee {
 
 const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper";
+  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
 const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
 
 const STATUS: Record<Employee["status"], { label: string; cls: string }> = {
@@ -292,7 +292,7 @@ export default function EmployeesPage() {
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <span className="font-display text-2xl text-kaunta-ink">Team</span>
-            <Link href="/dashboard" className="text-sm text-kaunta-copper hover:underline ml-3">
+            <Link href="/dashboard" className="text-sm text-kaunta-ultra hover:underline ml-3">
               ← Dashboard
             </Link>
           </div>
@@ -424,7 +424,7 @@ export default function EmployeesPage() {
 
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-kaunta-copper" />
+            <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
           </div>
         ) : employees.length === 0 && !draft ? (
           <div className={`${cardCls} p-10 text-center`}>
@@ -493,7 +493,7 @@ export default function EmployeesPage() {
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => toggleHistory(e.id)}
-                              className="text-kaunta-slate/60 hover:text-kaunta-copper p-1"
+                              className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
                               aria-label="Attendance history"
                               title="Attendance history"
                             >
@@ -513,7 +513,7 @@ export default function EmployeesPage() {
                                   start_date: e.start_date,
                                 })
                               }
-                              className="text-kaunta-slate/60 hover:text-kaunta-copper p-1"
+                              className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
                               aria-label="Edit"
                             >
                               <Pencil className="h-4 w-4" />
@@ -521,7 +521,7 @@ export default function EmployeesPage() {
                             {e.status === "invited" && (
                               <button
                                 onClick={() => resendInvite(e.id)}
-                                className="text-kaunta-slate/60 hover:text-kaunta-copper p-1"
+                                className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
                                 aria-label="Resend invite"
                                 title="Resend invite by SMS"
                               >
