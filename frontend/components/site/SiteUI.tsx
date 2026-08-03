@@ -5,7 +5,7 @@ import { RuleMark } from "./Engravings";
 
 /* `tone` always describes the SURFACE a component sits on:
  *   tone="dark"  → dark surface, light text   (the marketing site)
- *   tone="dark" → light surface, dark text   (the app UI)
+ *   tone="light" → light surface, dark text   (the app UI)
  * Every component in this file and in Blocks.tsx follows that. */
 
 /* ── Layout ─────────────────────────────────────────────────────── */
@@ -133,7 +133,7 @@ export function SiteButton({
       href={href}
       className={cn(
         btnBase,
-        size === "md" ? "h-9 px-4" : "h-11 px-6 text-sm",
+        size === "md" ? "h-11 px-5 sm:h-9 sm:px-4" : "h-12 px-6 text-sm sm:h-11",
         variant === "primary" &&
           "bg-kaunta-ultra text-white hover:bg-kaunta-ultra-dp",
         variant === "light" &&
@@ -276,7 +276,7 @@ export function FeatureCard({
       {index && (
         <span
           className={cn(
-            "font-mono text-[0.625rem] tracking-[0.16em]",
+            "font-mono text-[0.6875rem] sm:text-[0.625rem] tracking-[0.16em]",
             dark ? "text-white/30" : "text-kaunta-slate/35"
           )}
         >
@@ -293,8 +293,8 @@ export function FeatureCard({
       </h3>
       <div
         className={cn(
-          "mt-3 text-[0.9rem] leading-relaxed",
-          dark ? "text-white/55" : "text-kaunta-slate/70"
+          "mt-3 text-[0.95rem] leading-relaxed sm:text-[0.9rem]",
+          dark ? "text-white/60" : "text-kaunta-slate/70"
         )}
       >
         {body}
@@ -327,7 +327,7 @@ export function SpecList({
         >
           <dt
             className={cn(
-              "font-mono text-[0.6875rem] uppercase tracking-[0.14em] leading-5",
+              "font-mono text-xs uppercase tracking-[0.14em] leading-5 sm:text-[0.6875rem]",
               dark ? "text-white/40" : "text-kaunta-slate/45"
             )}
           >

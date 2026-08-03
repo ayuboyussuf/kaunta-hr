@@ -42,7 +42,7 @@ export function DocPage({
               href={prev.href}
               className="rounded-lg border border-white/10 p-5 transition-colors duration-200 hover:border-white/30"
             >
-              <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
+              <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
                 Previous
               </span>
               <span className="mt-2 block text-[0.95rem] text-white">
@@ -57,7 +57,7 @@ export function DocPage({
               href={next.href}
               className="rounded-lg border border-white/10 p-5 text-right transition-colors duration-200 hover:border-white/30 sm:col-start-2"
             >
-              <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
+              <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
                 Next
               </span>
               <span className="mt-2 block text-[0.95rem] text-white">
@@ -94,7 +94,7 @@ export function H3({ children }: { children: React.ReactNode }) {
 
 export function P({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-4 max-w-2xl text-[0.95rem] leading-[1.75] text-white/60">
+    <p className="mt-4 max-w-2xl text-[1rem] leading-[1.75] text-white/65 sm:text-[0.95rem] sm:text-white/60">
       {children}
     </p>
   );
@@ -102,7 +102,7 @@ export function P({ children }: { children: React.ReactNode }) {
 
 export function UL({ children }: { children: React.ReactNode }) {
   return (
-    <ul className="mt-4 max-w-2xl space-y-2.5 text-[0.95rem] leading-[1.7] text-white/60">
+    <ul className="mt-4 max-w-2xl space-y-3 text-[1rem] leading-[1.7] text-white/65 sm:space-y-2.5 sm:text-[0.95rem] sm:text-white/60">
       {children}
     </ul>
   );
@@ -190,7 +190,7 @@ export function CodeBlock({
     <div className="mt-6 max-w-2xl overflow-hidden rounded-lg border border-white/12 bg-white/[0.025]">
       {label && (
         <div className="border-b border-white/10 px-4 py-2.5">
-          <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
+          <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
             {label}
           </span>
         </div>
@@ -230,7 +230,7 @@ export function Callout({
     >
       <p
         className={cn(
-          "font-mono text-[0.625rem] uppercase tracking-[0.16em]",
+          "font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em]",
           tone === "note" ? "text-kaunta-ultra-br" : "text-kaunta-amber"
         )}
       >
@@ -260,7 +260,7 @@ export function DocTable({
             {head.map((h) => (
               <th
                 key={h}
-                className="py-3 pr-4 font-mono text-[0.625rem] font-medium uppercase tracking-[0.16em] text-white/35"
+                className="py-3 pr-4 font-mono text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-white/40 sm:text-[0.6875rem] sm:text-[0.625rem]"
               >
                 {h}
               </th>
@@ -298,7 +298,7 @@ export function SeeAlso({ hrefs }: { hrefs: string[] }) {
   if (items.length === 0) return null;
   return (
     <div className="mt-14 rounded-lg border border-white/10 p-6">
-      <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
+      <p className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
         See also
       </p>
       <ul className="mt-4 space-y-3">
@@ -306,7 +306,7 @@ export function SeeAlso({ hrefs }: { hrefs: string[] }) {
           <li key={d.href}>
             <Link
               href={d.href}
-              className="group flex items-baseline gap-2 text-[0.9rem] text-white/70 hover:text-white"
+              className="group flex min-h-[44px] items-baseline gap-2 pt-3 text-[0.95rem] text-white/70 hover:text-white sm:min-h-0 sm:pt-0 sm:text-[0.9rem]"
             >
               {d.title}
               <ArrowRight className="h-3 w-3 opacity-40 transition-opacity group-hover:opacity-100" />

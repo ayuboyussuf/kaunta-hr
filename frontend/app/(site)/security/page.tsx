@@ -52,7 +52,7 @@ export default function SecurityPage() {
 
       {/* ── Where it lives ────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
+        <Container className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
               tone="dark"
@@ -104,7 +104,7 @@ export default function SecurityPage() {
 
       {/* ── Access ────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-20 sm:py-28">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
               tone="dark"
@@ -113,7 +113,7 @@ export default function SecurityPage() {
               title="Three separations, each enforced on the server."
             />
           </>
-          <div className="mt-14 grid gap-4 lg:grid-cols-3">
+          <div className="mt-10 grid sm:mt-14 gap-4 lg:grid-cols-3">
             {[
               {
                 n: "01",
@@ -133,7 +133,7 @@ export default function SecurityPage() {
             ].map((c) => (
               <div key={c.n}>
                 <div className="h-full rounded-xl border border-white/10 bg-white/[0.02] p-7">
-                  <span className="font-mono text-[0.625rem] tracking-[0.16em] text-kaunta-ultra-br/70">
+                  <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] tracking-[0.16em] text-kaunta-ultra-br/70">
                     {c.n}
                   </span>
                   <h3 className="font-display mt-4 text-xl text-white">{c.t}</h3>
@@ -149,8 +149,8 @@ export default function SecurityPage() {
 
       {/* ── Document integrity ────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
+        <Container className="py-14 sm:py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
             <>
               <SectionHead
                 tone="dark"
@@ -198,8 +198,8 @@ export default function SecurityPage() {
 
       {/* ── What we collect ───────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-center lg:gap-20">
+        <Container className="py-14 sm:py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-center lg:gap-20">
             <>
               <SectionHead
                 tone="dark"
@@ -228,7 +228,7 @@ export default function SecurityPage() {
 
       {/* ── Reporting ─────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="prose" className="py-16 sm:py-20">
+        <Container width="prose" className="py-12 sm:py-16 lg:py-20">
           <>
             <div className="rounded-xl border border-white/10 bg-white/[0.02] p-7">
               <Eyebrow tone="dark">Reporting a vulnerability</Eyebrow>
@@ -249,7 +249,7 @@ export default function SecurityPage() {
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="prose" className="py-20 sm:py-24">
+        <Container width="prose" className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead tone="dark" eyebrow="Questions" title="The ones we get asked" />
           </>
@@ -272,9 +272,9 @@ export default function SecurityPage() {
             blurb: "The access model, in operational detail.",
           },
           {
-            href: "/status",
-            label: "Status",
-            blurb: "Current service availability and incident history.",
+            href: "/how-it-works",
+            label: "How it works",
+            blurb: "A day across two sites, gate to payslip.",
           },
         ]}
       />

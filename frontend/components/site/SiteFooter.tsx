@@ -32,7 +32,6 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
   {
     heading: "Company",
     links: [
-      { href: "/status", label: "Status" },
       { href: "/login", label: "Sign in" },
       { href: "/signup", label: "Create an account" },
     ],
@@ -59,15 +58,15 @@ export function SiteFooter() {
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
             {COLUMNS.map((col) => (
               <div key={col.heading}>
-                <h3 className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-white/35">
+                <h3 className="font-mono text-xs uppercase tracking-[0.16em] text-white/45 sm:text-[0.6875rem] sm:text-white/35">
                   {col.heading}
                 </h3>
-                <ul className="mt-4 space-y-2.5">
+                <ul className="mt-3 sm:mt-4 sm:space-y-2.5">
                   {col.links.map((l) => (
                     <li key={l.href}>
                       <Link
                         href={l.href}
-                        className="text-[0.875rem] text-white/60 transition-colors duration-200 hover:text-white"
+                        className="inline-flex min-h-[44px] items-center text-[0.9375rem] text-white/60 transition-colors duration-200 hover:text-white sm:min-h-0 sm:text-[0.875rem]"
                       >
                         {l.label}
                       </Link>

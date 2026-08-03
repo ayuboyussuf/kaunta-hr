@@ -94,8 +94,8 @@ export default function MultiSitePage() {
 
       {/* ── What changes at site two ──────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
+        <Container className="py-14 sm:py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
             <>
               <SectionHead
                 tone="dark"
@@ -131,7 +131,7 @@ export default function MultiSitePage() {
 
       {/* ── The morning ───────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-20 sm:py-28">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
               tone="dark"
@@ -141,7 +141,7 @@ export default function MultiSitePage() {
               lede="The dashboard does not show you eight sites' worth of clock-ins. It shows you the handful of things that did not go to plan, and stays quiet about the rest."
             />
           </>
-          <div className="mt-12">
+          <div className="mt-8 sm:mt-12">
             <Shot shot={SHOTS.overview} frame="device" caption="Site overview on a phone" />
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -182,7 +182,7 @@ export default function MultiSitePage() {
 
       {/* ── Segments ──────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-20 sm:py-28">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
               tone="dark"
@@ -191,11 +191,11 @@ export default function MultiSitePage() {
             />
           </>
 
-          <div className="mt-12 grid gap-4 lg:grid-cols-3">
+          <div className="mt-8 grid sm:mt-12 gap-4 lg:grid-cols-3">
             {SEGMENTS.map((s) => (
               <div key={s.tag}>
                 <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/[0.02] p-7">
-                  <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/70">
+                  <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/70">
                     {s.tag}
                   </span>
                   <h3 className="font-display mt-4 text-xl leading-snug text-white">
@@ -227,8 +227,8 @@ export default function MultiSitePage() {
 
       {/* ── Rolling out ───────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-2 lg:items-center lg:gap-20">
+        <Container className="py-14 sm:py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-20">
             <div className="order-2 lg:order-1">
             </div>
             <div className="order-1 lg:order-2">
@@ -267,7 +267,7 @@ export default function MultiSitePage() {
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="prose" className="py-20 sm:py-24">
+        <Container width="prose" className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead
               tone="dark"

@@ -143,7 +143,7 @@ export default function FeaturesPage() {
             <a
               key={c.id}
               href={`#${c.id}`}
-              className="rounded-full border border-white/15 px-3.5 py-1.5 text-[0.75rem] text-white/55 transition-colors duration-200 hover:border-white/40 hover:text-white"
+              className="inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-4 text-[0.8125rem] text-white/60 transition-colors duration-200 hover:border-white/40 hover:text-white sm:min-h-0 sm:py-1.5 sm:text-[0.75rem]"
             >
               {c.eyebrow}
             </a>
@@ -157,7 +157,7 @@ export default function FeaturesPage() {
           id={c.id}
           className="scroll-mt-24 border-b border-white/10 bg-kaunta-void"
         >
-          <Container width="wide" className="py-20 sm:py-28">
+          <Container width="wide" className="py-14 sm:py-20 lg:py-28">
             <div
               className={
                 c.shot
@@ -168,7 +168,7 @@ export default function FeaturesPage() {
               }
             >
               <div>
-                <span className="font-mono text-[0.625rem] tracking-[0.16em] text-white/30">
+                <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] tracking-[0.16em] text-white/30">
                   {c.index}
                 </span>
                 <SectionHead
@@ -193,7 +193,7 @@ export default function FeaturesPage() {
       ))}
 
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-24">
+        <Container className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead
               align="center"

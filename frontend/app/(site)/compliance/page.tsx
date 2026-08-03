@@ -56,8 +56,8 @@ export default function CompliancePage() {
 
       {/* ── The problem with the book ─────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
+        <Container className="py-14 sm:py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
             <>
               <SectionHead
                 tone="dark"
@@ -101,7 +101,7 @@ export default function CompliancePage() {
 
       {/* ── What makes a record hold ──────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-20 sm:py-28">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
               tone="dark"
@@ -112,7 +112,7 @@ export default function CompliancePage() {
             />
           </>
 
-          <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 grid sm:mt-14 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 n: "01",
@@ -137,7 +137,7 @@ export default function CompliancePage() {
             ].map((c) => (
               <div key={c.n}>
                 <div className="h-full rounded-xl border border-white/10 bg-white/[0.02] p-6">
-                  <span className="font-mono text-[0.625rem] tracking-[0.16em] text-kaunta-ultra-br/70">
+                  <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] tracking-[0.16em] text-kaunta-ultra-br/70">
                     {c.n}
                   </span>
                   <h3 className="font-display mt-4 text-xl text-white">{c.t}</h3>
@@ -153,8 +153,8 @@ export default function CompliancePage() {
 
       {/* ── The trail ─────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-20">
+        <Container className="py-14 sm:py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-20">
             <div>
               <>
                 <SectionHead
@@ -164,7 +164,7 @@ export default function CompliancePage() {
                   lede="Take one KES 200 lateness penalty that a staff member objected to — the document beside this is the real one. Here is everything Kaunta HR can produce about that case, months later, without anyone having to remember anything."
                 />
               </>
-              <div className="mt-12">
+              <div className="mt-8 sm:mt-12">
                 {[
                   {
                     n: "01",
@@ -218,7 +218,7 @@ export default function CompliancePage() {
 
       {/* ── Integrity mechanics ───────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-24">
+        <Container className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead
               tone="dark"
@@ -265,7 +265,7 @@ export default function CompliancePage() {
 
       {/* ── Disclaimer ────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="prose" className="py-16 sm:py-20">
+        <Container width="prose" className="py-12 sm:py-16 lg:py-20">
           <>
             <div className="rounded-xl border border-kaunta-amber/35 bg-kaunta-amber/[0.07] p-7">
               <Eyebrow tone="dark" className="text-kaunta-amber">
@@ -288,7 +288,7 @@ export default function CompliancePage() {
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="prose" className="py-20 sm:py-24">
+        <Container width="prose" className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead
               tone="dark"
