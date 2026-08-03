@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SelfieThumb from "@/components/SelfieThumb";
+import { InsightsPanel } from "@/components/InsightsPanel";
 
 /**
  * Owner live dashboard + hub (spec §9). Shows, per workplace, who's clocked in /
@@ -30,6 +31,8 @@ interface PageProps {
 export default async function DashboardPage({ searchParams }: PageProps) {
   const { w } = await searchParams;
   const supabase = await createClient();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token ?? "";
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -190,6 +193,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 </div>
               ))}
             </section>
+
+            {/* Patterns across the record — deterministic, never inferred. */}
+            {accessToken && <InsightsPanel token={accessToken} />}
 
             {/* Attendance today — per employee, expandable */}
             <section className="rounded-[12px] border border-kaunta-mist bg-white overflow-hidden">

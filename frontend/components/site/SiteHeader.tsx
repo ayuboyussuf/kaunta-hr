@@ -17,7 +17,6 @@ const MORE = [
   { href: "/compliance", label: "Compliance & records" },
   { href: "/security", label: "Security & data" },
   { href: "/changelog", label: "Changelog" },
-  { href: "/status", label: "Status" },
 ];
 
 export function SiteHeader() {
@@ -61,7 +60,11 @@ export function SiteHeader() {
         )}
       >
         <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-5 sm:h-18 sm:px-8">
-          <Link href="/" aria-label="Kaunta HR — home" className="shrink-0">
+          <Link
+            href="/"
+            aria-label="Kaunta HR — home"
+            className="flex min-h-[44px] shrink-0 items-center"
+          >
             <BrandLogo size="md" tone="dark" />
           </Link>
 
@@ -148,12 +151,12 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <div className="mt-6 grid gap-3">
+          <div className="mt-4 grid">
             {MORE.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-[0.9rem] text-white/50"
+                className="flex min-h-[44px] items-center text-[0.95rem] text-white/60"
               >
                 {item.label}
               </Link>

@@ -49,7 +49,7 @@ router.post("/", async (req, res) => {
   // ── 1) Expire overdue pending checks → missed, and flag the open session. ────
   const { data: overdue } = await db
     .from("presence_checks")
-    .select("id, session_entry_id")
+    .select("id, session_entry_id, employee_id")
     .eq("status", "pending")
     .lt("respond_by", nowIso);
 
@@ -70,6 +70,44 @@ router.post("/", async (req, res) => {
         .from("attendance_entries")
         .update({ flags, status: "flagged" })
         .eq("id", c.session_entry_id);
+    }
+
+    // Tell the owner. A missed check that nobody hears about is the same as no
+    // check at all — the whole point is that they find out on the day, not at
+    // month end. Deterministic: the window passed with no scan, so it failed.
+    try {
+      const { data: emp } = await db
+        .from("employees")
+        .select("id, name, org_id, workplace_id, workplaces(name)")
+        .eq("id", c.employee_id)
+        .maybeSingle();
+      if (emp) {
+        const site =
+          (emp.workplaces as unknown as { name: string } | null)?.name ?? "their site";
+        await db.from("owner_notifications").insert({
+          org_id: emp.org_id,
+          kind: "presence",
+          title: `${emp.name} missed a presence check`,
+          body: `A random check at ${site} went unanswered inside the window. The clock-in has been flagged.`,
+          link: "/dashboard",
+          ref_id: c.session_entry_id,
+        });
+
+        const { data: org } = await db
+          .from("orgs")
+          .select("phone")
+          .eq("id", emp.org_id)
+          .maybeSingle();
+        if (org?.phone) {
+          await sendText(
+            org.phone as string,
+            `Kaunta HR: ${emp.name} missed a random presence check at ${site}. The clock-in is flagged for your review.`
+          );
+        }
+      }
+    } catch (err) {
+      // Never let a notification failure stop the sweep.
+      console.error(`[cron] missed-check notice failed for ${c.id}:`, (err as Error).message);
     }
   }
 

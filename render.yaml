@@ -51,3 +51,63 @@ services:
         sync: false
       - key: CRON_SECRET
         sync: false
+
+  # ── Cron: fire random presence checks + expire missed ones (every 5 min) ───
+  # Without this the presence-check endpoint is never called and no check is
+  # ever fired. Note the org must also have presence_checks_per_shift > 0 in
+  # Settings — it ships at 0, which means off.
+  - type: cron
+    name: kaunta-hr-presence-checks
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    schedule: "*/5 * * * *"
+    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/presence-checks',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+
+  # ── Cron: absence sweep — rostered shifts that closed with no scan ─────────
+  # Runs after the latest shift end, once a day.
+  - type: cron
+    name: kaunta-hr-absence-sweep
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    schedule: "30 21 * * *"
+    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/absence-sweep',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+
+  # ── Cron: payroll periods (daily, early) ───────────────────────────────────
+  - type: cron
+    name: kaunta-hr-payroll
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    schedule: "0 3 * * *"
+    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/payroll',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+
+  # ── Cron: monthly review on the 1st — bonus suggestions + patterns ─────────
+  - type: cron
+    name: kaunta-hr-monthly-review
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    schedule: "0 6 1 * *"
+    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/monthly-review',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false

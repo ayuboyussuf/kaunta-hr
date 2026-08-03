@@ -42,13 +42,13 @@ const CAPABILITIES = [
   },
   {
     index: "06",
-    title: "Owner and accountant, separately",
-    body: "Role-based access separates who can change rules from who can read payroll. Staff only ever see their own record.",
+    title: "Owner and staff, separated",
+    body: "Two roles and no more: you, and the people who work for you. Staff only ever see their own record.",
   },
   {
     index: "07",
     title: "Onboarding by phone number",
-    body: "Add staff with a phone number and they verify over WhatsApp OTP. Notices and payslip links go out by SMS under the sender ID KAUNTAHR.",
+    body: "Add staff with a phone number and they verify with an SMS code. Notices and payslip links go out by SMS under the sender ID KAUNTAHR.",
   },
 ];
 
@@ -77,11 +77,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Who can see payroll figures?",
-    a: "Owners and any accountant you invite. Staff see their own attendance, their own penalties and their own payslips, and nothing belonging to anyone else. Roles are set per person, not per site.",
+    a: "Only you. Staff see their own attendance, their own penalties and their own payslips, and nothing belonging to anyone else.",
   },
   {
     q: "What do staff need on their phones?",
-    a: "A camera and a browser. There is no app to install. Staff verify once over WhatsApp OTP and then use a link.",
+    a: "A camera and a browser. There is no app to install. Staff verify once with an SMS code and then use a link.",
   },
   {
     q: "Is the PDF actually tamper-evident?",
@@ -103,47 +103,23 @@ export default function HomePage() {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="relative isolate -mt-16 flex min-h-[94svh] flex-col bg-kaunta-void pt-16 sm:-mt-18 sm:pt-18">
-        {/* The forecourt engraving. Full-bleed on desktop, a band anchored to
-            the fold on narrow screens so the station is never half-shown. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[48%] overflow-hidden sm:h-[54%] lg:inset-0 lg:h-auto"
+      {/* Below lg the copy and the engraving are stacked — nothing sits on
+          top of the line work, so every word stays at full contrast. From lg
+          the engraving goes full-bleed behind the copy column. */}
+      <section className="relative isolate -mt-16 flex flex-col bg-kaunta-void pt-16 sm:-mt-18 sm:pt-18 lg:min-h-[94svh]">
+        <Container
+          width="wide"
+          className="relative z-20 order-1 pb-10 pt-10 sm:pt-16 lg:pb-28 lg:pt-20"
         >
-          <Image
-            src="/art/forecourt.png"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-[64%_center] lg:object-center"
-          />
-        </div>
-        {/* scrim — the copy column has to stay readable over the engraving */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(6,9,15,0.96)_0%,rgba(6,9,15,0.90)_38%,rgba(6,9,15,0.52)_60%,rgba(6,9,15,0.10)_84%,transparent_100%)] lg:bg-[linear-gradient(to_right,rgba(6,9,15,0.95)_0%,rgba(6,9,15,0.86)_32%,rgba(6,9,15,0.38)_56%,transparent_76%)]"
-        />
-        {/* top scrim — the nav sits over the lit canopy on wide screens */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[linear-gradient(to_bottom,rgba(6,9,15,0.85)_0%,rgba(6,9,15,0.45)_55%,transparent_100%)]"
-        />
-        <div
-          aria-hidden
-          className="grain-overlay pointer-events-none absolute inset-0"
-        />
-
-        <Container width="wide" className="relative z-20 pb-24 pt-12 sm:pb-28 sm:pt-20">
           <div className="max-w-3xl">
             <Eyebrow tone="dark">Attendance · Penalties · Payslips</Eyebrow>
 
-            <h1 className="font-display mt-6 text-[2.6rem] leading-[1.02] tracking-[-0.028em] text-white sm:text-[3.9rem] lg:text-[4.6rem]">
+            <h1 className="font-display mt-5 text-[2.35rem] leading-[1.05] tracking-[-0.025em] text-white sm:text-[3.4rem] lg:text-[4.6rem] lg:leading-[1.02] lg:tracking-[-0.028em]">
               The attendance record for businesses running staff across several
               sites.
             </h1>
 
-            <p className="mt-7 max-w-xl text-[1rem] leading-relaxed text-white/65 sm:text-[1.1rem]">
+            <p className="mt-6 max-w-xl text-[1.0625rem] leading-[1.6] text-white/70 sm:text-[1.1rem] lg:text-[1.1rem] lg:text-white/65">
               Kaunta HR is built for Kenyan fuel stations, restaurants and branch
               networks. Staff clock in at the gate by QR, with a selfie and a GPS
               fix. The lateness rules you set apply on their own, staff appeal
@@ -151,7 +127,7 @@ export default function HomePage() {
               payslip you can send.
             </p>
 
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <SiteButton href="/signup" variant="light" size="lg">
                 Start free <ArrowRight />
               </SiteButton>
@@ -162,6 +138,35 @@ export default function HomePage() {
           </div>
         </Container>
 
+        <div
+          aria-hidden
+          className="relative order-2 h-[38svh] min-h-[240px] w-full overflow-hidden lg:absolute lg:inset-0 lg:order-none lg:h-auto lg:min-h-0"
+        >
+          <Image
+            src="/art/forecourt.png"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[62%_center] lg:object-center"
+          />
+          {/* soften the top edge into the copy block on stacked layouts */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[linear-gradient(to_bottom,#06090F_0%,transparent_100%)] lg:hidden" />
+        </div>
+
+        {/* desktop only — the copy column overlaps the engraving there */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 hidden lg:block lg:bg-[linear-gradient(to_right,rgba(6,9,15,0.95)_0%,rgba(6,9,15,0.86)_32%,rgba(6,9,15,0.38)_56%,transparent_76%)]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 hidden h-32 bg-[linear-gradient(to_bottom,rgba(6,9,15,0.85)_0%,rgba(6,9,15,0.45)_55%,transparent_100%)] lg:block"
+        />
+        <div
+          aria-hidden
+          className="grain-overlay pointer-events-none absolute inset-0 hidden lg:block"
+        />
       </section>
 
       {/* ── Spec strip ───────────────────────────────────────────── */}
@@ -170,12 +175,12 @@ export default function HomePage() {
           <dl className="grid grid-cols-2 gap-px bg-white/10 lg:grid-cols-4">
             {[
               ["Clock-in", "QR + geofence + selfie"],
-              ["Onboarding", "WhatsApp OTP"],
+              ["Onboarding", "SMS code"],
               ["Payslips", "Signed PDF links"],
               ["SMS sender ID", "KAUNTAHR"],
             ].map(([k, v]) => (
               <div key={k} className="bg-kaunta-void px-5 py-7 sm:px-7">
-                <dt className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
+                <dt className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
                   {k}
                 </dt>
                 <dd className="mt-2 text-[0.9rem] text-white/75 sm:text-[0.975rem]">
@@ -189,7 +194,7 @@ export default function HomePage() {
 
       {/* ── The premise ──────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
+        <Container className="py-14 sm:py-20 lg:py-28">
           <SectionHead
             eyebrow="The problem"
             tone="dark"
@@ -222,8 +227,8 @@ export default function HomePage() {
 
       {/* ── Exception dashboard ──────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.72fr)] lg:items-center lg:gap-20">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.72fr)] lg:items-center lg:gap-20">
             <div>
               <SectionHead
                 eyebrow="Multi-site dashboard"
@@ -238,7 +243,7 @@ export default function HomePage() {
                   ["Flagged", "A scan that needs a person to look at it."],
                 ].map(([k, v]) => (
                   <div key={k} className="h-full bg-kaunta-void p-6">
-                    <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/80">
+                    <p className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/80">
                       {k}
                     </p>
                     <p className="mt-3 text-[0.875rem] leading-relaxed text-white/55">
@@ -259,8 +264,8 @@ export default function HomePage() {
 
       {/* ── Rules ────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
             <Shot
               shot={SHOTS.rules}
               frame="device"
@@ -295,7 +300,7 @@ export default function HomePage() {
 
       {/* ── The record ───────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-20 sm:py-28">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <SectionHead
             eyebrow="The record"
             tone="dark"
@@ -303,7 +308,7 @@ export default function HomePage() {
             title="A month you can hand to somebody."
             lede="Every day carries its own state, every state traces back to a scan, and the whole month exports as a report with the selfies attached."
           />
-          <div className="mt-12">
+          <div className="mt-8 sm:mt-12">
             <Shot shot={SHOTS.teamCalendar} caption="One employee's month, with the report export" />
           </div>
         </Container>
@@ -311,8 +316,8 @@ export default function HomePage() {
 
       {/* ── Appeals + locked documents ───────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
+        <Container className="py-14 sm:py-20 lg:py-28">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-20">
             <div>
               <SectionHead
                 eyebrow="Appeals"
@@ -335,13 +340,13 @@ export default function HomePage() {
 
       {/* ── Capability grid ──────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-20 sm:py-28">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <SectionHead
             eyebrow="Everything in the box"
             tone="dark"
             title="Seven things it does, and nothing it doesn't."
           />
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid sm:mt-12 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {CAPABILITIES.map((c) => (
               <FeatureCard
                 key={c.index}
@@ -368,9 +373,9 @@ export default function HomePage() {
 
       {/* ── FAQ ──────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="prose" className="py-20 sm:py-28">
+        <Container width="prose" className="py-14 sm:py-20 lg:py-28">
           <SectionHead eyebrow="Questions" tone="dark" title="Before you set it up" />
-          <div className="mt-12">
+          <div className="mt-8 sm:mt-12">
             <FAQ items={FAQ_ITEMS} tone="dark" />
           </div>
         </Container>

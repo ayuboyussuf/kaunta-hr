@@ -47,14 +47,14 @@ export function DocsSidebar({ className }: { className?: string }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search docs"
-          className="h-10 w-full rounded-lg border border-white/12 bg-white/[0.03] pl-9 pr-3 text-[0.8125rem] text-white placeholder:text-white/30 focus:border-kaunta-ultra-br/60 focus:outline-none"
+          className="h-12 w-full rounded-lg sm:h-10 border border-white/12 bg-white/[0.03] pl-9 pr-3 text-[0.8125rem] text-white placeholder:text-white/30 focus:border-kaunta-ultra-br/60 focus:outline-none"
         />
       </label>
 
       <nav className="flex flex-col gap-7">
         {groups.map((g) => (
           <div key={g.group}>
-            <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
+            <p className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-white/40 sm:text-[0.6875rem] sm:text-[0.625rem] sm:text-white/30">
               {g.group}
             </p>
             <ul className="mt-3 space-y-0.5">
@@ -65,7 +65,7 @@ export function DocsSidebar({ className }: { className?: string }) {
                     <Link
                       href={item.href}
                       className={cn(
-                        "block rounded-md py-1.5 pl-3 text-[0.875rem] transition-colors duration-150",
+                        "flex min-h-[44px] items-center rounded-md pl-3 text-[0.95rem] transition-colors duration-150 sm:min-h-0 sm:py-1.5 sm:text-[0.875rem]",
                         active
                           ? "border-l border-kaunta-ultra-br bg-white/[0.04] text-white"
                           : "border-l border-white/10 text-white/50 hover:border-white/30 hover:text-white/85"

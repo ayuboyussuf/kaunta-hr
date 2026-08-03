@@ -54,7 +54,7 @@ const SEGMENTS = [
 const MULTI_FAQ = [
   {
     q: "Can I run different rules at different sites?",
-    a: "Yes. Penalty policies live on the site, so a station on a bad commuter road can carry more grace than a branch staff walk to. On the Multi-Site plan each site has its own policy; you can also apply one policy everywhere and only vary the exceptions.",
+    a: "Yes. Penalty policies live on the site, so a station on a bad commuter road can carry more grace than a branch staff walk to. Each site can carry its own policy, or you can apply one policy everywhere and vary only the exceptions.",
   },
   {
     q: "What about staff who move between sites?",
@@ -62,7 +62,7 @@ const MULTI_FAQ = [
   },
   {
     q: "Can my supervisor at each site see the dashboard?",
-    a: "Supervisors are staff — they see their own record only. If you want someone running payroll or settling appeals without the ability to rewrite rules, that is the accountant role, and on Multi-Site it can be scoped to specific sites.",
+    a: "No. Supervisors are staff — they see their own record only. There are two roles, owner and staff, and the dashboard belongs to the owner. That is deliberate: the person a late arrival reflects on should not be the person reporting it.",
   },
   {
     q: "How long does it take to add a fourth site?",
@@ -94,8 +94,8 @@ export default function MultiSitePage() {
 
       {/* ── What changes at site two ──────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
+        <Container className="py-14 sm:py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
             <>
               <SectionHead
                 tone="dark"
@@ -131,7 +131,7 @@ export default function MultiSitePage() {
 
       {/* ── The morning ───────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-20 sm:py-28">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
               tone="dark"
@@ -141,7 +141,7 @@ export default function MultiSitePage() {
               lede="The dashboard does not show you eight sites' worth of clock-ins. It shows you the handful of things that did not go to plan, and stays quiet about the rest."
             />
           </>
-          <div className="mt-12">
+          <div className="mt-8 sm:mt-12">
             <Shot shot={SHOTS.overview} frame="device" caption="Site overview on a phone" />
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -182,7 +182,7 @@ export default function MultiSitePage() {
 
       {/* ── Segments ──────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-20 sm:py-28">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
               tone="dark"
@@ -191,11 +191,11 @@ export default function MultiSitePage() {
             />
           </>
 
-          <div className="mt-12 grid gap-4 lg:grid-cols-3">
+          <div className="mt-8 grid sm:mt-12 gap-4 lg:grid-cols-3">
             {SEGMENTS.map((s) => (
               <div key={s.tag}>
                 <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/[0.02] p-7">
-                  <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/70">
+                  <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/70">
                     {s.tag}
                   </span>
                   <h3 className="font-display mt-4 text-xl leading-snug text-white">
@@ -227,8 +227,8 @@ export default function MultiSitePage() {
 
       {/* ── Rolling out ───────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
-          <div className="grid gap-14 lg:grid-cols-2 lg:items-center lg:gap-20">
+        <Container className="py-14 sm:py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-20">
             <div className="order-2 lg:order-1">
             </div>
             <div className="order-1 lg:order-2">
@@ -267,7 +267,7 @@ export default function MultiSitePage() {
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="prose" className="py-20 sm:py-24">
+        <Container width="prose" className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead
               tone="dark"

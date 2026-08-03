@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
+import { RulePresets } from "@/components/RulePresets";
 import { Button } from "@/components/ui/button";
 import { Scale, Plus, Trash2, Loader2, Pencil } from "lucide-react";
 
@@ -213,9 +214,23 @@ export default function RulesPage() {
                 </div>
               </div>
 
+              {token && (
+                <div className="mt-4">
+                  <RulePresets
+                    token={token}
+                    rulesetId={rs.id}
+                    rulesetName={rs.name}
+                    hasRules={rs.penalty_rules.length > 0}
+                    onApplied={() => load(token)}
+                  />
+                </div>
+              )}
+
               <div className="mt-4 divide-y divide-kaunta-mist">
                 {rs.penalty_rules.length === 0 && (
-                  <p className="text-sm text-kaunta-slate/50 py-2">No rules yet — add one.</p>
+                  <p className="text-sm text-kaunta-slate/50 py-2">
+                    No rules yet — pick a preset above, or add one by hand.
+                  </p>
                 )}
                 {rs.penalty_rules.map((r) => (
                   <div key={r.id} className="flex items-center justify-between py-2.5">

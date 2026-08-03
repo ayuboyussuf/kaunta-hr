@@ -73,7 +73,7 @@ export function CTASection({
 }) {
   return (
     <section className="ultra-glow border-t border-white/10 bg-kaunta-void">
-      <Container className="py-20 sm:py-28">
+      <Container className="py-14 sm:py-20 lg:py-28">
         <>
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-[2rem] leading-[1.08] tracking-[-0.02em] text-white sm:text-[2.75rem]">
@@ -112,7 +112,7 @@ export function PageHero({
 }) {
   return (
     <section className="ultra-glow-top relative overflow-hidden border-b border-white/10 bg-kaunta-void">
-      <Container className="pb-16 pt-14 sm:pb-24 sm:pt-20">
+      <Container className="pb-12 pt-10 sm:pb-16 sm:pt-14 lg:pb-24 lg:pt-20">
         <>
           <Eyebrow tone="dark">{eyebrow}</Eyebrow>
           <h1 className="font-display mt-5 max-w-3xl text-[2.35rem] leading-[1.04] tracking-[-0.025em] text-white sm:text-[3.4rem] lg:text-[4rem]">
@@ -196,7 +196,7 @@ export function NextLinks({
 }) {
   return (
     <section className="border-t border-white/10 bg-kaunta-void">
-      <Container className="py-16 sm:py-20">
+      <Container className="py-12 sm:py-16 lg:py-20">
         <SectionHead eyebrow="Keep reading" title="Related" tone="dark" />
         <div className="mt-10 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
           {links.map((l) => (

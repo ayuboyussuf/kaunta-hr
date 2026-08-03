@@ -98,7 +98,7 @@ const RELEASES: Release[] = [
     changes: [
       { tag: "Added", text: "One dashboard across all sites, built around exceptions rather than raw logs." },
       { tag: "Added", text: "Missed shift, out-of-fence and late-sync exception types." },
-      { tag: "Added", text: "Accountant role, separated from owner." },
+      { tag: "Added", text: "Staff sessions separated from owner sessions." },
       { tag: "Improved", text: "Scans that sync after a gap are marked as late sync rather than late arrival." },
     ],
   },
@@ -106,12 +106,12 @@ const RELEASES: Release[] = [
     version: "1.0",
     date: "January 2026",
     title: "Attendance, first release",
-    summary: "QR clock-in with geofencing, selfie and GPS, and onboarding over WhatsApp OTP.",
+    summary: "QR clock-in with geofencing, selfie and GPS, and onboarding over SMS code.",
 
     changes: [
       { tag: "Added", text: "Signed QR code per site, with a geofence radius set on a map." },
       { tag: "Added", text: "Selfie and GPS reading captured with every accepted scan." },
-      { tag: "Added", text: "Staff onboarding by phone number, verified over WhatsApp OTP." },
+      { tag: "Added", text: "Staff onboarding by phone number, verified with an SMS code." },
       { tag: "Added", text: "Configurable grace period and lateness bands." },
     ],
   },
@@ -127,22 +127,22 @@ export default function ChangelogPage() {
       />
 
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-16 sm:py-24">
+        <Container width="wide" className="py-12 sm:py-16 lg:py-24">
           {RELEASES.map((r, i) => (
             <div
               key={r.version}
-              className="grid gap-8 border-t border-white/10 py-12 first:border-t-0 first:pt-0 lg:grid-cols-[9rem_minmax(0,1fr)] lg:gap-14 lg:py-16"
+              className="grid gap-8 border-t border-white/10 py-12 first:border-t-0 first:pt-0 lg:grid-cols-[9rem_minmax(0,1fr)] lg:gap-10 lg:py-16"
             >
               <>
                 <div className="lg:sticky lg:top-28">
                   <p className="font-display text-2xl text-white">
                     {r.version}
                   </p>
-                  <p className="mt-1.5 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
+                  <p className="mt-1.5 font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
                     {r.date}
                   </p>
                   {i === 0 && (
-                    <span className="mt-4 inline-block rounded-full border border-kaunta-ultra-br/45 px-2.5 py-1 font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br">
+                    <span className="mt-4 inline-block rounded-full border border-kaunta-ultra-br/45 px-2.5 py-1 font-mono text-[0.625rem] sm:text-[0.5625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br">
                       Latest
                     </span>
                   )}
@@ -164,7 +164,7 @@ export default function ChangelogPage() {
                     <li key={j} className="flex flex-col gap-2 sm:flex-row sm:gap-4">
                       <span
                         className={cn(
-                          "inline-flex h-[1.375rem] shrink-0 items-center self-start rounded-full border px-2.5 font-mono text-[0.5625rem] uppercase tracking-[0.14em]",
+                          "inline-flex h-[1.375rem] shrink-0 items-center self-start rounded-full border px-2.5 font-mono text-[0.625rem] sm:text-[0.5625rem] uppercase tracking-[0.14em]",
                           TAG_STYLE[c.tag]
                         )}
                       >
@@ -192,7 +192,7 @@ export default function ChangelogPage() {
       </section>
 
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="prose" className="py-16 sm:py-20">
+        <Container width="prose" className="py-12 sm:py-16 lg:py-20">
           <>
             <SectionHead
               tone="dark"
@@ -207,7 +207,7 @@ export default function ChangelogPage() {
               {[
                 "Shift templates, so a roster can be applied to a site rather than built each week.",
                 "Consolidated payroll export across all sites in one file.",
-                "Bulk record export for audits, on Network plans.",
+                "A single-file record export for audits.",
               ].map((t) => (
                 <li
                   key={t}
@@ -233,9 +233,9 @@ export default function ChangelogPage() {
             blurb: "Everything currently shipped, capability by capability.",
           },
           {
-            href: "/status",
-            label: "Status",
-            blurb: "Current availability and incident history.",
+            href: "/compliance",
+            label: "Compliance & records",
+            blurb: "What the locked documents are actually for.",
           },
           {
             href: "/docs",

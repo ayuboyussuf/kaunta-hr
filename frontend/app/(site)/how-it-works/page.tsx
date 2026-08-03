@@ -127,7 +127,7 @@ const BEATS: Beat[] = [
   },
   {
     time: "End of month",
-    actor: "Accountant",
+    actor: "Owner",
     shot: "teamCalendar",
     title: "The payslip already knows all of it",
     body: (
@@ -152,7 +152,7 @@ export default function HowItWorksPage() {
       />
 
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container width="wide" className="py-16 sm:py-24">
+        <Container width="wide" className="py-12 sm:py-16 lg:py-24">
           {BEATS.map((beat) => (
             <div
               key={beat.title}
@@ -164,7 +164,7 @@ export default function HowItWorksPage() {
                   <p className="font-mono text-[0.8125rem] tracking-[0.08em] text-kaunta-ultra-br">
                     {beat.time}
                   </p>
-                  <p className="mt-1.5 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
+                  <p className="mt-1.5 font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
                     {beat.actor}
                   </p>
                 </div>
@@ -197,7 +197,7 @@ export default function HowItWorksPage() {
 
       {/* What the owner actually did all day */}
       <section className="border-b border-white/10 bg-kaunta-void">
-        <Container className="py-20 sm:py-28">
+        <Container className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
               align="center"
@@ -208,7 +208,7 @@ export default function HowItWorksPage() {
             />
           </>
           <>
-            <div className="mx-auto mt-12 grid max-w-3xl gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
+            <div className="mx-auto mt-8 grid sm:mt-12 max-w-3xl gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
               {[
                 ["11", "scans recorded"],
                 ["2", "decisions made by a person"],
@@ -216,7 +216,7 @@ export default function HowItWorksPage() {
               ].map(([n, l]) => (
                 <div key={l} className="bg-kaunta-void p-7 text-center">
                   <p className="font-display text-4xl text-white">{n}</p>
-                  <p className="mt-2 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
+                  <p className="mt-2 font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
                     {l}
                   </p>
                 </div>

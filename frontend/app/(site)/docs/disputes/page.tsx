@@ -35,9 +35,9 @@ export default function DisputesDocPage() {
         rows={[
           ["Applied", "The engine", "A penalty is attached to a scan and notified by SMS"],
           ["Appealed", "Staff", "The staff member objects, in writing, from their own record"],
-          ["Under review", "Owner or accountant", "The case appears in the exception queue"],
-          ["Upheld", "Owner or accountant", "The deduction stands and carries to the payslip"],
-          ["Waived", "Owner or accountant", "The deduction is reversed and never reaches the payslip"],
+          ["Under review", "Owner", "The case appears in the exception queue"],
+          ["Upheld", "Owner", "The deduction stands and carries to the payslip"],
+          ["Waived", "Owner", "The deduction is reversed and never reaches the payslip"],
           ["Locked", "The system", "A tamper-evident PDF is written and sent to the staff member"],
         ]}
       />
@@ -129,7 +129,7 @@ export default function DisputesDocPage() {
       </P>
       <H3>Who can decide</H3>
       <P>
-        Owners and accountants. Staff can raise and read, never decide. See{" "}
+        The owner. Staff can raise and read, never decide. See{" "}
         <DocLink href="/docs/roles">roles &amp; permissions</DocLink>.
       </P>
 

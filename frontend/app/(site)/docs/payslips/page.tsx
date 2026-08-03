@@ -40,7 +40,7 @@ export default function PayslipsDocPage() {
         rows={[
           ["Open appeals", "Decide them, or let the penalty roll to the next period"],
           ["Missed shifts undecided", "Confirm whether an absence rule should apply"],
-          ["Unverified staff", "They will not receive a link until they verify over WhatsApp"],
+          ["Unverified staff", "They will not receive a link until they verify by SMS"],
         ]}
       />
       <Callout title="Open appeals do not block you" tone="note">

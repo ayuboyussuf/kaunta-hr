@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Home, QrCode, Clock, AlertTriangle, Wallet, Megaphone } from "lucide-react";
+import { LogOut, Home, QrCode, Clock, AlertTriangle, Wallet, Megaphone, CalendarDays } from "lucide-react";
 import { getEmployeeToken, clearEmployeeToken } from "@/lib/api";
 
 /**
@@ -15,6 +15,7 @@ const NAV = [
   { href: "/me", label: "Home", icon: Home },
   { href: "/me/clock-in", label: "Clock in", icon: QrCode },
   { href: "/me/history", label: "History", icon: Clock },
+  { href: "/me/leave", label: "Leave", icon: CalendarDays },
   { href: "/me/violations", label: "Violations", icon: AlertTriangle },
   { href: "/me/payslips", label: "Payslips", icon: Wallet },
   { href: "/me/announcements", label: "Announcements", icon: Megaphone },
