@@ -89,7 +89,7 @@ export default function OwnerMessagesPage() {
             </p>
           </div>
           {unread > 0 && (
-            <button onClick={markAll} className="text-sm text-kaunta-copper hover:underline inline-flex items-center gap-1">
+            <button onClick={markAll} className="text-sm text-kaunta-ultra hover:underline inline-flex items-center gap-1">
               <Check className="h-4 w-4" /> Mark all read
             </button>
           )}
@@ -103,7 +103,7 @@ export default function OwnerMessagesPage() {
 
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-kaunta-copper" />
+            <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
           </div>
         ) : messages.length === 0 ? (
           <div className={`${cardCls} p-10 text-center`}>
@@ -120,12 +120,12 @@ export default function OwnerMessagesPage() {
                 <button
                   key={m.id}
                   onClick={() => open(m)}
-                  className={`${cardCls} w-full text-left p-5 flex gap-4 transition hover:border-kaunta-copper/40 ${
-                    unreadRow ? "border-l-4 border-l-kaunta-copper" : ""
+                  className={`${cardCls} w-full text-left p-5 flex gap-4 transition hover:border-kaunta-ultra/40 ${
+                    unreadRow ? "border-l-4 border-l-kaunta-ultra" : ""
                   }`}
                 >
                   <div className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${
-                    m.kind === "appeal" ? "bg-kaunta-copper/10 text-kaunta-copper" : "bg-kaunta-mist text-kaunta-slate"
+                    m.kind === "appeal" ? "bg-kaunta-ultra/10 text-kaunta-ultra" : "bg-kaunta-mist text-kaunta-slate"
                   }`}>
                     <Icon className="h-4 w-4" />
                   </div>
@@ -137,7 +137,7 @@ export default function OwnerMessagesPage() {
                       <span className="text-xs text-kaunta-slate/50 shrink-0">{timeAgo(m.created_at)}</span>
                     </div>
                     <p className="text-sm text-kaunta-slate/70 mt-0.5 whitespace-pre-wrap line-clamp-3">{m.body}</p>
-                    {m.link && <span className="text-xs text-kaunta-copper mt-1 inline-block">Open →</span>}
+                    {m.link && <span className="text-xs text-kaunta-ultra mt-1 inline-block">Open →</span>}
                   </div>
                 </button>
               );

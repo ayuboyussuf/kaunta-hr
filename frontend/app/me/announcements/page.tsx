@@ -140,7 +140,7 @@ export default function EmployeeMessagesPage() {
           {bubbles.map((b) => {
             const outgoing = b.side === "out";
             const toneCls = outgoing
-              ? "bg-kaunta-copper text-white rounded-br-sm"
+              ? "bg-kaunta-ultra text-white rounded-br-sm"
               : b.kind === "penalty"
               ? "bg-kaunta-red/5 border border-kaunta-red/20 text-kaunta-ink rounded-bl-sm"
               : b.kind === "outcome"
@@ -159,7 +159,7 @@ export default function EmployeeMessagesPage() {
                   {b.link && (
                     <Link
                       href={b.link}
-                      className={`text-xs mt-1 inline-block hover:underline ${outgoing ? "text-white/90" : "text-kaunta-copper"}`}
+                      className={`text-xs mt-1 inline-block hover:underline ${outgoing ? "text-white/90" : "text-kaunta-ultra"}`}
                     >
                       {b.linkLabel ?? "Open"} →
                     </Link>

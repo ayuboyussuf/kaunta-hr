@@ -39,7 +39,7 @@ interface Workplace {
 
 const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper";
+  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
 const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
 
 interface Draft {
@@ -149,7 +149,7 @@ export default function WorkplacesPage() {
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <span className="font-display text-2xl text-kaunta-ink">Workplaces</span>
-            <Link href="/dashboard" className="text-sm text-kaunta-copper hover:underline ml-3">
+            <Link href="/dashboard" className="text-sm text-kaunta-ultra hover:underline ml-3">
               ← Dashboard
             </Link>
           </div>
@@ -242,7 +242,7 @@ export default function WorkplacesPage() {
 
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-kaunta-copper" />
+            <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
           </div>
         ) : workplaces.length === 0 && !draft ? (
           <div className={`${cardCls} p-10 text-center`}>
@@ -250,7 +250,7 @@ export default function WorkplacesPage() {
             <p className="text-kaunta-slate/70">No workplaces yet.</p>
             <p className="text-sm text-kaunta-slate/50 mt-1">
               Run the{" "}
-              <Link href="/dashboard/onboarding" className="text-kaunta-copper hover:underline">
+              <Link href="/dashboard/onboarding" className="text-kaunta-ultra hover:underline">
                 setup wizard
               </Link>{" "}
               or add one directly.
@@ -263,7 +263,7 @@ export default function WorkplacesPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-kaunta-copper" /> {w.name}
+                      <MapPin className="h-4 w-4 text-kaunta-ultra" /> {w.name}
                     </h3>
                     <p className="text-xs text-kaunta-slate/60 mt-1">
                       {w.lat != null && w.lng != null ? `${w.lat}, ${w.lng}` : "No coordinates"} · {w.geofence_radius_m} m
@@ -282,7 +282,7 @@ export default function WorkplacesPage() {
                           ruleset_id: w.ruleset_id,
                         })
                       }
-                      className="text-kaunta-slate/60 hover:text-kaunta-copper p-1"
+                      className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
                       aria-label="Edit"
                     >
                       <Pencil className="h-4 w-4" />
@@ -304,7 +304,7 @@ export default function WorkplacesPage() {
                     ))}
                     {w.shifts.length === 0 && <li className="text-kaunta-slate/40">No shifts defined</li>}
                   </ul>
-                  <Link href="/dashboard/shifts" className="text-xs text-kaunta-copper hover:underline mt-2 inline-block">
+                  <Link href="/dashboard/shifts" className="text-xs text-kaunta-ultra hover:underline mt-2 inline-block">
                     Manage shifts →
                   </Link>
                 </div>

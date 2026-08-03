@@ -6,12 +6,12 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-kaunta-copper/50 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-kaunta-ultra/50 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         default:
-          "bg-kaunta-copper text-white shadow-sm hover:bg-kaunta-copper/90",
+          "bg-kaunta-ultra text-white shadow-sm hover:bg-kaunta-ultra/90",
         destructive:
           "bg-kaunta-red text-white shadow-sm hover:bg-kaunta-red/90",
         outline:
@@ -21,7 +21,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-kaunta-stone hover:text-kaunta-ink",
         link:
-          "text-kaunta-copper underline-offset-4 hover:underline",
+          "text-kaunta-ultra underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2",

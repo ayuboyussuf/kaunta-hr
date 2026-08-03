@@ -44,7 +44,7 @@ export default function SelfieThumb({ entryId, label }: { entryId: string; label
     <button
       type="button"
       onClick={load}
-      className="text-xs text-kaunta-copper hover:underline disabled:opacity-50"
+      className="text-xs text-kaunta-ultra hover:underline disabled:opacity-50"
       disabled={loading}
     >
       {loading ? "Loading…" : error ? "Retry photo" : `View ${label} photo`}

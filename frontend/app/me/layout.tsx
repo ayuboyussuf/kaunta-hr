@@ -53,7 +53,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
               clearEmployeeToken();
               router.replace("/me/login");
             }}
-            className="flex items-center gap-1.5 text-sm text-kaunta-copper hover:underline"
+            className="flex items-center gap-1.5 text-sm text-kaunta-ultra hover:underline"
           >
             <LogOut className="h-4 w-4" />
             Sign out
@@ -68,7 +68,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 href={href}
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${
                   active
-                    ? "bg-kaunta-copper/10 text-kaunta-copper font-medium"
+                    ? "bg-kaunta-ultra/10 text-kaunta-ultra font-medium"
                     : "text-kaunta-slate/70 hover:bg-kaunta-stone hover:text-kaunta-ink"
                 }`}
               >

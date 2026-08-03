@@ -49,7 +49,7 @@ const fmtDate = (s: string) => new Date(s).toLocaleString("en-KE");
 
 const STATUS_STYLE: Record<string, string> = {
   open: "bg-kaunta-amber/15 text-kaunta-amber",
-  appealed: "bg-kaunta-copper/15 text-kaunta-copper",
+  appealed: "bg-kaunta-ultra/15 text-kaunta-ultra",
   locked: "bg-kaunta-ink/10 text-kaunta-ink",
 };
 
@@ -199,7 +199,7 @@ export default function OwnerViolationsPage() {
               <select
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
-                className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper"
+                className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
               >
                 <option value="">Select employee…</option>
                 {employees.map((emp) => (
@@ -217,7 +217,7 @@ export default function OwnerViolationsPage() {
               <select
                 value={ruleId}
                 onChange={(e) => setRuleId(e.target.value)}
-                className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper"
+                className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
               >
                 <option value="">Free reason + amount…</option>
                 {rules.map((r) => (
@@ -236,7 +236,7 @@ export default function OwnerViolationsPage() {
                     value={freeReason}
                     onChange={(e) => setFreeReason(e.target.value)}
                     placeholder="e.g. Late arrival"
-                    className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper"
+                    className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
                   />
                 </div>
                 <div>
@@ -249,7 +249,7 @@ export default function OwnerViolationsPage() {
                     step="1"
                     value={freeAmount}
                     onChange={(e) => setFreeAmount(e.target.value)}
-                    className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper tabular-nums"
+                    className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra tabular-nums"
                   />
                 </div>
               </>
@@ -263,7 +263,7 @@ export default function OwnerViolationsPage() {
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
-                className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper"
+                className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
               />
             </div>
 
@@ -343,7 +343,7 @@ export default function OwnerViolationsPage() {
                 setStatusFilter(e.target.value);
                 refresh(e.target.value);
               }}
-              className="rounded-lg border border-kaunta-mist bg-white px-3 py-1.5 text-sm outline-none focus:border-kaunta-copper"
+              className="rounded-lg border border-kaunta-mist bg-white px-3 py-1.5 text-sm outline-none focus:border-kaunta-ultra"
             >
               <option value="">All statuses</option>
               <option value="open">Open</option>
@@ -397,7 +397,7 @@ export default function OwnerViolationsPage() {
                               href={v.pdf_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-kaunta-copper hover:underline"
+                              className="text-kaunta-ultra hover:underline"
                             >
                               Download
                             </a>

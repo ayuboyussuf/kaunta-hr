@@ -127,7 +127,7 @@ export default function EmployeeLoginPage() {
   }
 
   const input =
-    "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper";
+    "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
 
   return (
     <main className="min-h-screen grid place-items-center bg-kaunta-stone px-4">
@@ -155,7 +155,7 @@ export default function EmployeeLoginPage() {
             </Button>
             <button
               onClick={tryPinFirst}
-              className="w-full text-sm text-kaunta-copper hover:underline"
+              className="w-full text-sm text-kaunta-ultra hover:underline"
             >
               I have a PIN on this device
             </button>
@@ -183,7 +183,7 @@ export default function EmployeeLoginPage() {
               <button
                 onClick={() => requestOtp(true)}
                 disabled={loading || resendIn > 0}
-                className="text-kaunta-copper hover:underline disabled:text-kaunta-slate/40 disabled:no-underline"
+                className="text-kaunta-ultra hover:underline disabled:text-kaunta-slate/40 disabled:no-underline"
               >
                 {resendIn > 0 ? `Resend code in ${resendIn}s` : "Didn't get it? Resend code"}
               </button>

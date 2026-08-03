@@ -1,18 +1,32 @@
 @import "tailwindcss";
 
-/* ── Kaunta Design System ───────────────────────────────────────── */
+/* ── Kaunta-HR Design System ────────────────────────────────────────
+   Sibling to Kaunta main (copper #C4622D / navy #0F1923): same
+   typographic system, spacing and restraint — ultramarine identity.
+   ------------------------------------------------------------------ */
 @theme {
-  /* Core palette */
-  --color-kaunta-ink:        #0F1923;
-  --color-kaunta-slate:      #1C2B3A;
-  --color-kaunta-copper:     #C4622D;
-  --color-kaunta-copper-lt:  #F2E4D9;
-  --color-kaunta-sage:       #3D6B5E;
-  --color-kaunta-sage-lt:    #DFF0EB;
-  --color-kaunta-stone:      #F7F4F0;
-  --color-kaunta-mist:       #EAE6E1;
-  --color-kaunta-amber:      #D4A017;
-  --color-kaunta-red:        #B83232;
+  /* Grounds — cool, near-black */
+  --color-kaunta-void:       #06090F;
+  --color-kaunta-ink:        #0B1120;
+  --color-kaunta-slate:      #1B2540;
+
+  /* Primary — ultramarine */
+  --color-kaunta-ultra:      #1E3FD8;
+  --color-kaunta-ultra-dp:   #1631A8;
+  --color-kaunta-ultra-br:   #4A6BF5;
+  --color-kaunta-ultra-lt:   #E6EAFD;
+
+  /* Support */
+  --color-kaunta-sage:       #176B58;
+  --color-kaunta-sage-lt:    #DCEFE9;
+  --color-kaunta-amber:      #B5820C;
+  --color-kaunta-amber-lt:   #FBF0D6;
+  --color-kaunta-red:        #C0362F;
+  --color-kaunta-red-lt:     #FBE5E3;
+
+  /* Neutrals — cooled to sit under ultramarine */
+  --color-kaunta-stone:      #F5F6FA;
+  --color-kaunta-mist:       #E3E7F2;
   --color-kaunta-white:      #FFFFFF;
 
   /* Typography */
@@ -21,9 +35,9 @@
   --font-mono: var(--font-jetbrains-mono), "Courier New", monospace;
 
   /* Shadows */
-  --shadow-card: 0 2px 16px rgba(15, 25, 35, 0.08);
-  --shadow-card-hover: 0 8px 32px rgba(15, 25, 35, 0.14);
-  --shadow-modal: 0 24px 64px rgba(15, 25, 35, 0.18);
+  --shadow-card: 0 2px 16px rgba(11, 17, 32, 0.07);
+  --shadow-card-hover: 0 8px 32px rgba(11, 17, 32, 0.13);
+  --shadow-modal: 0 24px 64px rgba(11, 17, 32, 0.18);
 
   /* Border radius */
   --radius-card: 12px;
@@ -31,8 +45,8 @@
 
 /* ── Base ────────────────────────────────────────────────────────── */
 :root {
-  --background: #F7F4F0;
-  --foreground: #0F1923;
+  --background: #F5F6FA;
+  --foreground: #0B1120;
 }
 
 html {
@@ -46,7 +60,7 @@ body {
   font-family: var(--font-sans);
 }
 
-/* ── Grain texture overlay (used on hero) ───────────────────────── */
+/* ── Grain texture overlay ──────────────────────────────────────── */
 .grain-overlay {
   position: relative;
 }
@@ -54,7 +68,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 200px;
   pointer-events: none;
@@ -62,25 +76,128 @@ body {
   border-radius: inherit;
 }
 
-/* ── Copper glow (hero background effect) ───────────────────────── */
-/* NOTE: must use background-image (not background shorthand) so that
-   Tailwind's bg-kaunta-slate background-color is not overridden. */
-.copper-glow {
-  background-image: radial-gradient(ellipse 80% 50% at 50% 110%, rgba(196, 98, 45, 0.18) 0%, transparent 70%);
+/* ── Ultramarine glow (dark-ground hero wash) ───────────────────── */
+/* NOTE: background-image (not shorthand) so Tailwind's bg-* color survives. */
+.ultra-glow {
+  background-image: radial-gradient(ellipse 95% 65% at 50% 112%, rgba(37, 78, 245, 0.52) 0%, rgba(30, 63, 216, 0.16) 42%, transparent 72%);
+}
+.ultra-glow-top {
+  background-image: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(30, 63, 216, 0.22) 0%, transparent 68%);
 }
 
-/* ── Typography utilities ────────────────────────────────────────── */
+/* ── Hairline rules (engraving language) ────────────────────────── */
+.hairline-b { border-bottom: 1px solid rgba(255, 255, 255, 0.10); }
+.hairline-t { border-top: 1px solid rgba(255, 255, 255, 0.10); }
+.hairline-x { border-left: 1px solid rgba(255, 255, 255, 0.10); border-right: 1px solid rgba(255, 255, 255, 0.10); }
+
+/* ── Typography utilities ───────────────────────────────────────── */
 .font-display {
   font-family: var(--font-display);
 }
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
 
-/* ── Number formatting (monospace for financial figures) ─────────── */
+/* ── Number formatting (monospace for financial figures) ────────── */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
 }
 
-/* ── Accordion animations ────────────────────────────────────────── */
+/* ── Scroll motion ───────────────────────────────────────────────
+   Driven entirely by IntersectionObserver toggling `.is-in`.
+   No scroll event handlers, no per-frame JS, compositor-only
+   properties (opacity/transform) — so it cannot stall the scroller.
+   ---------------------------------------------------------------- */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+  transition:
+    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal-rise  { transform: translate3d(0, 28px, 0); }
+.reveal-left  { transform: translate3d(-20px, 0, 0); }
+.reveal-right { transform: translate3d(20px, 0, 0); }
+.reveal-scale { transform: scale(0.975); }
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Engraved line art draws itself in */
+.draw-in path,
+.draw-in line,
+.draw-in circle,
+.draw-in rect,
+.draw-in polyline {
+  stroke-dasharray: var(--len, 1400);
+  stroke-dashoffset: var(--len, 1400);
+  transition: stroke-dashoffset 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.draw-in.is-in path,
+.draw-in.is-in line,
+.draw-in.is-in circle,
+.draw-in.is-in rect,
+.draw-in.is-in polyline {
+  stroke-dashoffset: 0;
+}
+
+/* Scroll-linked drift — CSS scroll-driven animation only. Browsers
+   without support simply render the static (final) state. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .drift {
+      animation: drift-y linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+      will-change: transform;
+    }
+    .drift-slow { --drift-to: -3%; }
+    .drift-fast { --drift-to: -9%; }
+  }
+}
+@keyframes drift-y {
+  from { transform: translate3d(0, 4%, 0); }
+  to   { transform: translate3d(0, var(--drift-to, -6%), 0); }
+}
+
+/* Ticker — pure CSS, GPU only */
+@keyframes ticker {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+.ticker-track {
+  animation: ticker 42s linear infinite;
+  will-change: transform;
+}
+.ticker-mask {
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .draw-in path,
+  .draw-in line,
+  .draw-in circle,
+  .draw-in rect,
+  .draw-in polyline {
+    transition: none !important;
+    opacity: 1;
+    transform: none;
+    stroke-dashoffset: 0;
+  }
+  .ticker-track { animation: none; }
+}
+
+/* ── Accordion animations ───────────────────────────────────────── */
 @keyframes accordion-down {
   from { height: 0; }
   to { height: var(--radix-accordion-content-height); }
@@ -110,7 +227,7 @@ body {
   animation: pulse-dot 1.5s ease-in-out infinite;
 }
 
-/* ── Scrollbar ───────────────────────────────────────────────────── */
+/* ── Scrollbar ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -123,18 +240,18 @@ body {
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-kaunta-copper);
+  background: var(--color-kaunta-ultra);
 }
 
 /* ── Focus ring ─────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid #C4622D;
+  outline: 2px solid #1E3FD8;
   outline-offset: 2px;
 }
 
-/* ── Table zebra striping ────────────────────────────────────────── */
+/* ── Table zebra striping ───────────────────────────────────────── */
 .table-zebra tbody tr:nth-child(even) {
-  background-color: #F7F4F0;
+  background-color: #F5F6FA;
 }
 .table-zebra tbody tr:nth-child(odd) {
   background-color: #FFFFFF;

@@ -41,7 +41,7 @@ function windowLeft(end: string): string {
 
 const STATUS_STYLE: Record<string, string> = {
   open: "bg-kaunta-amber/15 text-kaunta-amber",
-  appealed: "bg-kaunta-copper/15 text-kaunta-copper",
+  appealed: "bg-kaunta-ultra/15 text-kaunta-ultra",
   locked: "bg-kaunta-ink/10 text-kaunta-ink",
 };
 
@@ -116,7 +116,7 @@ export default function MyViolationsPage() {
           <span className="font-display text-2xl text-kaunta-ink">My penalties</span>
           <button
             onClick={() => router.push("/me")}
-            className="text-sm text-kaunta-copper hover:underline"
+            className="text-sm text-kaunta-ultra hover:underline"
           >
             Back
           </button>
@@ -178,7 +178,7 @@ export default function MyViolationsPage() {
                       onChange={(e) => setMessage(e.target.value)}
                       rows={3}
                       placeholder="Explain why this penalty should be waived…"
-                      className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper"
+                      className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
                     />
                     <div className="flex gap-2">
                       <Button
@@ -228,7 +228,7 @@ export default function MyViolationsPage() {
                   href={v.pdf_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-block text-sm text-kaunta-copper hover:underline mt-3"
+                  className="inline-block text-sm text-kaunta-ultra hover:underline mt-3"
                 >
                   Download outcome PDF
                 </a>

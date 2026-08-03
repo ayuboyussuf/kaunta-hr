@@ -37,7 +37,7 @@ interface Employee {
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-copper";
+  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
 const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
 
 interface Draft {
@@ -155,7 +155,7 @@ export default function ShiftsPage() {
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <span className="font-display text-2xl text-kaunta-ink">Shifts & rosters</span>
-            <Link href="/dashboard" className="text-sm text-kaunta-copper hover:underline ml-3">
+            <Link href="/dashboard" className="text-sm text-kaunta-ultra hover:underline ml-3">
               ← Dashboard
             </Link>
           </div>
@@ -231,7 +231,7 @@ export default function ShiftsPage() {
                     onClick={() => toggleDay(di)}
                     className={`h-8 w-11 rounded-md text-xs ${
                       draft.days_of_week.includes(di)
-                        ? "bg-kaunta-copper text-white"
+                        ? "bg-kaunta-ultra text-white"
                         : "bg-kaunta-stone text-kaunta-slate/70 hover:bg-kaunta-mist"
                     }`}
                   >
@@ -253,12 +253,12 @@ export default function ShiftsPage() {
 
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-kaunta-copper" />
+            <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
           </div>
         ) : workplaces.length === 0 ? (
           <div className={`${cardCls} p-10 text-center`}>
             <p className="text-kaunta-slate/70">No workplaces yet.</p>
-            <Link href="/dashboard/workplaces" className="text-sm text-kaunta-copper hover:underline mt-1 inline-block">
+            <Link href="/dashboard/workplaces" className="text-sm text-kaunta-ultra hover:underline mt-1 inline-block">
               Add a workplace first →
             </Link>
           </div>
@@ -280,7 +280,7 @@ export default function ShiftsPage() {
                       <div key={s.id} className="flex items-center justify-between rounded-lg border border-kaunta-mist px-4 py-3">
                         <div>
                           <p className="text-sm font-medium text-kaunta-ink inline-flex items-center gap-2">
-                            <Clock className="h-3.5 w-3.5 text-kaunta-copper" /> {s.name}
+                            <Clock className="h-3.5 w-3.5 text-kaunta-ultra" /> {s.name}
                             <span className="text-xs font-normal text-kaunta-slate/50 capitalize">({s.kind})</span>
                           </p>
                           <p className="text-xs text-kaunta-slate/60 mt-0.5">
@@ -305,7 +305,7 @@ export default function ShiftsPage() {
                                 grace_minutes: s.grace_minutes,
                               })
                             }
-                            className="text-kaunta-slate/60 hover:text-kaunta-copper p-1"
+                            className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
                             aria-label="Edit"
                           >
                             <Pencil className="h-4 w-4" />
@@ -322,7 +322,7 @@ export default function ShiftsPage() {
             ))}
             <p className="text-xs text-kaunta-slate/50">
               Assign employees to shifts from the{" "}
-              <Link href="/dashboard/employees" className="text-kaunta-copper hover:underline">
+              <Link href="/dashboard/employees" className="text-kaunta-ultra hover:underline">
                 employees page
               </Link>
               .

@@ -146,7 +146,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             {(pendingAppeals ?? 0) > 0 && (
               <Link
                 href="/dashboard/violations"
-                className="rounded-full bg-kaunta-copper/10 px-3 py-1 text-sm text-kaunta-copper hover:bg-kaunta-copper/20"
+                className="rounded-full bg-kaunta-ultra/10 px-3 py-1 text-sm text-kaunta-ultra hover:bg-kaunta-ultra/20"
               >
                 {pendingAppeals} pending appeal{pendingAppeals === 1 ? "" : "s"}
               </Link>
@@ -259,7 +259,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                                 ))}
                                 <Link
                                   href="/dashboard/violations"
-                                  className="inline-block mt-1 text-kaunta-copper hover:underline text-xs"
+                                  className="inline-block mt-1 text-kaunta-ultra hover:underline text-xs"
                                 >
                                   Open in Penalties →
                                 </Link>
@@ -278,7 +278,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <div className="rounded-[12px] border border-kaunta-mist bg-white p-8">
             <p className="text-kaunta-slate/70">
               No workplaces yet.{" "}
-              <Link href="/dashboard/workplaces" className="text-kaunta-copper hover:underline">
+              <Link href="/dashboard/workplaces" className="text-kaunta-ultra hover:underline">
                 Add one
               </Link>{" "}
               to start tracking attendance.

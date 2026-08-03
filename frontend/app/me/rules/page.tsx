@@ -61,7 +61,7 @@ export default function MyRulesPage() {
       <header className="border-b border-kaunta-mist bg-white">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <span className="font-display text-2xl text-kaunta-ink">Workplace rules</span>
-          <button onClick={() => router.push("/me")} className="text-sm text-kaunta-copper hover:underline">
+          <button onClick={() => router.push("/me")} className="text-sm text-kaunta-ultra hover:underline">
             Back
           </button>
         </div>
