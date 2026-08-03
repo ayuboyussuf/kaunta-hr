@@ -13,10 +13,25 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import Decimal from "decimal.js";
+import { z } from "zod";
 import { getServiceClient } from "../supabase";
 import { D, money, toDb, toNum, maxZero, sum } from "../money";
 
 const TZ = "Africa/Nairobi";
+
+// Every computed figure is validated against this before it can be persisted or
+// land on a payslip. A malformed/missing money or attendance value must be caught
+// here and flagged — never silently written through.
+const finiteMoney = z.number().finite().min(0);
+const nonNegInt = z.number().int().min(0);
+const payslipComputedSchema = z.object({
+  gross: finiteMoney,
+  net_computed: finiteMoney,
+  days_present: nonNegInt,
+  expected_days: nonNegInt,
+  absent_days: nonNegInt,
+  deductions: z.array(z.object({ amount: finiteMoney }).passthrough()),
+});
 
 /** Nairobi calendar date (YYYY-MM-DD) for an instant. */
 function nairobiDate(iso: string): string {
@@ -42,7 +57,7 @@ function datesInRange(start: string, end: string): string[] {
 const weekdayOf = (ymd: string) => new Date(`${ymd}T00:00:00Z`).getUTCDay(); // 0=Sun..6=Sat
 
 export interface PayrollFlag {
-  code: "missing_clockins" | "flagged_attendance" | "incomplete_session" | "no_pay_config";
+  code: "missing_clockins" | "flagged_attendance" | "incomplete_session" | "no_pay_config" | "invalid_computation";
   message: string;
   resolved: boolean;
   // Only blocking flags gate approval. Informational ones (e.g. absence already
@@ -263,8 +278,28 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
       absence_suggestion: absenceSuggestion.gt(0) ? toNum(absenceSuggestion) : null,
       override_net: null as number | null,
       net_computed: toNum(netComputed),
+      invalid_computation: false,
       workplace_name: wp?.name ?? "Unassigned",
     };
+
+    // Validate every computed figure before it can be persisted. If anything is
+    // malformed/missing (NaN, negative, non-integer day count), do NOT pass it
+    // through silently: raise a blocking flag and zero the net so the run cannot be
+    // approved until a human resolves it.
+    const check = payslipComputedSchema.safeParse(breakdown);
+    let persistNet = netComputed;
+    if (!check.success) {
+      const issue = check.error.issues[0];
+      flags.push({
+        code: "invalid_computation",
+        message: `A computed figure failed validation (${issue?.path.join(".") || "figure"}: ${issue?.message}). Review this line — it can't be approved as-is.`,
+        resolved: false,
+        blocking: true,
+      });
+      persistNet = new Decimal(0);
+      breakdown.net_computed = 0;
+      breakdown.invalid_computation = true;
+    }
 
     // Upsert the line. Money columns are written as fixed 2dp strings (toDb) so no
     // float re-enters the numeric(12,2) columns. Preserve owner state (held/override)
@@ -277,7 +312,7 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
           cycle_id: cycleId,
           gross: toDb(gross),
           deductions: allDeductions,
-          net: toDb(netComputed),
+          net: toDb(persistNet),
           breakdown,
           flags,
         },
