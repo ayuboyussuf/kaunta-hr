@@ -187,7 +187,7 @@ async function notify(
 ): Promise<void> {
   const { data: emp } = await db
     .from("employees")
-    .select("phone, full_name")
+    .select("phone, name")
     .eq("id", employeeId)
     .maybeSingle();
   if (!emp?.phone) return;

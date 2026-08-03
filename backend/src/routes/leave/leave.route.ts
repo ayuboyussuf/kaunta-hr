@@ -134,7 +134,7 @@ router.get("/", requireOwner, async (req, res) => {
   let q = db
     .from("leave_requests")
     .select(
-      "id, start_date, end_date, reason, status, paid, decided_at, created_at, employees(id, full_name, phone, workplace_id)"
+      "id, start_date, end_date, reason, status, paid, decided_at, created_at, employees(id, name, phone, workplace_id)"
     )
     .eq("org_id", req.owner!.orgId)
     .order("start_date", { ascending: true })
@@ -170,12 +170,12 @@ router.post("/:id/approve", requireOwner, async (req, res) => {
     .eq("id", req.params.id)
     .eq("org_id", req.owner!.orgId)
     .eq("status", "pending")
-    .select("id, start_date, end_date, paid, employees(full_name, phone)")
+    .select("id, start_date, end_date, paid, employees(name, phone)")
     .maybeSingle();
   if (error) return res.status(500).json({ error: error.message });
   if (!data) return res.status(404).json({ error: "no pending request with that id" });
 
-  const emp = data.employees as unknown as { full_name: string; phone: string } | null;
+  const emp = data.employees as unknown as { name: string; phone: string } | null;
   if (emp?.phone) {
     const span =
       data.start_date === data.end_date
@@ -209,12 +209,12 @@ router.post("/:id/decline", requireOwner, async (req, res) => {
     .eq("id", req.params.id)
     .eq("org_id", req.owner!.orgId)
     .eq("status", "pending")
-    .select("id, start_date, end_date, employees(full_name, phone)")
+    .select("id, start_date, end_date, employees(name, phone)")
     .maybeSingle();
   if (error) return res.status(500).json({ error: error.message });
   if (!data) return res.status(404).json({ error: "no pending request with that id" });
 
-  const emp = data.employees as unknown as { full_name: string; phone: string } | null;
+  const emp = data.employees as unknown as { name: string; phone: string } | null;
   if (emp?.phone) {
     try {
       await sendText(
