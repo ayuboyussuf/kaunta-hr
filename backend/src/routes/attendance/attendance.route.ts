@@ -21,6 +21,7 @@ import { getServiceClient } from "../../lib/supabase";
 import { signWorkplaceToken, verifyWorkplaceToken } from "../../lib/qr";
 import { evaluateScan } from "../../lib/attendance/geofence";
 import { uploadSelfie, signSelfie } from "../../lib/storage/selfies";
+import { evaluateScan as enforceRules } from "../../lib/rules/engine";
 import { confirmPendingCheck } from "../../lib/presence";
 
 const router = Router();
@@ -223,6 +224,26 @@ router.post("/scan", requireEmployee, async (req, res) => {
     console.error(`[scan] presence confirm failed for entry ${entry.id}:`, (err as Error).message);
   }
 
+  // Automatic enforcement. The owner's rules are evaluated against this scan
+  // the moment it lands, so a late arrival becomes a notified violation
+  // without anyone having to watch the dashboard. Deterministic, and it only
+  // ever applies a rule the owner configured — see lib/rules/engine.
+  let applied = null as Awaited<ReturnType<typeof enforceRules>>;
+  try {
+    applied = await enforceRules(db, {
+      orgId: req.employee!.orgId,
+      employeeId: req.employee!.employeeId,
+      workplaceId: workplace.id,
+      attendanceId: entry.id,
+      status,
+      lateByMin: rosterExpected?.late_by_min ?? 0,
+      scannedAt: entry.scanned_at,
+    });
+  } catch (err) {
+    // Enforcement must never cost the employee their clock-in.
+    console.error(`[scan] rule evaluation failed for entry ${entry.id}:`, (err as Error).message);
+  }
+
   res.status(201).json({
     entry,
     workplace: { id: workplace.id, name: workplace.name },
@@ -230,6 +251,9 @@ router.post("/scan", requireEmployee, async (req, res) => {
     status,
     direction,
     flags,
+    penalty: applied
+      ? { id: applied.violationId, reason: applied.reason, amount: applied.amount }
+      : null,
   });
 });
 

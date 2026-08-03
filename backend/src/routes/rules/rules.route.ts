@@ -10,6 +10,8 @@
  *   POST   /api/rules/rulesets/:id/rules    → add a penalty rule
  *   PATCH  /api/rules/rules/:id             → edit a penalty rule
  *   DELETE /api/rules/rules/:id             → delete a penalty rule
+ *   GET    /api/rules/presets               → the preset menu
+ *   POST   /api/rules/rulesets/:id/apply-preset → fill a ruleset from a preset
  *
  * Everything is org-scoped: rulesets carry org_id directly; penalty rules are
  * verified through ruleset → org_id (same pattern as violations.route.ts).
@@ -18,6 +20,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { requireOwner } from "../../lib/auth";
 import { getServiceClient } from "../../lib/supabase";
+import { PRESETS, findPreset } from "../../lib/rules/presets";
 
 const router = Router();
 
@@ -194,6 +197,60 @@ router.delete("/rules/:id", requireOwner, async (req, res) => {
   const { error } = await db.from("penalty_rules").delete().eq("id", idParse.data);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
+});
+
+/* ── Presets ──────────────────────────────────────────────────────────────────
+ * A first-time owner should be choosing from a menu, not inventing a policy on
+ * an empty screen. Applying a preset writes ordinary penalty rules — there is
+ * nothing special about them afterwards, and every one can be edited or
+ * deleted like any other.
+ * --------------------------------------------------------------------------- */
+
+router.get("/presets", requireOwner, async (_req, res) => {
+  res.json({ presets: PRESETS });
+});
+
+const applyPreset = z.object({
+  preset: z.string().trim().min(1),
+  /** replace whatever the ruleset already holds, rather than adding to it */
+  replace: z.boolean().optional(),
+});
+
+router.post("/rulesets/:id/apply-preset", requireOwner, async (req, res) => {
+  const idParse = z.string().uuid().safeParse(req.params.id);
+  if (!idParse.success) return res.status(400).json({ error: "invalid ruleset id" });
+  const parsed = applyPreset.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+
+  const preset = findPreset(parsed.data.preset);
+  if (!preset) return res.status(404).json({ error: "no such preset" });
+
+  const db = getServiceClient();
+  if (!(await ownsRuleset(db, req.owner!.orgId, idParse.data))) {
+    return res.status(404).json({ error: "ruleset not found" });
+  }
+
+  if (parsed.data.replace) {
+    const { error } = await db.from("penalty_rules").delete().eq("ruleset_id", idParse.data);
+    if (error) return res.status(500).json({ error: error.message });
+  }
+
+  const rows = preset.rules.map((r) => ({
+    ruleset_id: idParse.data,
+    code: r.code,
+    reason: r.reason,
+    amount: r.amount,
+    calc: r.calc ?? {},
+    appeal_window_hours: r.appeal_window_hours,
+  }));
+
+  const { data, error } = await db
+    .from("penalty_rules")
+    .insert(rows)
+    .select("id, code, reason, amount, calc, appeal_window_hours, created_at");
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.status(201).json({ preset: preset.key, rules: data ?? [] });
 });
 
 export default { basePath: "/api/rules", router };
