@@ -1,4 +1,5 @@
 import "dotenv/config"; // load .env before anything reads process.env
+import { Sentry } from "./instrument"; // Sentry.init (no-op without SENTRY_DSN) — keep early
 import express from "express";
 import cors from "cors";
 import { loadRoutes } from "./routes/registry";
@@ -37,6 +38,10 @@ console.log(`[routes] mounted ${mounted.length}:`, mounted.join(", "));
 
 // Start background job workers (no-op unless REDIS_URL is set).
 startWorkers();
+
+// Capture unhandled route errors in Sentry (no-op without SENTRY_DSN), before
+// the client-facing handler below.
+Sentry.setupExpressErrorHandler(app);
 
 // Central error handler — never leak stack traces to clients.
 app.use(
