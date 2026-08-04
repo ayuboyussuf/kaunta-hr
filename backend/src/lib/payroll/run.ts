@@ -12,36 +12,29 @@
  * window, idempotently stamped to the cycle.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { DateTime } from "luxon";
+import Decimal from "decimal.js";
+import { z } from "zod";
 import { getServiceClient } from "../supabase";
+import { D, money, toDb, toNum, maxZero, sum } from "../money";
+import { nairobiDate, datesInRange, weekdayOf } from "../time";
 
-const TZ = "Africa/Nairobi";
-const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
-
-/** Nairobi calendar date (YYYY-MM-DD) for an instant. */
-function nairobiDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(iso));
-}
-
-/** Every YYYY-MM-DD from start to end inclusive. */
-function datesInRange(start: string, end: string): string[] {
-  const out: string[] = [];
-  const d = new Date(`${start}T00:00:00Z`);
-  const last = new Date(`${end}T00:00:00Z`);
-  while (d <= last) {
-    out.push(d.toISOString().slice(0, 10));
-    d.setUTCDate(d.getUTCDate() + 1);
-  }
-  return out;
-}
-const weekdayOf = (ymd: string) => new Date(`${ymd}T00:00:00Z`).getUTCDay(); // 0=Sun..6=Sat
+// Every computed figure is validated against this before it can be persisted or
+// land on a payslip. A malformed/missing money or attendance value must be caught
+// here and flagged — never silently written through.
+const finiteMoney = z.number().finite().min(0);
+const nonNegInt = z.number().int().min(0);
+const payslipComputedSchema = z.object({
+  gross: finiteMoney,
+  net_computed: finiteMoney,
+  days_present: nonNegInt,
+  expected_days: nonNegInt,
+  absent_days: nonNegInt,
+  deductions: z.array(z.object({ amount: finiteMoney }).passthrough()),
+});
 
 export interface PayrollFlag {
-  code: "missing_clockins" | "flagged_attendance" | "incomplete_session" | "no_pay_config";
+  code: "missing_clockins" | "flagged_attendance" | "incomplete_session" | "no_pay_config" | "invalid_computation";
   message: string;
   resolved: boolean;
   // Only blocking flags gate approval. Informational ones (e.g. absence already
@@ -66,10 +59,9 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
   const { data: org } = await db.from("orgs").select("absence_policy").eq("id", cycle.org_id).maybeSingle();
   const absencePolicy = (org?.absence_policy as string) ?? "flat";
 
-  const startBoundary = `${cycle.start_date}T00:00:00.000Z`;
-  const endD = new Date(`${cycle.end_date}T00:00:00.000Z`);
-  endD.setUTCDate(endD.getUTCDate() + 1);
-  const endBoundary = endD.toISOString();
+  // Attendance-query bounds (unchanged semantics: UTC-midnight of the cycle dates).
+  const startBoundary = DateTime.fromISO(`${cycle.start_date}T00:00:00`, { zone: "utc" }).toISO()!;
+  const endBoundary = DateTime.fromISO(`${cycle.end_date}T00:00:00`, { zone: "utc" }).plus({ days: 1 }).toISO()!;
   const todayYmd = nairobiDate(new Date().toISOString());
 
   await db.from("pay_cycles").update({ status: "processing" }).eq("id", cycleId);
@@ -147,25 +139,25 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
       });
     }
 
-    // Gross by pay model.
-    const payRate = emp.pay_rate == null ? null : Number(emp.pay_rate);
-    const baseSalary = emp.base_salary == null ? null : Number(emp.base_salary);
-    let gross = 0;
+    // Gross by pay model. payRate/baseSalary are money → Decimal (null = not set).
+    const payRate = emp.pay_rate == null ? null : money(emp.pay_rate);
+    const baseSalary = emp.base_salary == null ? null : money(emp.base_salary);
+    let gross = new Decimal(0);
     let grossBasis = "";
     let hoursWorked: number | undefined;
 
     if (payType === "monthly") {
-      if (baseSalary == null || baseSalary <= 0) {
+      if (baseSalary == null || baseSalary.lte(0)) {
         flags.push({ code: "no_pay_config", message: "No monthly salary set for this employee.", resolved: false, blocking: true });
       }
-      gross = round2(baseSalary ?? 0);
+      gross = money(baseSalary ?? 0);
       grossBasis = "Monthly salary";
     } else if (payType === "daily") {
       if (payRate == null) {
         flags.push({ code: "no_pay_config", message: "No daily rate set for this employee.", resolved: false, blocking: true });
       }
-      gross = round2((payRate ?? 0) * daysPresent);
-      grossBasis = `${daysPresent} day(s) × ${payRate ?? 0}/day`;
+      gross = money(D(payRate).times(daysPresent));
+      grossBasis = `${daysPresent} day(s) × ${toNum(payRate ?? 0)}/day`;
     } else {
       // hourly — pair in→out chronologically.
       if (payRate == null) {
@@ -194,9 +186,11 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
           blocking: true,
         });
       }
-      hoursWorked = round2(ms / 3_600_000);
-      gross = round2((payRate ?? 0) * hoursWorked);
-      grossBasis = `${hoursWorked} hour(s) × ${payRate ?? 0}/hr`;
+      // Hours worked (time, not money) at 2dp; gross = rate × hours via Decimal.
+      const hours = new Decimal(ms).dividedBy(3_600_000).toDecimalPlaces(2);
+      hoursWorked = hours.toNumber();
+      gross = money(D(payRate).times(hours));
+      grossBasis = `${hoursWorked} hour(s) × ${toNum(payRate ?? 0)}/hr`;
     }
 
     // Deductions = locked violations in-window (idempotent stamp).
@@ -214,36 +208,37 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
       violation_id: v.id as string,
       rule_id: (v.rule_id as string) ?? null,
       label: (v.reason as string) ?? "Penalty",
-      amount: round2(Number(v.amount ?? 0)),
+      amount: toNum(v.amount), // 2dp for the JSON breakdown
     }));
     if (penaltyLines.length) {
       await db.from("violations").update({ pay_cycle_id: cycleId }).in("id", penaltyLines.map((p) => p.violation_id));
     }
-    const penaltyTotal = round2(penaltyLines.reduce((s, p) => s + p.amount, 0));
+    const penaltyTotal = money(sum(penaltyLines, (p) => p.amount));
 
     // Absence (monthly only). Daily/hourly already pay per day/hour, so absence is
     // already reflected in gross. Everything below is derived from recorded
     // attendance + the salary + the schedule — nothing invented.
     const expectedDays = expectedDates.length;
     const absentDays = Math.max(0, expectedDays - daysPresent);
-    let absenceAmount = 0; // applied deduction (prorate)
-    let absenceSuggestion = 0; // suggested-only (flat)
-    if (payType === "monthly" && expectedDays > 0 && (baseSalary ?? 0) > 0 && absentDays > 0) {
-      const amt = round2(((baseSalary as number) / expectedDays) * absentDays);
+    let absenceAmount = new Decimal(0); // applied deduction (prorate)
+    let absenceSuggestion = new Decimal(0); // suggested-only (flat)
+    if (payType === "monthly" && expectedDays > 0 && baseSalary != null && baseSalary.gt(0) && absentDays > 0) {
+      // dailyEquiv × absentDays, exact — base_salary / expected_days × absent_days.
+      const amt = money(baseSalary.dividedBy(expectedDays).times(absentDays));
       if (absencePolicy === "prorate") absenceAmount = amt;
       else absenceSuggestion = amt;
     }
-    const absenceLines = absenceAmount > 0
-      ? [{ source: "absence" as const, label: `Absence (${absentDays} day(s))`, amount: absenceAmount }]
+    const absenceLines = absenceAmount.gt(0)
+      ? [{ source: "absence" as const, label: `Absence (${absentDays} day(s))`, amount: toNum(absenceAmount) }]
       : [];
     const allDeductions = [...penaltyLines, ...absenceLines];
     // Payroll can never be negative — floor at zero.
-    const netComputed = Math.max(0, round2(gross - penaltyTotal - absenceAmount));
+    const netComputed = maxZero(money(gross.minus(penaltyTotal).minus(absenceAmount)));
 
     const breakdown = {
       pay_type: payType,
-      pay_rate: payRate,
-      base_salary: baseSalary,
+      pay_rate: payRate == null ? null : toNum(payRate),
+      base_salary: baseSalary == null ? null : toNum(baseSalary),
       days_present: daysPresent,
       expected_days: expectedDays,
       absent_days: absentDays,
@@ -252,27 +247,48 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
       attendance_entry_ids: inEntryIds,
       hours_worked: hoursWorked,
       gross_basis: grossBasis,
-      gross,
+      gross: toNum(gross),
       deductions: allDeductions, // penalties + absence (prorate); adjustments merged in recomputeNet
       additions: [] as unknown[],
       manual_deductions: [] as unknown[],
-      absence_suggestion: absenceSuggestion || null,
+      absence_suggestion: absenceSuggestion.gt(0) ? toNum(absenceSuggestion) : null,
       override_net: null as number | null,
-      net_computed: netComputed,
+      net_computed: toNum(netComputed),
+      invalid_computation: false,
       workplace_name: wp?.name ?? "Unassigned",
     };
 
-    // Upsert the line. Preserve owner state (held/override) across re-runs by not
-    // overwriting them here — recomputeNet re-derives net from audited adjustments.
+    // Validate every computed figure before it can be persisted. If anything is
+    // malformed/missing (NaN, negative, non-integer day count), do NOT pass it
+    // through silently: raise a blocking flag and zero the net so the run cannot be
+    // approved until a human resolves it.
+    const check = payslipComputedSchema.safeParse(breakdown);
+    let persistNet = netComputed;
+    if (!check.success) {
+      const issue = check.error.issues[0];
+      flags.push({
+        code: "invalid_computation",
+        message: `A computed figure failed validation (${issue?.path.join(".") || "figure"}: ${issue?.message}). Review this line — it can't be approved as-is.`,
+        resolved: false,
+        blocking: true,
+      });
+      persistNet = new Decimal(0);
+      breakdown.net_computed = 0;
+      breakdown.invalid_computation = true;
+    }
+
+    // Upsert the line. Money columns are written as fixed 2dp strings (toDb) so no
+    // float re-enters the numeric(12,2) columns. Preserve owner state (held/override)
+    // across re-runs — recomputeNet re-derives net from audited adjustments.
     const { data: slip, error: slipErr } = await db
       .from("payslips")
       .upsert(
         {
           employee_id: emp.id,
           cycle_id: cycleId,
-          gross,
+          gross: toDb(gross),
           deductions: allDeductions,
-          net: netComputed,
+          net: toDb(persistNet),
           breakdown,
           flags,
         },
@@ -292,7 +308,7 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
 export async function recomputeNet(db: SupabaseClient, payslipId: string): Promise<number> {
   const { data: slip } = await db.from("payslips").select("breakdown").eq("id", payslipId).single();
   const breakdown = (slip?.breakdown ?? {}) as Record<string, unknown>;
-  const netComputed = Number(breakdown.net_computed ?? 0);
+  const netComputed = D(breakdown.net_computed as number | undefined);
 
   const { data: adj } = await db
     .from("payroll_adjustments")
@@ -302,30 +318,31 @@ export async function recomputeNet(db: SupabaseClient, payslipId: string): Promi
 
   const additions: { adjustment_id: string; label: string; amount: number }[] = [];
   const manualDeductions: { adjustment_id: string; label: string; amount: number }[] = [];
-  let override: number | null = null;
+  let override: Decimal | null = null;
   let overrideId: string | null = null;
   let held = false;
 
   for (const a of adj ?? []) {
-    if (a.type === "bonus") additions.push({ adjustment_id: a.id, label: a.note, amount: round2(Number(a.amount ?? 0)) });
-    else if (a.type === "deduction") manualDeductions.push({ adjustment_id: a.id, label: a.note, amount: round2(Number(a.amount ?? 0)) });
-    else if (a.type === "override_net") { override = round2(Number(a.amount ?? 0)); overrideId = a.id; }
+    if (a.type === "bonus") additions.push({ adjustment_id: a.id, label: a.note, amount: toNum(a.amount) });
+    else if (a.type === "deduction") manualDeductions.push({ adjustment_id: a.id, label: a.note, amount: toNum(a.amount) });
+    else if (a.type === "override_net") { override = money(a.amount); overrideId = a.id; }
     else if (a.type === "hold") held = true;
     else if (a.type === "unhold") held = false;
   }
 
-  const addTotal = additions.reduce((s, x) => s + x.amount, 0);
-  const dedTotal = manualDeductions.reduce((s, x) => s + x.amount, 0);
-  const derived = round2(netComputed + addTotal - dedTotal);
+  const addTotal = sum(additions, (x) => x.amount);
+  const dedTotal = sum(manualDeductions, (x) => x.amount);
+  const derived = money(netComputed.plus(addTotal).minus(dedTotal));
   // Never negative.
-  const net = Math.max(0, override != null ? override : derived);
+  const net = maxZero(override != null ? override : derived);
+  const overrideNum = override != null ? toNum(override) : null;
 
-  const nextBreakdown = { ...breakdown, additions, manual_deductions: manualDeductions, override_net: override, override_adjustment_id: overrideId };
+  const nextBreakdown = { ...breakdown, additions, manual_deductions: manualDeductions, override_net: overrideNum, override_adjustment_id: overrideId };
   await db
     .from("payslips")
-    .update({ net, override_net: override, held, breakdown: nextBreakdown })
+    .update({ net: toDb(net), override_net: override != null ? toDb(override) : null, held, breakdown: nextBreakdown })
     .eq("id", payslipId);
-  return net;
+  return toNum(net);
 }
 
 /** Roll up run totals, unresolved-flag count, and status (unless locked). */
@@ -333,12 +350,12 @@ export async function recomputeCycle(db: SupabaseClient, cycleId: string): Promi
   const { data: cycle } = await db.from("pay_cycles").select("locked").eq("id", cycleId).single();
   const { data: slips } = await db.from("payslips").select("net, held, flags").eq("cycle_id", cycleId);
 
-  let total = 0;
+  let total = new Decimal(0);
   let count = 0;
   let flaggedLines = 0;
   for (const s of slips ?? []) {
     if (!s.held) {
-      total = round2(total + Number(s.net ?? 0));
+      total = total.plus(D(s.net));
       count += 1;
     }
     // Only unresolved BLOCKING flags gate approval. (Flags from before this field
@@ -348,7 +365,7 @@ export async function recomputeCycle(db: SupabaseClient, cycleId: string): Promi
   }
 
   const patch: Record<string, unknown> = {
-    total_net: total,
+    total_net: toDb(total),
     employee_count: count,
     flagged_count: flaggedLines,
   };

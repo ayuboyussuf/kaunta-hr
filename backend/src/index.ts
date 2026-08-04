@@ -1,7 +1,9 @@
 import "dotenv/config"; // load .env before anything reads process.env
+import { Sentry } from "./instrument"; // Sentry.init (no-op without SENTRY_DSN) — keep early
 import express from "express";
 import cors from "cors";
 import { loadRoutes } from "./routes/registry";
+import { startWorkers } from "./lib/queue/worker";
 
 // Safety net: a rejected promise that escapes a handler (e.g. an SMS provider
 // 5xx in a fire-and-forget path) must never take the whole server down.
@@ -33,6 +35,13 @@ app.get("/health", (_req, res) => res.json({ ok: true, service: "kaunta-hr-backe
 // Auto-mount every src/routes/**/*.route.ts module ({ basePath, router }).
 const mounted = loadRoutes(app);
 console.log(`[routes] mounted ${mounted.length}:`, mounted.join(", "));
+
+// Start background job workers (no-op unless REDIS_URL is set).
+startWorkers();
+
+// Capture unhandled route errors in Sentry (no-op without SENTRY_DSN), before
+// the client-facing handler below.
+Sentry.setupExpressErrorHandler(app);
 
 // Central error handler — never leak stack traces to clients.
 app.use(

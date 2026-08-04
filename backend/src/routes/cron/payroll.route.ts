@@ -11,10 +11,10 @@ import { Router } from "express";
 import { env } from "../../lib/env";
 import { getServiceClient } from "../../lib/supabase";
 import { runPayrollDraft } from "../../lib/payroll/run";
-import { sendText } from "../../lib/messaging";
+import { enqueue } from "../../lib/queue";
+import { lastDayOfMonth, ymdMinus, nairobiTodayParts } from "../../lib/time";
 
 const router = Router();
-const TZ = "Africa/Nairobi";
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -26,11 +26,6 @@ interface Trigger {
   start: string; // YYYY-MM-DD
   end: string;
   payDate: string;
-}
-
-/** Last day of a given (year, 1-based month). */
-function lastDayOf(y: number, m: number): number {
-  return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
 
 /** Decide whether an org's cadence fires today, and for which period. */
@@ -48,7 +43,7 @@ function triggerFor(
       const py = p.m === 1 ? p.y - 1 : p.y;
       const pm = p.m === 1 ? 12 : p.m - 1; // previous month (1-based)
       const mm = String(pm).padStart(2, "0");
-      const lastD = lastDayOf(py, pm);
+      const lastD = lastDayOfMonth(py, pm);
       return {
         period: `${py}-${mm}`,
         label: `${MONTHS[pm - 1]} ${py}`,
@@ -85,30 +80,14 @@ function triggerFor(
   return null;
 }
 
-function ymdMinus(ymd: string, days: number): string {
-  const d = new Date(`${ymd}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() - days);
-  return d.toISOString().slice(0, 10);
-}
-
 router.post("/", async (req, res) => {
   if (req.headers["x-cron-secret"] !== env.cronSecret()) {
     return res.status(401).json({ error: "unauthorized" });
   }
   const db = getServiceClient();
-  const now = new Date();
 
-  const ymd = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
-  const [y, m, d] = ymd.split("-").map(Number);
-  const weekday = new Date(`${ymd}T12:00:00+03:00`).getUTCDay();
-  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const daysSinceEpoch = Math.floor(new Date(`${ymd}T00:00:00Z`).getTime() / 86_400_000);
-  const parts = { ymd, y, m, d, weekday, lastDay, daysSinceEpoch };
+  // Today's Nairobi date parts (weekday 0=Sun..6=Sat) for cadence scheduling.
+  const parts = nairobiTodayParts();
 
   const { data: orgs } = await db
     .from("orgs")
@@ -168,12 +147,14 @@ router.post("/", async (req, res) => {
 
       if (org.phone) {
         try {
-          await sendText(
-            org.phone,
-            `Kaunta HR: draft payroll for ${trig.label} is ready (${totalStr}).${flaggedNote} Review and approve at ${env.appUrl}/dashboard/payroll`
+          // Deduped per (org, period): re-running the cron won't re-send.
+          await enqueue(
+            "sms",
+            { to: org.phone, body: `Kaunta HR: draft payroll for ${trig.label} is ready (${totalStr}).${flaggedNote} Review and approve at ${env.appUrl}/dashboard/payroll` },
+            `sms:payroll:${org.id}:${trig.period}`
           );
         } catch (err) {
-          console.warn(`[cron][payroll] SMS to owner failed for org ${org.id}:`, (err as Error).message);
+          console.warn(`[cron][payroll] SMS enqueue to owner failed for org ${org.id}:`, (err as Error).message);
         }
       }
 
