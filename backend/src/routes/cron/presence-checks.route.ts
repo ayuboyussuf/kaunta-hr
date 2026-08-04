@@ -99,9 +99,14 @@ router.post("/", async (req, res) => {
           .eq("id", emp.org_id)
           .maybeSingle();
         if (org?.phone) {
-          await sendText(
-            org.phone as string,
-            `Kaunta HR: ${emp.name} missed a random presence check at ${site}. The clock-in is flagged for your review.`
+          // Deduped per missed check so a re-run of the sweep never re-sends.
+          await enqueue(
+            "sms",
+            {
+              to: org.phone as string,
+              body: `Kaunta HR: ${emp.name} missed a random presence check at ${site}. The clock-in is flagged for your review.`,
+            },
+            `sms:presence-missed:${c.id}`
           );
         }
       }
