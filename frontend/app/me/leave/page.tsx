@@ -6,10 +6,13 @@ import { api, getEmployeeToken } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+type HalfDay = "morning" | "afternoon";
+
 interface LeaveRequest {
   id: string;
   start_date: string;
   end_date: string;
+  half_day: HalfDay | null;
   reason: string;
   status: "pending" | "approved" | "declined" | "cancelled";
   paid: boolean | null;
@@ -58,6 +61,7 @@ export default function MyLeavePage() {
   const [from, setFrom] = useState<string | null>(null);
   const [to, setTo] = useState<string | null>(null);
   const [reason, setReason] = useState("");
+  const [halfDay, setHalfDay] = useState<HalfDay | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,6 +116,8 @@ export default function MyLeavePage() {
       return;
     }
     setTo(dateStr);
+    // A range is no longer half of anything.
+    if (dateStr !== from) setHalfDay(null);
   }
 
   const inRange = (d: string) =>
@@ -123,13 +129,20 @@ export default function MyLeavePage() {
     setSaving(true);
     setError(null);
     try {
+      const singleDay = !to || to === from;
       await api("/api/leave", {
         method: "POST",
         token: getEmployeeToken()!,
-        body: { start_date: from, end_date: to ?? from, reason: reason.trim() },
+        body: {
+          start_date: from,
+          end_date: to ?? from,
+          reason: reason.trim(),
+          half_day: singleDay ? halfDay : null,
+        },
       });
       setFrom(null);
       setTo(null);
+      setHalfDay(null);
       setReason("");
       setPicking(false);
       await load();
@@ -231,11 +244,41 @@ export default function MyLeavePage() {
 
           <p className="mt-3 text-xs text-kaunta-slate/60">
             {from
-              ? to
+              ? to && to !== from
                 ? `${fmtDay(from)} – ${fmtDay(to)} · ${dayCount(from, to)} day${dayCount(from, to) > 1 ? "s" : ""}`
                 : `${fmtDay(from)} — tap another day for a range, or send for one day.`
               : "Tap the first day you will be away."}
           </p>
+
+          {/* Half days, only where they mean something. Most of what people
+              actually need is a morning at the clinic, not a whole day off —
+              and asking for the whole day costs them the rest of it. */}
+          {from && (!to || to === from) && (
+            <div className="mt-3">
+              <span className="text-xs text-kaunta-slate/60">How much of the day?</span>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {[
+                  { key: null, label: "Whole day" },
+                  { key: "morning" as const, label: "Morning only" },
+                  { key: "afternoon" as const, label: "Afternoon only" },
+                ].map((opt) => (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    onClick={() => setHalfDay(opt.key)}
+                    className={[
+                      "inline-flex min-h-[40px] items-center rounded-full px-4 text-sm transition-colors",
+                      halfDay === opt.key
+                        ? "bg-kaunta-ultra text-white"
+                        : "border border-kaunta-mist bg-white text-kaunta-slate hover:border-kaunta-ultra/40",
+                    ].join(" ")}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <label className="mt-4 block">
             <span className="text-sm text-kaunta-ink">Reason</span>
@@ -286,6 +329,11 @@ export default function MyLeavePage() {
                     {r.start_date === r.end_date
                       ? fmtDay(r.start_date)
                       : `${fmtDay(r.start_date)} – ${fmtDay(r.end_date)}`}
+                    {r.half_day && (
+                      <span className="ml-1.5 font-normal text-kaunta-slate/60">
+                        · {r.half_day} only
+                      </span>
+                    )}
                   </p>
                   <p className="mt-1 text-sm text-kaunta-slate/70">{r.reason}</p>
                 </div>

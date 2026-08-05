@@ -86,7 +86,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       // up being chased.
       supabase
         .from("leave_requests")
-        .select("employee_id, paid, start_date, end_date")
+        .select("employee_id, paid, half_day, start_date, end_date")
         .eq("org_id", org.id)
         .eq("status", "approved")
         .lte("start_date", today)
@@ -103,8 +103,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const fmtTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-KE", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false });
 
-  const leaveByEmp = new Map<string, { paid: boolean | null }>();
-  for (const l of leaveToday ?? []) leaveByEmp.set(l.employee_id, { paid: l.paid });
+  const leaveByEmp = new Map<string, { paid: boolean | null; half_day: string | null }>();
+  for (const l of leaveToday ?? []) {
+    leaveByEmp.set(l.employee_id, { paid: l.paid, half_day: l.half_day ?? null });
+  }
 
   const STATUS_RANK: Record<string, number> = { normal: 0, on_leave: 0, adjusted: 1, late: 2, flagged: 3 };
 
@@ -254,7 +256,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                                 {clockedIn
                                   ? `In ${a!.inAt ? fmtTime(a!.inAt) : "—"} · Out ${a!.outAt ? fmtTime(a!.outAt) : "—"}`
                                   : leave
-                                    ? `Approved leave · ${leave.paid ? "paid" : "unpaid"}`
+                                    ? `Approved leave${leave.half_day ? ` (${leave.half_day} only)` : ""} · ${leave.paid ? "paid" : "unpaid"}`
                                     : "Not clocked in"}
                               </p>
                             </div>
@@ -288,7 +290,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                           <div className="px-6 pb-4 -mt-1 text-sm text-kaunta-slate/70 space-y-1">
                             {leave && (
                               <p className="text-kaunta-ultra">
-                                On approved leave today ({leave.paid ? "paid" : "unpaid"}).
+                                On approved leave today
+                                {leave.half_day ? ` — ${leave.half_day} only` : ""} (
+                                {leave.paid ? "paid" : "unpaid"}).
                                 {clockedIn
                                   ? " They scanned anyway — the day is not counted late and carries no penalty."
                                   : " Not counted absent, and no penalty applies."}{" "}

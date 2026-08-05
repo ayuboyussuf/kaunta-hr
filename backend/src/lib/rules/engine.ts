@@ -217,6 +217,14 @@ async function notify(
  * off must not become money on the strength of a status string computed
  * somewhere else.
  *
+ * A HALF day suppresses lateness for the whole day. Someone with the morning
+ * off has no configured start time for the afternoon — the owner set one shift
+ * start, not two — and picking a substitute (midday? shift midpoint?) would be
+ * the engine inventing a rule nobody wrote. It applies what the owner
+ * configured or it applies nothing. Half a day of pay is still deducted where
+ * the owner marked it unpaid; that happens in payroll, from the record, and is
+ * a separate question from a penalty.
+ *
  * Returns null when no rule applied — which is the common case.
  */
 export async function evaluateScan(

@@ -13,6 +13,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServiceClient } from "../supabase";
+import { approvedLeaveDays, type LeaveDay } from "../leave/cover";
 
 const TZ = "Africa/Nairobi";
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -41,7 +42,12 @@ function datesInRange(start: string, end: string): string[] {
 const weekdayOf = (ymd: string) => new Date(`${ymd}T00:00:00Z`).getUTCDay(); // 0=Sun..6=Sat
 
 export interface PayrollFlag {
-  code: "missing_clockins" | "flagged_attendance" | "incomplete_session" | "no_pay_config";
+  code:
+    | "missing_clockins"
+    | "flagged_attendance"
+    | "incomplete_session"
+    | "no_pay_config"
+    | "paid_leave_unvalued";
   message: string;
   resolved: boolean;
   // Only blocking flags gate approval. Informational ones (e.g. absence already
@@ -123,7 +129,33 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
     // Expected working days from the shift schedule, within the employment window.
     const effRange = effStart <= effEnd ? datesInRange(effStart, effEnd) : [];
     const expectedDates = daysOfWeek.length ? effRange.filter((d) => daysOfWeek.includes(weekdayOf(d))) : [];
-    const missingDates = expectedDates.filter((d) => !presentDates.has(d));
+
+    // Leave the owner approved, as days. Without this a paid leave day looks
+    // exactly like an absence — no scan against a scheduled day — and the
+    // prorate policy quietly deducts salary for time the owner signed off and
+    // said would be paid. That is the same mistake as fining someone for a
+    // day they were given, in the one place it is hardest to notice.
+    const leaveDays = expectedDates.length
+      ? await approvedLeaveDays(db, emp.id as string, expectedDates[0], expectedDates[expectedDates.length - 1])
+      : new Map<string, LeaveDay>();
+
+    let paidLeaveDays = 0;
+    let unpaidLeaveDays = 0;
+    for (const d of expectedDates) {
+      const l = leaveDays.get(d);
+      if (!l) continue;
+      // Someone who came in anyway is present; the day is not also leave.
+      const worked = presentDates.has(d);
+      const share = worked ? 0 : l.fraction;
+      if (share === 0) continue;
+      if (l.paid) paidLeaveDays += share;
+      else unpaidLeaveDays += share;
+    }
+    paidLeaveDays = round2(paidLeaveDays);
+    unpaidLeaveDays = round2(unpaidLeaveDays);
+
+    // Only days with no scan AND no approved cover are missing.
+    const missingDates = expectedDates.filter((d) => !presentDates.has(d) && !leaveDays.has(d));
     if (missingDates.length > 0) {
       // Blocks approval only when it affects pay in a way the owner must confirm:
       // a monthly-flat employee paid full despite absence. Where pay already
@@ -164,8 +196,13 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
       if (payRate == null) {
         flags.push({ code: "no_pay_config", message: "No daily rate set for this employee.", resolved: false, blocking: true });
       }
-      gross = round2((payRate ?? 0) * daysPresent);
-      grossBasis = `${daysPresent} day(s) × ${payRate ?? 0}/day`;
+      // Paid leave is paid: for a daily rate that means the day still earns.
+      const paidDays = round2(daysPresent + paidLeaveDays);
+      gross = round2((payRate ?? 0) * paidDays);
+      grossBasis =
+        paidLeaveDays > 0
+          ? `${daysPresent} day(s) worked + ${paidLeaveDays} day(s) paid leave × ${payRate ?? 0}/day`
+          : `${daysPresent} day(s) × ${payRate ?? 0}/day`;
     } else {
       // hourly — pair in→out chronologically.
       if (payRate == null) {
@@ -221,24 +258,59 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
     }
     const penaltyTotal = round2(penaltyLines.reduce((s, p) => s + p.amount, 0));
 
+    // An hourly employee's paid leave has no hours attached to it, and guessing
+    // a shift length to invent some would be the engine deciding what somebody
+    // is owed. Say so instead and let the owner add it as an adjustment.
+    if (payType === "hourly" && paidLeaveDays > 0) {
+      flags.push({
+        code: "paid_leave_unvalued",
+        message: `${paidLeaveDays} day(s) of paid leave approved, but hourly pay has no hours for them. Add an adjustment if they should be paid.`,
+        resolved: false,
+        blocking: false,
+      });
+    }
+
     // Absence (monthly only). Daily/hourly already pay per day/hour, so absence is
     // already reflected in gross. Everything below is derived from recorded
     // attendance + the salary + the schedule — nothing invented.
     const expectedDays = expectedDates.length;
-    const absentDays = Math.max(0, expectedDays - daysPresent);
+    // Absent = scheduled, no scan, and no approved cover. Leave is accounted
+    // for separately below, because "you were away without telling anyone" and
+    // "you took the unpaid day I approved" are different things and a payslip
+    // that calls them both absence is lying to both sides.
+    const absentDays = round2(Math.max(0, expectedDays - daysPresent - paidLeaveDays - unpaidLeaveDays));
+    const perDay = expectedDays > 0 ? (baseSalary ?? 0) / expectedDays : 0;
+
     let absenceAmount = 0; // applied deduction (prorate)
     let absenceSuggestion = 0; // suggested-only (flat)
     if (payType === "monthly" && expectedDays > 0 && (baseSalary ?? 0) > 0 && absentDays > 0) {
-      const amt = round2(((baseSalary as number) / expectedDays) * absentDays);
+      const amt = round2(perDay * absentDays);
       if (absencePolicy === "prorate") absenceAmount = amt;
       else absenceSuggestion = amt;
     }
     const absenceLines = absenceAmount > 0
       ? [{ source: "absence" as const, label: `Absence (${absentDays} day(s))`, amount: absenceAmount }]
       : [];
-    const allDeductions = [...penaltyLines, ...absenceLines];
+
+    // Unpaid leave is deducted whatever the absence policy says. The owner did
+    // not fail to notice these days — they pressed "Approve — unpaid" against
+    // this exact request. Treating that as a suggestion would make the button
+    // do nothing.
+    const unpaidLeaveAmount =
+      payType === "monthly" && expectedDays > 0 && (baseSalary ?? 0) > 0 && unpaidLeaveDays > 0
+        ? round2(perDay * unpaidLeaveDays)
+        : 0;
+    const leaveLines = unpaidLeaveAmount > 0
+      ? [{
+          source: "absence" as const,
+          label: `Unpaid leave (${unpaidLeaveDays} day(s), approved)`,
+          amount: unpaidLeaveAmount,
+        }]
+      : [];
+
+    const allDeductions = [...penaltyLines, ...absenceLines, ...leaveLines];
     // Payroll can never be negative — floor at zero.
-    const netComputed = Math.max(0, round2(gross - penaltyTotal - absenceAmount));
+    const netComputed = Math.max(0, round2(gross - penaltyTotal - absenceAmount - unpaidLeaveAmount));
 
     const breakdown = {
       pay_type: payType,
@@ -247,6 +319,11 @@ export async function runPayrollDraft(cycleId: string): Promise<{ cycle_id: stri
       days_present: daysPresent,
       expected_days: expectedDays,
       absent_days: absentDays,
+      paid_leave_days: paidLeaveDays,
+      unpaid_leave_days: unpaidLeaveDays,
+      leave_dates: [...leaveDays.values()]
+        .filter((l) => !presentDates.has(l.date))
+        .map((l) => ({ date: l.date, paid: l.paid, half_day: l.half_day })),
       present_dates: [...presentDates].sort(),
       missing_dates: missingDates,
       attendance_entry_ids: inEntryIds,
