@@ -6,7 +6,8 @@
  *      time (never the device clock), validates the signed workplace token +
  *      nonce, runs geofence + integrity heuristics, compares against the
  *      employee's assigned shift for auto-lateness, and assigns a status of
- *      normal | late | flagged.
+ *      normal | late | flagged | on_leave. A day covered by approved leave is
+ *      never late: the owner already signed it off.
  *
  *  GET  /api/attendance/qr/:workplaceId (owner) — issue the signed token to
  *      print as the static QR (valid ~3 months).
@@ -23,39 +24,15 @@ import { evaluateScan } from "../../lib/attendance/geofence";
 import { uploadSelfie, signSelfie } from "../../lib/storage/selfies";
 import { evaluateScan as enforceRules } from "../../lib/rules/engine";
 import { confirmPendingCheck } from "../../lib/presence";
+import { approvedLeaveOn } from "../../lib/leave/cover";
+import { nairobiDate, nairobiDayStartISO, nairobiMinutes } from "../../lib/time";
 
 const router = Router();
-
-const TZ = "Africa/Nairobi";
-
-/** Minutes since local midnight for a Date, in the given IANA timezone. */
-function minutesSinceMidnight(d: Date, tz: string): number {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: tz,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(d);
-  const h = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
-  const m = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
-  return h * 60 + m;
-}
 
 /** "08:30[:00]" → minutes since midnight. */
 function timeToMinutes(t: string): number {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + (m || 0);
-}
-
-/** Start of "today" in Nairobi (UTC+3, no DST) as an ISO instant. */
-function nairobiDayStartISO(now: Date): string {
-  const ymd = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
-  return new Date(`${ymd}T00:00:00+03:00`).toISOString();
 }
 
 const scanInput = z.object({
@@ -156,12 +133,17 @@ router.post("/scan", requireEmployee, async (req, res) => {
       })
     : { distanceM: null as number | null, flags: [] as string[], insideGeofence: true };
 
+  // Leave the owner already approved for today. Someone who is signed off and
+  // comes in anyway is doing us a favour — the day must not be priced as late.
+  const onDate = nairobiDate(now);
+  const leave = await approvedLeaveOn(db, req.employee!.employeeId, onDate);
+
   // Roster comparison → auto-lateness. Only clock-INs can be "late".
   let rosterExpected: { shift_id: string; expected_start: string; late_by_min: number } | null = null;
   let late = false;
-  if (shift && direction === "in") {
+  if (shift && direction === "in" && !leave) {
     const startMin = timeToMinutes(shift.start_time);
-    const nowMin = minutesSinceMidnight(now, TZ);
+    const nowMin = nairobiMinutes(now);
     let lateBy = nowMin - (startMin + (shift.grace_minutes ?? 0));
     // Guard against midnight wrap for overnight shifts: only treat as late within a 12h window.
     if (lateBy > 0 && lateBy < 12 * 60) {
@@ -178,8 +160,10 @@ router.post("/scan", requireEmployee, async (req, res) => {
   const flags = [...geo.flags];
   if (faceDetected !== true) flags.push("no_face");
 
-  // Status precedence: integrity flags → flagged; else shift lateness → late; else normal.
-  const status = flags.length > 0 ? "flagged" : late ? "late" : "normal";
+  // Status precedence: integrity flags → flagged (a signed-off day is still no
+  // excuse for a scan nobody can identify); else an approved leave day →
+  // on_leave; else shift lateness → late; else normal.
+  const status = flags.length > 0 ? "flagged" : leave ? "on_leave" : late ? "late" : "normal";
 
   const { data: entry, error } = await db
     .from("attendance_entries")
@@ -238,6 +222,7 @@ router.post("/scan", requireEmployee, async (req, res) => {
       status,
       lateByMin: rosterExpected?.late_by_min ?? 0,
       scannedAt: entry.scanned_at,
+      onDate,
     });
   } catch (err) {
     // Enforcement must never cost the employee their clock-in.
@@ -251,6 +236,7 @@ router.post("/scan", requireEmployee, async (req, res) => {
     status,
     direction,
     flags,
+    on_leave: leave ? { id: leave.id, start_date: leave.start_date, end_date: leave.end_date } : null,
     penalty: applied
       ? { id: applied.violationId, reason: applied.reason, amount: applied.amount }
       : null,

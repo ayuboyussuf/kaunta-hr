@@ -18,9 +18,10 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendText } from "../messaging";
+import { approvedLeaveOn } from "../leave/cover";
 
 /** Bump when the matching logic changes in a way that alters outcomes. */
-export const ENGINE_VERSION = "1.0.0";
+export const ENGINE_VERSION = "1.1.0";
 
 /** Rule codes the engine knows how to apply automatically. */
 export type RuleCode = "late" | "absent";
@@ -210,6 +211,12 @@ async function notify(
  * Evaluate one accepted clock-in. Called from the scan path, so a late
  * arrival becomes a notified violation within seconds of the scan.
  *
+ * Approved leave is checked here as well as by the caller. That looks like
+ * belt and braces because it is: the caller decides what to write on the
+ * record, but this function decides what to charge, and a day the owner signed
+ * off must not become money on the strength of a status string computed
+ * somewhere else.
+ *
  * Returns null when no rule applied — which is the common case.
  */
 export async function evaluateScan(
@@ -222,9 +229,12 @@ export async function evaluateScan(
     status: string;
     lateByMin: number;
     scannedAt: string;
+    /** Nairobi date of the scan (YYYY-MM-DD), for the leave check. */
+    onDate: string;
   }
 ): Promise<Applied | null> {
   if (params.status !== "late" || params.lateByMin <= 0) return null;
+  if (await approvedLeaveOn(db, params.employeeId, params.onDate)) return null;
   if (await alreadyRaised(db, params.attendanceId)) return null;
 
   const rules = await rulesFor(db, params.orgId, params.workplaceId);
@@ -266,16 +276,7 @@ export async function evaluateAbsence(
     onDate: string; // YYYY-MM-DD
   }
 ): Promise<Applied | null> {
-  const { data: leave } = await db
-    .from("leave_requests")
-    .select("id")
-    .eq("employee_id", params.employeeId)
-    .eq("status", "approved")
-    .lte("start_date", params.onDate)
-    .gte("end_date", params.onDate)
-    .limit(1)
-    .maybeSingle();
-  if (leave) return null; // on approved leave — not absent
+  if (await approvedLeaveOn(db, params.employeeId, params.onDate)) return null;
 
   const rules = await rulesFor(db, params.orgId, params.workplaceId);
   const rule = pickRule(rules, "absent");

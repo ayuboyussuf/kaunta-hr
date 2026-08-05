@@ -16,17 +16,24 @@ import { Button } from "@/components/ui/button";
 type Phase = "scanning" | "selfie" | "locating" | "sending" | "done" | "error";
 
 interface ScanResult {
-  status: "normal" | "late" | "flagged";
+  status: "normal" | "late" | "flagged" | "on_leave";
   direction: "in" | "out";
   distance_m: number | null;
   flags: string[];
   workplace: { name: string };
+  on_leave: { id: string; start_date: string; end_date: string } | null;
+  penalty: { id: string; reason: string; amount: number } | null;
 }
 
 const STATUS_COPY: Record<string, { title: string; tone: string; note: string }> = {
   normal: { title: "Clocked in — on time", tone: "text-kaunta-sage", note: "You're inside the workplace area." },
   late: { title: "Clocked in — late", tone: "text-kaunta-amber", note: "Recorded as late against your shift." },
   flagged: { title: "Clocked in — flagged", tone: "text-kaunta-red", note: "This scan was flagged for review." },
+  on_leave: {
+    title: "Clocked in — approved leave",
+    tone: "text-kaunta-ultra",
+    note: "Today is leave your employer approved. You are not marked late and there is no penalty.",
+  },
   out: { title: "Clocked out", tone: "text-kaunta-sage", note: "Your clock-out has been recorded." },
 };
 
@@ -161,6 +168,30 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
           {result.flags?.length > 0 && (
             <p className="text-xs text-kaunta-red">Flags: {result.flags.join(", ")}</p>
           )}
+
+          {/* The rule applied itself the moment the scan landed. Say so here as
+              well as by SMS — and say in the same breath that it can be argued
+              with, because a deduction you only find out about at month end is
+              the thing this product exists to stop. */}
+          {result.penalty && (
+            <div className="mt-4 rounded-xl border border-kaunta-amber/30 bg-kaunta-amber/5 p-4 text-left">
+              <p className="text-sm font-medium text-kaunta-ink">
+                {result.penalty.reason} — KES{" "}
+                {Number(result.penalty.amount).toLocaleString("en-KE")}
+              </p>
+              <p className="mt-1 text-xs text-kaunta-slate/70">
+                Applied automatically by your employer&apos;s rules. If you think
+                it is wrong, say why and it goes to them to decide.
+              </p>
+              <a
+                href="/me/violations"
+                className="mt-2 inline-block text-sm text-kaunta-ultra underline underline-offset-2"
+              >
+                Appeal this
+              </a>
+            </div>
+          )}
+
           <Button className="mt-4" onClick={() => (window.location.href = "/me")}>
             Done
           </Button>
