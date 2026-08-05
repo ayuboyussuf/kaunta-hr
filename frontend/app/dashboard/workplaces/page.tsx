@@ -10,7 +10,18 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Plus, Trash2, Loader2, LocateFixed, Pencil } from "lucide-react";
+import { MapPin, Clock, Plus, Trash2, Loader2, Pencil } from "lucide-react";
+import dynamic from "next/dynamic";
+
+// Leaflet reads `window` on import, so the picker can only exist in the browser.
+const WorkplaceMapPicker = dynamic(() => import("@/components/WorkplaceMapPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="grid h-[300px] place-items-center rounded-xl border border-kaunta-mist bg-white sm:h-[380px]">
+      <Loader2 className="h-5 w-5 animate-spin text-kaunta-ultra" />
+    </div>
+  ),
+});
 
 interface Shift {
   id: string;
@@ -62,7 +73,6 @@ export default function WorkplacesPage() {
   const [rulesets, setRulesets] = useState<Ruleset[]>([]);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
-  const [locating, setLocating] = useState(false);
 
   const load = useCallback(async (t: string) => {
     setLoading(true);
@@ -89,21 +99,6 @@ export default function WorkplacesPage() {
       await load(t);
     })();
   }, [supabase, router, load]);
-
-  function captureLocation() {
-    if (!draft || typeof navigator === "undefined" || !navigator.geolocation) return;
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        setDraft((d) =>
-          d ? { ...d, lat: Number(pos.coords.latitude.toFixed(6)), lng: Number(pos.coords.longitude.toFixed(6)) } : d
-        ),
-      () => setLocating(false),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-    // clear locating once state updates
-    setTimeout(() => setLocating(false), 1200);
-  }
 
   async function save() {
     if (!token || !draft) return;
@@ -173,61 +168,36 @@ export default function WorkplacesPage() {
               <label className={labelCls}>Name</label>
               <input className={inputCls} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className={labelCls}>Latitude</label>
-                <input
-                  type="number"
-                  step="any"
-                  className={inputCls}
-                  value={draft.lat ?? ""}
-                  onChange={(e) => setDraft({ ...draft, lat: e.target.value === "" ? null : Number(e.target.value) })}
+            {/* Where it is, and how far around it counts — chosen on a map.
+                Coordinates are an output of this, never a question. */}
+            <div>
+              <label className={labelCls}>Where is it?</label>
+              {token && (
+                <WorkplaceMapPicker
+                  token={token}
+                  lat={draft.lat}
+                  lng={draft.lng}
+                  radiusM={draft.geofence_radius_m}
+                  onChange={({ lat, lng }) => setDraft((d) => (d ? { ...d, lat, lng } : d))}
+                  onRadiusChange={(m) => setDraft((d) => (d ? { ...d, geofence_radius_m: m } : d))}
                 />
-              </div>
-              <div>
-                <label className={labelCls}>Longitude</label>
-                <input
-                  type="number"
-                  step="any"
-                  className={inputCls}
-                  value={draft.lng ?? ""}
-                  onChange={(e) => setDraft({ ...draft, lng: e.target.value === "" ? null : Number(e.target.value) })}
-                />
-              </div>
-              <div className="flex items-end">
-                <Button type="button" variant="outline" className="w-full" onClick={captureLocation} disabled={locating}>
-                  {locating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LocateFixed className="h-4 w-4 mr-2" />}
-                  Use current
-                </Button>
-              </div>
+              )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className={labelCls}>Geofence radius (m)</label>
-                <input
-                  type="number"
-                  min={10}
-                  max={5000}
-                  className={inputCls}
-                  value={draft.geofence_radius_m}
-                  onChange={(e) => setDraft({ ...draft, geofence_radius_m: Number(e.target.value) })}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Ruleset</label>
-                <select
-                  className={inputCls}
-                  value={draft.ruleset_id ?? ""}
-                  onChange={(e) => setDraft({ ...draft, ruleset_id: e.target.value || null })}
-                >
-                  <option value="">None</option>
-                  {rulesets.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
+            <div>
+              <label className={labelCls}>Ruleset</label>
+              <select
+                className={inputCls}
+                value={draft.ruleset_id ?? ""}
+                onChange={(e) => setDraft({ ...draft, ruleset_id: e.target.value || null })}
+              >
+                <option value="">None</option>
+                {rulesets.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex gap-2">
               <Button onClick={save} disabled={saving}>
