@@ -11,6 +11,15 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import dynamic from "next/dynamic";
+
+// Leaflet reads `window` on import, so the picker is browser-only.
+const WorkplaceMapPicker = dynamic(() => import("@/components/WorkplaceMapPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[300px] w-full animate-pulse rounded-xl border border-kaunta-mist bg-white sm:h-[380px]" />
+  ),
+});
 import {
   Building2,
   MapPin,
@@ -21,7 +30,6 @@ import {
   Trash2,
   Loader2,
   FileDown,
-  LocateFixed,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -451,7 +459,7 @@ export default function OnboardingWizard() {
           />
         )}
         {step === 2 && (
-          <StepWorkplaces workplaces={workplaces} setWorkplaces={setWorkplaces} rulesets={rulesets} />
+          <StepWorkplaces workplaces={workplaces} setWorkplaces={setWorkplaces} rulesets={rulesets} token={token ?? ""} />
         )}
         {step === 3 && (
           <StepReview
@@ -706,31 +714,15 @@ function StepWorkplaces({
   workplaces,
   setWorkplaces,
   rulesets,
+  token,
 }: {
   workplaces: Workplace[];
   setWorkplaces: React.Dispatch<React.SetStateAction<Workplace[]>>;
   rulesets: Ruleset[];
+  token: string;
 }) {
-  const [locating, setLocating] = useState<number | null>(null);
-
   const update = (i: number, patch: Partial<Workplace>) =>
     setWorkplaces((ws) => ws.map((w, idx) => (idx === i ? { ...w, ...patch } : w)));
-
-  function captureLocation(i: number) {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
-    setLocating(i);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        update(i, {
-          lat: Number(pos.coords.latitude.toFixed(6)),
-          lng: Number(pos.coords.longitude.toFixed(6)),
-        });
-        setLocating(null);
-      },
-      () => setLocating(null),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -761,44 +753,21 @@ function StepWorkplaces({
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Field label="Latitude">
-              <input
-                type="number"
-                step="any"
-                className={inputCls}
-                value={w.lat ?? ""}
-                onChange={(e) => update(i, { lat: e.target.value === "" ? null : Number(e.target.value) })}
-              />
-            </Field>
-            <Field label="Longitude">
-              <input
-                type="number"
-                step="any"
-                className={inputCls}
-                value={w.lng ?? ""}
-                onChange={(e) => update(i, { lng: e.target.value === "" ? null : Number(e.target.value) })}
-              />
-            </Field>
-            <div className="flex items-end">
-              <Button type="button" variant="outline" className="w-full" onClick={() => captureLocation(i)} disabled={locating === i}>
-                {locating === i ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LocateFixed className="h-4 w-4 mr-2" />}
-                Use current
-              </Button>
-            </div>
-          </div>
+          {/* Placed on a map. This is the first screen a new owner ever sees,
+              and asking for a latitude here is how a business ends up with a
+              geofence that silently never checks anything. */}
+          <Field label="Where is it?">
+            <WorkplaceMapPicker
+              token={token}
+              lat={w.lat}
+              lng={w.lng}
+              radiusM={w.geofence_radius_m}
+              onChange={({ lat, lng }) => update(i, { lat, lng })}
+              onRadiusChange={(m) => update(i, { geofence_radius_m: m })}
+            />
+          </Field>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Geofence radius (metres)">
-              <input
-                type="number"
-                min={10}
-                max={5000}
-                className={inputCls}
-                value={w.geofence_radius_m}
-                onChange={(e) => update(i, { geofence_radius_m: Number(e.target.value) })}
-              />
-            </Field>
+          <div className="grid grid-cols-1 gap-4">
             <Field label="Ruleset">
               <select className={inputCls} value={w.rulesetKey} onChange={(e) => update(i, { rulesetKey: e.target.value })}>
                 {rulesets.map((r) => (
