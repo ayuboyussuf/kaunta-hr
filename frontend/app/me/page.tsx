@@ -5,6 +5,7 @@ import Link from "next/link";
 import { QrCode, ChevronRight } from "lucide-react";
 import { api, getEmployeeToken } from "@/lib/api";
 import { registerPush } from "@/lib/push";
+import { flushScanFailures } from "@/lib/scanAttempts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ATTENDANCE_STATUS, formatDate, formatTime } from "@/lib/utils";
@@ -91,6 +92,9 @@ export default function EmployeeHome() {
     // Subscribe to push (best-effort), then poll for a pending presence check so
     // the banner shows even if the notification was missed.
     registerPush(token);
+    // Any clock-in failures this phone couldn't report at the time — sent now
+    // that it demonstrably has a connection.
+    void flushScanFailures();
     let cancelled = false;
     const checkPending = async () => {
       try {

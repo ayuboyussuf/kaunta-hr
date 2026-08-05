@@ -6,3 +6,4 @@
  * code, with no build step to forget.
  */
 import "../lib/rules/engine.test";
+import "../lib/attendance/attempts.test";

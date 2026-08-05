@@ -25,6 +25,7 @@ import { uploadSelfie, signSelfie } from "../../lib/storage/selfies";
 import { evaluateScan as enforceRules } from "../../lib/rules/engine";
 import { confirmPendingCheck } from "../../lib/presence";
 import { approvedLeaveOn } from "../../lib/leave/cover";
+import { CLIENT_OUTCOMES, recordClientAttempt, recordServerAttempt } from "../../lib/attendance/attempts";
 import { nairobiDate, nairobiDayStartISO, nairobiMinutes } from "../../lib/time";
 
 const router = Router();
@@ -54,10 +55,24 @@ router.post("/scan", requireEmployee, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
   const { token, lat, lng, accuracy, selfie, faceDetected } = parsed.data;
 
-  const payload = verifyWorkplaceToken(token);
-  if (!payload) return res.status(400).json({ error: "Invalid or expired QR code." });
-
   const db = getServiceClient();
+
+  // Every rejection below is logged before it is returned. A scan that does not
+  // become attendance is exactly the thing an employee later says they tried,
+  // so it has to leave a trace on our side too — see lib/attendance/attempts.
+  const who = {
+    orgId: req.employee!.orgId,
+    employeeId: req.employee!.employeeId,
+    lat: lat ?? null,
+    lng: lng ?? null,
+    accuracyM: accuracy ?? null,
+  };
+
+  const payload = verifyWorkplaceToken(token);
+  if (!payload) {
+    await recordServerAttempt(db, "invalid_token", who, "Token failed signature or expiry check.");
+    return res.status(400).json({ error: "Invalid or expired QR code." });
+  }
 
   // Workplace referenced by the token, scoped to the employee's org.
   const { data: workplace } = await db
@@ -67,9 +82,16 @@ router.post("/scan", requireEmployee, async (req, res) => {
     .maybeSingle();
 
   if (!workplace || workplace.org_id !== req.employee!.orgId) {
+    await recordServerAttempt(db, "wrong_workplace", who, "QR belongs to a workplace outside this org.");
     return res.status(403).json({ error: "This QR code is not for your workplace." });
   }
   if (workplace.qr_nonce !== payload.nonce) {
+    await recordServerAttempt(
+      db,
+      "rotated_qr",
+      { ...who, workplaceId: workplace.id },
+      "QR was printed before the code was last rotated."
+    );
     return res.status(400).json({ error: "This QR code has been replaced. Ask for the new one." });
   }
 
@@ -80,7 +102,10 @@ router.post("/scan", requireEmployee, async (req, res) => {
     .eq("id", req.employee!.employeeId)
     .eq("org_id", req.employee!.orgId)
     .maybeSingle();
-  if (!employee) return res.status(404).json({ error: "employee not found" });
+  if (!employee) {
+    await recordServerAttempt(db, "employee_not_found", { ...who, workplaceId: workplace.id });
+    return res.status(404).json({ error: "employee not found" });
+  }
 
   // Supabase types a to-one embed as an array; normalise to a single row.
   const shiftRaw = employee.shift as unknown;
@@ -182,7 +207,15 @@ router.post("/scan", requireEmployee, async (req, res) => {
     .select("id, scanned_at, status, direction, distance_m, flags")
     .single();
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    await recordServerAttempt(
+      db,
+      "server_error",
+      { ...who, workplaceId: workplace.id },
+      "The attendance row could not be written."
+    );
+    return res.status(500).json({ error: error.message });
+  }
 
   // Store the selfie (best-effort) and stamp its path on the entry. A failed
   // upload must never fail the clock-in — the attendance record already exists.
@@ -241,6 +274,61 @@ router.post("/scan", requireEmployee, async (req, res) => {
       ? { id: applied.violationId, reason: applied.reason, amount: applied.amount }
       : null,
   });
+});
+
+// ── POST /attempts (employee) — the phone reports a scan it couldn't complete ─
+//
+// When the camera won't open or the signal drops, the server never hears about
+// it, so the employee's side of "I tried" has no record. The app reports it
+// here — queued on the device and sent when it can reach us, which is why the
+// device supplies the time it happened.
+//
+// The device sends a code from a fixed list and nothing else. No free text is
+// accepted: there is no field here for a name, a number or an amount to end up
+// in, and a client-written row is marked as a claim, not as something we saw.
+const attemptInput = z.object({
+  outcome: z.enum(CLIENT_OUTCOMES as [string, ...string[]]),
+  workplace_id: z.string().uuid().nullable().optional(),
+  occurred_at: z.string().datetime().nullable().optional(),
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
+  accuracy: z.number().nonnegative().nullable().optional(),
+});
+
+router.post("/attempts", requireEmployee, async (req, res) => {
+  const parsed = attemptInput.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+
+  const db = getServiceClient();
+  const now = new Date();
+
+  // A device that reports in a loop would fill the table and drown the real
+  // signal, so the day is capped. The cap is generous — a genuinely broken
+  // phone at a genuinely broken site will retry a lot, and we want that.
+  const { count } = await db
+    .from("scan_attempts")
+    .select("id", { count: "exact", head: true })
+    .eq("employee_id", req.employee!.employeeId)
+    .eq("source", "client")
+    .gte("created_at", nairobiDayStartISO(now));
+  if ((count ?? 0) >= 60) return res.status(429).json({ error: "too many reports today" });
+
+  // Never trust a device clock beyond today, and never let it write the future.
+  const claimed = parsed.data.occurred_at ? new Date(parsed.data.occurred_at) : now;
+  const occurredAt =
+    claimed > now || claimed.getTime() < now.getTime() - 3 * 864e5 ? now : claimed;
+
+  await recordClientAttempt(db, parsed.data.outcome as never, {
+    orgId: req.employee!.orgId,
+    employeeId: req.employee!.employeeId,
+    workplaceId: parsed.data.workplace_id ?? null,
+    lat: parsed.data.lat ?? null,
+    lng: parsed.data.lng ?? null,
+    accuracyM: parsed.data.accuracy ?? null,
+    occurredAt: occurredAt.toISOString(),
+  });
+
+  res.status(201).json({ recorded: true });
 });
 
 // ── GET /selfie/:entryId (owner) — short-lived signed URL for a scan selfie ───

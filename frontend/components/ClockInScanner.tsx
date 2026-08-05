@@ -8,8 +8,9 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { api, getEmployeeToken } from "@/lib/api";
+import { api, getEmployeeToken, NetworkError } from "@/lib/api";
 import { captureSelfie } from "@/lib/selfie";
+import { flushScanFailures, reportScanFailure } from "@/lib/scanAttempts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -98,7 +99,20 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
         });
         setResult(res);
         setPhase("done");
+        // The clock-in worked, so the connection does — a good moment to send
+        // any failures this phone couldn't report earlier.
+        void flushScanFailures();
       } catch (e) {
+        // Only report what the server never saw. A rejection it issued (wrong
+        // QR, replaced code) is already on its record; duplicating it here
+        // would file the employee's own claim as corroboration of itself.
+        if (e instanceof NetworkError) {
+          void reportScanFailure("network_error", {
+            lat: coords?.lat ?? null,
+            lng: coords?.lng ?? null,
+            accuracy: coords?.accuracy ?? null,
+          });
+        }
         setError((e as Error).message);
         setPhase("error");
       }
@@ -112,8 +126,13 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => sendScan({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy ?? null }),
-      // Permission denied / timeout / unavailable → still clock in via the QR scan.
-      () => sendScan(null),
+      // Permission denied / timeout / unavailable → still clock in via the QR
+      // scan, but note the refusal: a clock-in with no location is the one the
+      // geofence can't vouch for, and the reason belongs on the record.
+      (err) => {
+        if (err?.code === 1) void reportScanFailure("location_denied");
+        void sendScan(null);
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }
@@ -141,7 +160,12 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
         },
         () => {}
       )
-      .catch(() => {
+      .catch((err: unknown) => {
+        // A refused permission and a camera that won't start are different
+        // facts about the same morning, and an appeal turns on which it was.
+        const name = (err as { name?: string } | null)?.name ?? "";
+        const blocked = name === "NotAllowedError" || /permission|denied/i.test(String(err));
+        void reportScanFailure(blocked ? "camera_blocked" : "camera_failed");
         setError("Couldn't open the camera. Grant camera access and reload.");
         setPhase("error");
       });

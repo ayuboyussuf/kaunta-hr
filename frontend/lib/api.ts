@@ -18,6 +18,20 @@ function apiBase(): string {
   return typeof window === "undefined" ? BACKEND_URL : "/gateway";
 }
 
+/**
+ * The request never reached the backend.
+ *
+ * Worth its own type: "we could not reach the server" and "the server said no"
+ * look identical to a user but are opposite facts in an attendance dispute.
+ * Only the first is something the phone has to report on its own behalf.
+ */
+export class NetworkError extends Error {
+  constructor() {
+    super("Cannot reach the server. Check your connection and try again.");
+    this.name = "NetworkError";
+  }
+}
+
 export interface ApiOptions {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
   token?: string; // owner Supabase token OR employee session JWT
@@ -38,7 +52,7 @@ export async function api<T = unknown>(path: string, opts: ApiOptions = {}): Pro
   } catch {
     // fetch() rejects (network/DNS/offline) with a terse "Load failed" /
     // "Failed to fetch". Replace it with something the user can act on.
-    throw new Error("Cannot reach the server. Check your connection and try again.");
+    throw new NetworkError();
   }
   const data = (await res.json().catch(() => ({}))) as T & { error?: string };
   if (!res.ok) throw new Error((data as { error?: string }).error ?? `Request failed (${res.status})`);
