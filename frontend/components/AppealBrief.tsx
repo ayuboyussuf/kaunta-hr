@@ -13,6 +13,10 @@
  * wrong, the sentence they actually wrote is the thing that corrects it.
  */
 
+import { useState } from "react";
+import { api } from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
+
 type Stance = "supports" | "contradicts" | "neutral" | "unverifiable";
 
 export interface AssistFinding {
@@ -34,12 +38,14 @@ export interface Assist {
 }
 
 export interface InfoRequest {
+  id: string;
   ask_code: string;
   question: string;
   asked_at: string;
   answered_at: string | null;
   answer: string | null;
   declined: boolean;
+  document_path: string | null;
 }
 
 const CLAIM_LABEL: Record<Assist["claim"], string> = {
@@ -119,15 +125,18 @@ export function AppealBrief({
             Asked of the employee
           </p>
           {infoRequests.map((r, i) => (
-            <div key={i} className="mt-2 text-sm">
+            <div key={r.id ?? i} className="mt-2 text-sm">
               <p className="text-kaunta-slate/75">{r.question}</p>
               <p className="mt-0.5 text-kaunta-ink">
                 {r.declined
                   ? "They said they can't provide this."
                   : r.answer
                     ? `“${r.answer}”`
-                    : "No answer yet."}
+                    : r.document_path
+                      ? "They attached a document."
+                      : "No answer yet."}
               </p>
+              {r.document_path && <DocumentLink requestId={r.id} />}
             </div>
           ))}
         </div>
@@ -153,6 +162,46 @@ export function AppealBrief({
         decision below is entirely yours.
       </p>
     </div>
+  );
+}
+
+/**
+ * A medical note is fetched only when the owner asks for it, on a link that
+ * expires in two minutes. Not rendered inline and not preloaded: this is
+ * somebody's health information, and it should appear because a decision is
+ * being made, not because a page loaded.
+ */
+function DocumentLink({ requestId }: { requestId: string }) {
+  const [state, setState] = useState<"idle" | "loading" | "error">("idle");
+
+  async function open() {
+    setState("loading");
+    try {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getSession();
+      const { url } = await api<{ url: string }>(`/api/appeals/info/${requestId}/document`, {
+        token: data.session?.access_token ?? "",
+      });
+      window.open(url, "_blank", "noopener,noreferrer");
+      setState("idle");
+    } catch {
+      setState("error");
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={open}
+      className="mt-1 text-sm text-kaunta-ultra underline underline-offset-2 disabled:opacity-60"
+      disabled={state === "loading"}
+    >
+      {state === "loading"
+        ? "Opening…"
+        : state === "error"
+          ? "Couldn't open it — try again"
+          : "Open the document"}
+    </button>
   );
 }
 

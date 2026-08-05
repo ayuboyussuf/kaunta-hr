@@ -37,77 +37,29 @@ services:
         sync: false
       - key: AT_SENDER_ID
         sync: false
-
-  # ── Cron: close appeal windows + lock outcomes (every 15 min) ──────────────
-  - type: cron
-    name: kaunta-hr-close-appeals
-    runtime: node
-    rootDir: backend
-    buildCommand: npm install && npm run build
-    schedule: "*/15 * * * *"
-    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/close-appeals',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
-    envVars:
-      - key: BACKEND_URL
+      - key: ADMIN_API_TOKEN
         sync: false
-      - key: CRON_SECRET
+      - key: SENTRY_DSN
+        sync: false
+      # Leave unset to run the scheduler in this service (the default). Set to
+      # "false" only if something outside Render drives /api/cron/* instead —
+      # running both would fire every job twice.
+      - key: RUN_SCHEDULER
         sync: false
 
-  # ── Cron: fire random presence checks + expire missed ones (every 5 min) ───
-  # Without this the presence-check endpoint is never called and no check is
-  # ever fired. Note the org must also have presence_checks_per_shift > 0 in
-  # Settings — it ships at 0, which means off.
-  - type: cron
-    name: kaunta-hr-presence-checks
-    runtime: node
-    rootDir: backend
-    buildCommand: npm install && npm run build
-    schedule: "*/5 * * * *"
-    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/presence-checks',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
-    envVars:
-      - key: BACKEND_URL
-        sync: false
-      - key: CRON_SECRET
-        sync: false
-
-  # ── Cron: absence sweep — rostered shifts that closed with no scan ─────────
-  # Runs after the latest shift end, once a day.
-  - type: cron
-    name: kaunta-hr-absence-sweep
-    runtime: node
-    rootDir: backend
-    buildCommand: npm install && npm run build
-    schedule: "30 21 * * *"
-    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/absence-sweep',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
-    envVars:
-      - key: BACKEND_URL
-        sync: false
-      - key: CRON_SECRET
-        sync: false
-
-  # ── Cron: payroll periods (daily, early) ───────────────────────────────────
-  - type: cron
-    name: kaunta-hr-payroll
-    runtime: node
-    rootDir: backend
-    buildCommand: npm install && npm run build
-    schedule: "0 3 * * *"
-    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/payroll',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
-    envVars:
-      - key: BACKEND_URL
-        sync: false
-      - key: CRON_SECRET
-        sync: false
-
-  # ── Cron: monthly review on the 1st — bonus suggestions + patterns ─────────
-  - type: cron
-    name: kaunta-hr-monthly-review
-    runtime: node
-    rootDir: backend
-    buildCommand: npm install && npm run build
-    schedule: "0 6 1 * *"
-    startCommand: node -e "fetch(process.env.BACKEND_URL+'/api/cron/monthly-review',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET||''}}).then(r=>r.json()).then(console.log).catch(e=>{console.error(e);process.exit(1)})"
-    envVars:
-      - key: BACKEND_URL
-        sync: false
-      - key: CRON_SECRET
-        sync: false
+# ── On the schedule ──────────────────────────────────────────────────────────
+#
+# There were five `type: cron` services here. They never ran: Render's cron is
+# a paid service type, so on this plan the blocks were accepted and silently
+# did nothing — which is how random presence checks went two days without
+# firing and nothing anywhere said so.
+#
+# The schedule now lives in the app (backend/src/lib/scheduler). It deploys
+# with the code that defines it, costs nothing, and a job that stops running
+# shows up in the same logs as everything else.
+#
+# One caveat worth knowing about the free web plan: it sleeps after ~15 minutes
+# of no traffic, and a sleeping service runs no schedule. The five-minute
+# presence tick is itself traffic and keeps it awake, so in practice the jobs
+# run — but if this is ever moved to a plan or platform that hard-sleeps, set
+# RUN_SCHEDULER=false and drive /api/cron/* from outside with CRON_SECRET.

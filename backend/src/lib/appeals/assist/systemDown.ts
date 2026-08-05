@@ -25,12 +25,14 @@ import {
   type PenaltyFacts,
 } from "./facts";
 import { summarise } from "./summary";
+import type { Trace } from "../../observability/log";
 
 export async function assessSystemNotWorking(
   db: SupabaseClient,
   facts: PenaltyFacts,
   appealId: string,
-  confidence: "high" | "low"
+  confidence: "high" | "low",
+  trace: Trace
 ): Promise<AssistBrief> {
   const { fromISO, toISO } = disputeWindow(facts);
   const findings: AssistFinding[] = [];
@@ -60,7 +62,9 @@ export async function assessSystemNotWorking(
 
   /* ── Did their phone leave a trace? ────────────────────────────────── */
 
+  trace.step("tool:attempt_evidence");
   const attempts = await attemptEvidence(db, facts.employeeId, fromISO, toISO);
+  trace.step("tool:attempt_evidence:result", { total: attempts.total, witnessed: attempts.serverWitnessed });
 
   if (attempts.total === 0) {
     findings.push({
@@ -100,7 +104,12 @@ export async function assessSystemNotWorking(
   /* ── Was it just them? ─────────────────────────────────────────────── */
 
   if (facts.workplaceId) {
+    trace.step("tool:site_evidence");
     const site = await siteEvidence(db, facts.workplaceId, facts.employeeId, fromISO, toISO);
+    trace.step("tool:site_evidence:result", {
+      scans_by_others: site.successfulScansByOthers,
+      colleagues: site.colleaguesOnSite,
+    });
 
     if (site.colleaguesOnSite === 0) {
       findings.push({
@@ -161,6 +170,7 @@ export async function assessSystemNotWorking(
 
   /* ── Context, not character ────────────────────────────────────────── */
 
+  trace.step("tool:claim_history");
   const history = await claimHistory(db, facts.employeeId, "system_not_working", appealId);
   if (history.appealsInNinetyDays > 0) {
     findings.push({

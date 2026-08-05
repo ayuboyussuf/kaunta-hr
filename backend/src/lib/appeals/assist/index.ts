@@ -23,9 +23,12 @@ import { ASSIST_VERSION, type AssistBrief } from "./types";
 import { classify } from "./classify";
 import { penaltyFacts, leaveEvidence, type PenaltyFacts } from "./facts";
 import { assessSystemNotWorking } from "./systemDown";
+import { assessSick } from "./sickNote";
+import { assessRoadClosed } from "./roadClosed";
 import { summarise } from "./summary";
 import { sendText } from "../../messaging";
 import { env } from "../../env";
+import { observed, Trace } from "../../observability/log";
 
 export { classify } from "./classify";
 export * from "./types";
@@ -45,15 +48,66 @@ export async function runAssist(
   appeal: AppealRow,
   orgId: string
 ): Promise<AssistBrief | null> {
+  // Wrapped for observability. The wrapper returns exactly what the work
+  // returns and cannot alter it — see lib/observability/log.
+  return observed<AssistBrief | null>(
+    db,
+    {
+      orgId,
+      kind: "appeal_assist",
+      subjectRef: appeal.id,
+      input: appeal.message,
+      engineVersion: ASSIST_VERSION,
+    },
+    async (trace) => {
+      const brief = await assess(db, appeal, orgId, trace);
+      if (!brief) {
+        return { result: null, record: { outcome: "no_subject" as const } };
+      }
+      return {
+        result: brief,
+        record: {
+          claim: brief.claim,
+          confidence: brief.confidence,
+          findings: brief.findings.length,
+          askedEmployee: Boolean(brief.ask),
+          output: brief.summary,
+          outcome:
+            brief.findings.length === 0
+              ? ("empty" as const)
+              : brief.ask
+                ? ("awaiting_employee" as const)
+                : ("ready" as const),
+        },
+      };
+    }
+  );
+}
+
+async function assess(
+  db: SupabaseClient,
+  appeal: AppealRow,
+  orgId: string,
+  trace: Trace
+): Promise<AssistBrief | null> {
+  trace.step("tool:penalty_facts");
   const facts = await penaltyFacts(db, appeal.violation_id);
-  if (!facts) return null;
+  if (!facts) {
+    trace.step("abort", { reason: "violation_missing" });
+    return null;
+  }
 
   const routed = classify(appeal.message);
+  trace.step("classify", {
+    claim: routed.claim,
+    confidence: routed.confidence,
+    signals: routed.matched.length,
+  });
   let brief: AssistBrief;
 
   switch (routed.claim) {
     case "system_not_working":
-      brief = await assessSystemNotWorking(db, facts, appeal.id, routed.confidence);
+      brief = await assessSystemNotWorking(db, facts, appeal.id, routed.confidence, trace);
       break;
 
     // Sick notes and road closures are the two checks that need something from
@@ -61,17 +115,61 @@ export async function runAssist(
     // built, an appeal routed here gets the facts of the penalty and an honest
     // statement that the claim itself has not been checked, rather than a brief
     // that looks complete and is not.
-    case "sick":
-    case "road_closed":
+    case "sick": {
+      const answer = await answerFor(db, appeal.id, "sick_note");
+      brief = await assessSick(db, facts, appeal.id, routed.confidence, trace, answer);
+      break;
+    }
+
+    case "road_closed": {
+      const answer = await answerFor(db, appeal.id, "which_road");
+      brief = await assessRoadClosed(db, facts, appeal.id, routed.confidence, trace, answer);
+      break;
+    }
+
     case "unclear":
     default:
-      brief = await baseline(db, facts, routed.claim, routed.confidence);
+      brief = await baseline(db, facts, routed.claim, routed.confidence, trace);
       break;
   }
 
+  trace.step("persist", { findings: brief.findings.length });
   await persist(db, appeal, orgId, brief);
-  if (brief.ask) await askEmployee(db, appeal, facts.employeeId, brief);
+  if (brief.ask) {
+    trace.step("ask_employee", { ask_code: brief.ask.code });
+    await askEmployee(db, appeal, facts.employeeId, brief);
+  }
   return brief;
+}
+
+/**
+ * What the employee has already told us, if this is a re-run.
+ *
+ * The assist runs twice for the two claims that need something: once when the
+ * appeal lands, and again when the answer arrives. The second run replaces the
+ * first brief rather than adding to it, so the owner always sees one current
+ * picture instead of a thread they have to read in order.
+ */
+async function answerFor(
+  db: SupabaseClient,
+  appealId: string,
+  askCode: string
+): Promise<
+  { answered: boolean; declined: boolean; documentPath: string | null; answer: string | null } | undefined
+> {
+  const { data } = await db
+    .from("appeal_info_requests")
+    .select("answered_at, answer, declined, document_path")
+    .eq("appeal_id", appealId)
+    .eq("ask_code", askCode)
+    .maybeSingle();
+  if (!data) return undefined;
+  return {
+    answered: Boolean(data.answered_at),
+    declined: data.declined === true,
+    documentPath: (data.document_path as string | null) ?? null,
+    answer: (data.answer as string | null) ?? null,
+  };
 }
 
 /* ── The floor: what we can always say ────────────────────────────────── */
@@ -80,7 +178,8 @@ async function baseline(
   db: SupabaseClient,
   facts: PenaltyFacts,
   claim: AssistBrief["claim"],
-  confidence: "high" | "low"
+  confidence: "high" | "low",
+  trace: Trace
 ): Promise<AssistBrief> {
   const findings: AssistBrief["findings"] = [
     {
@@ -101,6 +200,7 @@ async function baseline(
 
   // Cheap and worth doing every time: a penalty on a day that turns out to
   // have been signed off is a bug, and the owner should see it as one.
+  trace.step("tool:leave_evidence");
   const leave = await leaveEvidence(db, facts.employeeId, facts.onDate);
   if (leave.covered) {
     findings.push({

@@ -16,6 +16,7 @@ import { finalizeViolation } from "../../lib/violations/finalize";
 import { sendText } from "../../lib/messaging";
 import { env } from "../../lib/env";
 import { runAssist } from "../../lib/appeals/assist";
+import { signAppealDocument } from "../../lib/storage/appealDocs";
 
 const router = Router();
 
@@ -127,7 +128,7 @@ router.get("/", requireOwner, async (req, res) => {
         "violations!inner(id, reason, amount, status, created_at, employee_id, " +
         "employees!inner(name, phone, org_id)), " +
         "appeal_assists(claim, confidence, status, findings, summary, missing), " +
-        "appeal_info_requests(ask_code, question, asked_at, answered_at, answer, declined, document_path)"
+        "appeal_info_requests(id, ask_code, question, asked_at, answered_at, answer, declined, document_path)"
     )
     .eq("violations.employees.org_id", orgId)
     .order("submitted_at", { ascending: false });
@@ -165,6 +166,36 @@ router.get("/", requireOwner, async (req, res) => {
   });
 
   res.json({ appeals });
+});
+
+// ── Owner: view a document the employee attached ──────────────────────────────
+// Signed for two minutes. Medical documents are special-category data; the
+// owner is looking at it while deciding and nobody needs a link that outlives
+// that. See lib/storage/appealDocs.
+router.get("/info/:id/document", requireOwner, async (req, res) => {
+  const id = z.string().uuid().safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ error: "invalid id" });
+
+  const db = getServiceClient();
+  const { data } = await db
+    .from("appeal_info_requests")
+    .select("document_path, appeal_assists!inner(org_id)")
+    .eq("id", id.data)
+    .maybeSingle();
+
+  const assist = data
+    ? Array.isArray((data as any).appeal_assists)
+      ? (data as any).appeal_assists[0]
+      : (data as any).appeal_assists
+    : null;
+  if (!data || !assist || assist.org_id !== req.owner!.orgId) {
+    return res.status(404).json({ error: "not found" });
+  }
+  if (!data.document_path) return res.status(404).json({ error: "no document" });
+
+  const url = await signAppealDocument(data.document_path as string);
+  if (!url) return res.status(502).json({ error: "could not sign the document" });
+  res.json({ url });
 });
 
 // ── Owner: decide an appeal ───────────────────────────────────────────────────

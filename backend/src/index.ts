@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 import { loadRoutes } from "./routes/registry";
 import { startWorkers } from "./lib/queue/worker";
+import { startScheduler } from "./lib/scheduler";
 
 // Safety net: a rejected promise that escapes a handler (e.g. an SMS provider
 // 5xx in a fire-and-forget path) must never take the whole server down.
@@ -38,6 +39,10 @@ console.log(`[routes] mounted ${mounted.length}:`, mounted.join(", "));
 
 // Start background job workers (no-op unless REDIS_URL is set).
 startWorkers();
+
+// Scheduled jobs run in-process. Render's cron is a paid service type, so the
+// five `type: cron` blocks this replaces never fired at all — see lib/scheduler.
+startScheduler();
 
 // Capture unhandled route errors in Sentry (no-op without SENTRY_DSN), before
 // the client-facing handler below.

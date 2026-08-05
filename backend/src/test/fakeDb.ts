@@ -105,11 +105,20 @@ class Builder implements PromiseLike<{ data: Row[] | null; error: null }> {
     return this;
   }
 
-  insert(row: Row) {
-    const withId = { id: `gen-${this.db.inserts.length + 1}`, ...row };
-    (this.db.tables[this.table] ??= []).push(withId);
-    this.db.inserts.push({ table: this.table, row: withId });
-    this.pending = withId;
+  /** Accepts one row or many, like the real client. */
+  insert(row: Row | Row[]) {
+    const rows = Array.isArray(row) ? row : [row];
+    const table = (this.db.tables[this.table] ??= []);
+    let last: Row | null = null;
+    for (const r of rows) {
+      const withId = { id: `gen-${this.db.inserts.length + 1}`, ...r };
+      table.push(withId);
+      this.db.inserts.push({ table: this.table, row: withId });
+      last = withId;
+    }
+    // Mirrors the real client: .select().single() after a bulk insert returns
+    // one row, so only the last is pending.
+    this.pending = last;
     return this;
   }
 

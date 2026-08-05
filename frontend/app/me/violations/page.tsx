@@ -6,6 +6,7 @@ import { getEmployeeToken } from "@/lib/api";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { AppealQuestion } from "@/components/AppealQuestion";
 
 interface MyViolation {
   id: string;
@@ -124,6 +125,11 @@ export default function MyViolationsPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-4">
+        {/* Anything Kaunta needs from them about an appeal already filed. Sits
+            at the top because it is the only thing on this page waiting on
+            them; it renders nothing when there is nothing outstanding. */}
+        <AppealQuestion />
+
         {error && (
           <div className="rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-4 py-3 text-sm text-kaunta-red">
             {error}
