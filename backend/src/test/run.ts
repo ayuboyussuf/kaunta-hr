@@ -9,3 +9,4 @@ import "../lib/rules/engine.test";
 import "../lib/attendance/attempts.test";
 import "../lib/privacy/scrub.test";
 import "../lib/leave/cover.test";
+import "../lib/appeals/assist/assist.test";

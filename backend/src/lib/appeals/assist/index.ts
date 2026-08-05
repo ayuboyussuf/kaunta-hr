@@ -1,0 +1,229 @@
+/**
+ * Running an appeal assist and storing what it found.
+ *
+ * The shape of the whole thing, in order:
+ *
+ *   1. Read the appeal. Route it — keywords, in Kaunta, never a fact.
+ *   2. Gather what the record says, with the tools in facts.ts.
+ *   3. Assemble a brief by template.
+ *   4. If one specific thing is missing, ask for that one thing by SMS with a
+ *      link back to the dashboard. Otherwise ask nothing.
+ *   5. Store it against the appeal for the owner to read.
+ *
+ * It never touches the appeal's decision, never writes to violations, and has
+ * no code path that could. The employer waives or upholds; this makes that
+ * ten seconds of reading instead of twenty minutes of guessing.
+ *
+ * Failure is not allowed to matter. An assist that throws leaves the appeal
+ * exactly as it was — a message and a decision to make, which is what the
+ * owner had before any of this existed.
+ */
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { ASSIST_VERSION, type AssistBrief } from "./types";
+import { classify } from "./classify";
+import { penaltyFacts, leaveEvidence, type PenaltyFacts } from "./facts";
+import { assessSystemNotWorking } from "./systemDown";
+import { summarise } from "./summary";
+import { sendText } from "../../messaging";
+import { env } from "../../env";
+
+export { classify } from "./classify";
+export * from "./types";
+
+interface AppealRow {
+  id: string;
+  violation_id: string;
+  message: string;
+}
+
+/**
+ * Assess one appeal. Returns the brief, or null if there was nothing to work
+ * with — a violation that has vanished, a database that would not answer.
+ */
+export async function runAssist(
+  db: SupabaseClient,
+  appeal: AppealRow,
+  orgId: string
+): Promise<AssistBrief | null> {
+  const facts = await penaltyFacts(db, appeal.violation_id);
+  if (!facts) return null;
+
+  const routed = classify(appeal.message);
+  let brief: AssistBrief;
+
+  switch (routed.claim) {
+    case "system_not_working":
+      brief = await assessSystemNotWorking(db, facts, appeal.id, routed.confidence);
+      break;
+
+    // Sick notes and road closures are the two checks that need something from
+    // outside Kaunta — a document to read, a road to ask about. Until those are
+    // built, an appeal routed here gets the facts of the penalty and an honest
+    // statement that the claim itself has not been checked, rather than a brief
+    // that looks complete and is not.
+    case "sick":
+    case "road_closed":
+    case "unclear":
+    default:
+      brief = await baseline(db, facts, routed.claim, routed.confidence);
+      break;
+  }
+
+  await persist(db, appeal, orgId, brief);
+  if (brief.ask) await askEmployee(db, appeal, facts.employeeId, brief);
+  return brief;
+}
+
+/* ── The floor: what we can always say ────────────────────────────────── */
+
+async function baseline(
+  db: SupabaseClient,
+  facts: PenaltyFacts,
+  claim: AssistBrief["claim"],
+  confidence: "high" | "low"
+): Promise<AssistBrief> {
+  const findings: AssistBrief["findings"] = [
+    {
+      kind: "penalty",
+      stance: "neutral",
+      headline:
+        facts.lateByMin != null && facts.expectedStart
+          ? `Clocked in at ${facts.scannedAtLocal}, ${facts.lateByMin} minutes past the ${facts.expectedStart} start plus ${facts.graceMinutes ?? 0} minutes' grace`
+          : `${facts.reason} raised on ${facts.onDate ?? facts.createdAt.slice(0, 10)}`,
+      detail:
+        facts.raisedBy === "engine"
+          ? "Applied automatically by your rules when the scan landed."
+          : "Raised manually.",
+      evidence: { amount_kes: facts.amount, raised_by: facts.raisedBy },
+      source: "violations",
+    },
+  ];
+
+  // Cheap and worth doing every time: a penalty on a day that turns out to
+  // have been signed off is a bug, and the owner should see it as one.
+  const leave = await leaveEvidence(db, facts.employeeId, facts.onDate);
+  if (leave.covered) {
+    findings.push({
+      kind: "leave_cover",
+      stance: "supports",
+      headline: "This day was covered by leave you had already approved",
+      detail:
+        `Approved as ${leave.paid ? "paid" : "unpaid"}${leave.halfDay ? ` (${leave.halfDay} only)` : ""}. ` +
+        "A penalty should not have been raised against it.",
+      evidence: { approved: "yes", paid: leave.paid ? "yes" : "no" },
+      source: "leave_requests",
+    });
+  }
+
+  findings.push({
+    kind: "not_checked",
+    stance: "unverifiable",
+    headline:
+      claim === "unclear"
+        ? "The reason given could not be matched to anything checkable"
+        : "This kind of claim cannot yet be checked automatically",
+    detail:
+      claim === "unclear"
+        ? "Read the employee's own words below — the facts above are the penalty itself, not an assessment of what they said."
+        : "The facts above describe the penalty. The claim itself has not been verified either way.",
+    evidence: { claim, routing_confidence: confidence },
+    source: "—",
+  });
+
+  return {
+    claim,
+    confidence,
+    findings,
+    summary: summarise(claim, facts, findings),
+    missing: ["A check of the claim itself, which Kaunta cannot yet perform."],
+    ask: null,
+  };
+}
+
+/* ── Storage ──────────────────────────────────────────────────────────── */
+
+async function persist(
+  db: SupabaseClient,
+  appeal: AppealRow,
+  orgId: string,
+  brief: AssistBrief
+): Promise<string | null> {
+  const { data, error } = await db
+    .from("appeal_assists")
+    .upsert(
+      {
+        appeal_id: appeal.id,
+        org_id: orgId,
+        claim: brief.claim,
+        confidence: brief.confidence,
+        status: brief.ask ? "awaiting_employee" : "ready",
+        findings: brief.findings,
+        summary: brief.summary,
+        missing: brief.missing,
+        engine_version: ASSIST_VERSION,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "appeal_id" }
+    )
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    console.error("[assist] could not store brief:", error.message);
+    return null;
+  }
+  return (data?.id as string) ?? null;
+}
+
+/* ── The one question ─────────────────────────────────────────────────── */
+
+/**
+ * One SMS, one specific ask, a link back to the dashboard, and "I can't provide
+ * this" always available. Not a conversation, and never asked twice.
+ */
+async function askEmployee(
+  db: SupabaseClient,
+  appeal: AppealRow,
+  employeeId: string,
+  brief: AssistBrief
+): Promise<void> {
+  if (!brief.ask) return;
+  try {
+    const { data: assist } = await db
+      .from("appeal_assists")
+      .select("id")
+      .eq("appeal_id", appeal.id)
+      .maybeSingle();
+    if (!assist) return;
+
+    const { data: existing } = await db
+      .from("appeal_info_requests")
+      .select("id")
+      .eq("appeal_id", appeal.id)
+      .eq("ask_code", brief.ask.code)
+      .maybeSingle();
+    if (existing) return; // asked already; asking again is harassment, not diligence
+
+    await db.from("appeal_info_requests").insert({
+      assist_id: assist.id,
+      appeal_id: appeal.id,
+      employee_id: employeeId,
+      ask_code: brief.ask.code,
+      question: brief.ask.question,
+    });
+
+    const { data: emp } = await db
+      .from("employees")
+      .select("phone")
+      .eq("id", employeeId)
+      .maybeSingle();
+    if (!emp?.phone) return;
+
+    await sendText(
+      emp.phone as string,
+      `Kaunta HR: about your appeal — ${brief.ask.question} Answer at ${env.appUrl}/me/violations. If you can't, choose "not available" there and it still goes to your employer.`
+    );
+  } catch (err) {
+    console.error("[assist] could not ask the employee:", (err as Error).message);
+  }
+}

@@ -56,13 +56,15 @@ class Builder implements PromiseLike<{ data: Row[] | null; error: null }> {
   private sortCol: string | null = null;
   private sortAsc = true;
   private pending: Row | null = null;
+  private wantCount = false;
 
   constructor(
     private db: FakeDb,
     private table: string
   ) {}
 
-  select(_cols?: string) {
+  select(_cols?: string, opts?: { count?: string; head?: boolean }) {
+    this.wantCount = Boolean(opts?.count);
     return this;
   }
   eq(col: string, val: unknown) {
@@ -111,6 +113,23 @@ class Builder implements PromiseLike<{ data: Row[] | null; error: null }> {
     return this;
   }
 
+  /**
+   * Real upsert semantics matter here: the assist re-runs, and a second brief
+   * must replace the first rather than stack a duplicate the owner then sees
+   * twice.
+   */
+  upsert(row: Row, opts?: { onConflict?: string }) {
+    const key = opts?.onConflict;
+    const table = (this.db.tables[this.table] ??= []);
+    const existing = key ? table.find((r) => r[key] === row[key]) : undefined;
+    if (existing) {
+      Object.assign(existing, row);
+      this.pending = existing;
+      return this;
+    }
+    return this.insert(row);
+  }
+
   update(patch: Row) {
     for (const r of this.rows()) Object.assign(r, patch);
     this.pending = null;
@@ -151,10 +170,15 @@ class Builder implements PromiseLike<{ data: Row[] | null; error: null }> {
   }
 
   then<A, B = never>(
-    onOk?: ((v: { data: Row[] | null; error: null }) => A | PromiseLike<A>) | null,
+    onOk?: ((v: { data: Row[] | null; error: null; count?: number }) => A | PromiseLike<A>) | null,
     onErr?: ((e: unknown) => B | PromiseLike<B>) | null
   ): PromiseLike<A | B> {
-    return Promise.resolve({ data: this.rows(), error: null }).then(onOk, onErr);
+    const rows = this.rows();
+    return Promise.resolve({
+      data: rows,
+      error: null,
+      ...(this.wantCount ? { count: rows.length } : {}),
+    }).then(onOk, onErr);
   }
 }
 
@@ -176,10 +200,17 @@ export function fakeDb(tables: Record<string, Row[]> = {}): FakeDb {
  * it ever reaches fetch, and then retries with backoff — which would make the
  * suite slow and would test the retry loop instead of the engine.
  */
+let smsSink: string[] | null = null;
+
 export function captureSms(): string[] {
+  // One sink, however many suites ask for it. Patching fetch a second time
+  // would silently orphan the first suite's array, and its assertions would
+  // pass or fail depending on import order.
+  if (smsSink) return smsSink;
+
   process.env.AT_API_KEY ||= "test-key-not-used";
   const sent: string[] = [];
-  const realFetch = globalThis.fetch;
+  smsSink = sent;
   globalThis.fetch = (async (url: unknown, init?: { body?: unknown }) => {
     sent.push(String(init?.body ?? url));
     return {
@@ -189,8 +220,5 @@ export function captureSms(): string[] {
       text: async () => "{}",
     } as never;
   }) as typeof fetch;
-  process.on("exit", () => {
-    globalThis.fetch = realFetch;
-  });
   return sent;
 }
