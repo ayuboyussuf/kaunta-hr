@@ -18,6 +18,8 @@ import { getServiceClient } from "../../lib/supabase";
 import { sendText } from "../../lib/whatsapp/meta";
 import { env } from "../../lib/env";
 import { renderToBuffer, drawHeader, drawFooter, BRAND } from "../../lib/pdf/render";
+import { DateTime } from "luxon";
+import { monthWindowUtc, nairobiDate } from "../../lib/time";
 
 const router = Router();
 const TZ = "Africa/Nairobi";
@@ -119,9 +121,9 @@ router.get("/attendance-overview", requireOwner, async (req, res) => {
   const ids = (emps ?? []).map((e) => e.id);
   if (ids.length === 0) return res.json({ overview: [] });
 
-  const now = Date.now();
-  const since60 = new Date(now - 60 * 864e5).toISOString();
-  const since7 = new Date(now - 7 * 864e5).toISOString();
+  const nowDt = DateTime.utc();
+  const since60 = nowDt.minus({ days: 60 }).toISO()!;
+  const since7 = nowDt.minus({ days: 7 }).toISO()!;
 
   const [{ data: ins }, { data: checks }] = await Promise.all([
     db
@@ -151,7 +153,7 @@ router.get("/attendance-overview", requireOwner, async (req, res) => {
 
   const overview = (emps ?? []).map((e) => {
     const last = lastIn.get(e.id) ?? null;
-    const daysSince = last ? Math.floor((now - new Date(last).getTime()) / 864e5) : null;
+    const daysSince = last ? Math.floor(nowDt.diff(DateTime.fromISO(last), "days").days) : null;
     const agg = checkAgg.get(e.id) ?? { confirmed: 0, missed: 0 };
     return {
       employee_id: e.id,
@@ -184,7 +186,7 @@ router.get("/:id/history", requireOwner, async (req, res) => {
   const shift = Array.isArray((emp as any).shift) ? (emp as any).shift[0] : (emp as any).shift;
 
   // ~6 months back for the calendar to page through, bounded for memory/size.
-  const since = new Date(Date.now() - 186 * 864e5).toISOString();
+  const since = DateTime.utc().minus({ days: 186 }).toISO()!;
   const [{ data: entries }, { data: checks }] = await Promise.all([
     db
       .from("attendance_entries")
@@ -229,11 +231,8 @@ router.get("/:id/attendance-report.pdf", requireOwner, async (req, res) => {
     .maybeSingle();
   if (!emp) return res.status(404).json({ error: "employee not found" });
 
-  // Month window in Nairobi (UTC+3, no DST).
-  const [y, m] = month.split("-").map(Number);
-  const startISO = new Date(`${month}-01T00:00:00+03:00`).toISOString();
-  const nextMonth = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
-  const endISO = new Date(`${nextMonth}-01T00:00:00+03:00`).toISOString();
+  // Month window in Nairobi (UTC+3, no DST) → UTC instant bounds.
+  const { startISO, endISO } = monthWindowUtc(month);
 
   const { data: entries } = await db
     .from("attendance_entries")
@@ -263,7 +262,7 @@ router.get("/:id/attendance-report.pdf", requireOwner, async (req, res) => {
   }
 
   const rows = entries ?? [];
-  const present = new Set(rows.filter((e) => e.direction === "in").map((e) => e.scanned_at.slice(0, 10))).size;
+  const present = new Set(rows.filter((e) => e.direction === "in").map((e) => nairobiDate(e.scanned_at))).size;
   const late = rows.filter((e) => e.status === "late").length;
   const flagged = rows.filter((e) => e.status === "flagged").length;
   const empName = (emp as any).name as string;
@@ -273,8 +272,7 @@ router.get("/:id/attendance-report.pdf", requireOwner, async (req, res) => {
     new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
   const dayLabel = (iso: string) =>
     new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short", day: "2-digit", month: "short" }).format(new Date(iso));
-  const nairDay = (iso: string) =>
-    new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+  const nairDay = (iso: string) => nairobiDate(iso);
 
   try {
     const buf = await renderToBuffer((doc) => {

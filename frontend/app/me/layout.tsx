@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Home, QrCode, Clock, AlertTriangle, Wallet, Megaphone, CalendarDays } from "lucide-react";
+import { LogOut, Home, QrCode, Clock, AlertTriangle, Wallet, CalendarDays } from "lucide-react";
 import { getEmployeeToken, clearEmployeeToken } from "@/lib/api";
 
 /**
  * Employee shell (spec §8). Wraps every page under /me/** with a header + nav,
  * gated on the employee session. /me/login is exempt from the gate — it's how
  * an employee without a session gets one.
+ *
+ * Announcements are reached from a bell icon on the Home page (not the nav).
  */
 const NAV = [
   { href: "/me", label: "Home", icon: Home },
@@ -18,7 +20,6 @@ const NAV = [
   { href: "/me/leave", label: "Leave", icon: CalendarDays },
   { href: "/me/violations", label: "Violations", icon: AlertTriangle },
   { href: "/me/payslips", label: "Payslips", icon: Wallet },
-  { href: "/me/announcements", label: "Announcements", icon: Megaphone },
 ];
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {

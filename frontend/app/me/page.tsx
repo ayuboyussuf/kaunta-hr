@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { QrCode, ChevronRight } from "lucide-react";
+import { QrCode, ChevronRight, Megaphone, AlertTriangle } from "lucide-react";
 import { api, getEmployeeToken } from "@/lib/api";
 import { registerPush } from "@/lib/push";
 import { flushScanFailures } from "@/lib/scanAttempts";
@@ -40,6 +40,12 @@ interface Announcement {
   posted_at: string;
 }
 
+interface MyViolation {
+  id: string;
+  status: string; // open | appealed | locked
+  can_appeal: boolean;
+}
+
 const STATUS_BADGE: Record<string, string> = {
   normal: "bg-kaunta-sage/10 text-kaunta-sage border-kaunta-sage/20",
   late: "bg-kaunta-amber/10 text-kaunta-amber border-kaunta-amber/20",
@@ -58,6 +64,7 @@ export default function EmployeeHome() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [attendance, setAttendance] = useState<AttendanceEntry[]>([]);
   const [unread, setUnread] = useState(0);
+  const [violations, setViolations] = useState<MyViolation[]>([]);
   const [presenceDue, setPresenceDue] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,13 +75,15 @@ export default function EmployeeHome() {
 
     (async () => {
       try {
-        const [profileRes, attendanceRes, announcementsRes] = await Promise.all([
+        const [profileRes, attendanceRes, announcementsRes, violationsRes] = await Promise.all([
           api<{ employee: Profile }>("/api/employees/me/profile", { token }),
           api<{ attendance: AttendanceEntry[] }>("/api/employees/me/attendance", { token }),
           api<{ announcements: Announcement[] }>("/api/employees/me/announcements", { token }),
+          api<{ violations: MyViolation[] }>("/api/violations/mine", { token }),
         ]);
         setProfile(profileRes.employee);
         setAttendance(attendanceRes.attendance.slice(0, 1));
+        setViolations(violationsRes.violations);
 
         const seenAt = localStorage.getItem(SEEN_KEY);
         const seenMs = seenAt ? new Date(seenAt).getTime() : 0;
@@ -122,19 +131,60 @@ export default function EmployeeHome() {
 
   const lastEntry = attendance[0];
   const lastStatus = lastEntry ? ATTENDANCE_STATUS[lastEntry.status] : null;
+  const openPenalties = violations.filter((v) => v.status === "open" || v.status === "appealed").length;
+  const appealable = violations.filter((v) => v.can_appeal).length;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-kaunta-ink mb-1">
-          {greeting()}
-          {profile?.name ? `, ${profile.name.split(" ")[0]}` : ""}
-        </h1>
-        <p className="text-kaunta-slate/70 text-sm">
-          {profile?.workplace?.name ?? "No workplace assigned"}
-          {profile?.shift ? ` · ${profile.shift.name} shift` : ""}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl text-kaunta-ink mb-1">
+            {greeting()}
+            {profile?.name ? `, ${profile.name.split(" ")[0]}` : ""}
+          </h1>
+          <p className="text-kaunta-slate/70 text-sm">
+            {profile?.workplace?.name ?? "No workplace assigned"}
+            {profile?.shift ? ` · ${profile.shift.name} shift` : ""}
+          </p>
+        </div>
+        {/* Announcements — moved off the nav to a bell icon here, with an unread count. */}
+        <Link
+          href="/me/announcements"
+          aria-label={`Announcements${unread > 0 ? `, ${unread} unread` : ""}`}
+          className="relative shrink-0 grid h-11 w-11 place-items-center rounded-full border border-kaunta-mist bg-white text-kaunta-slate hover:text-kaunta-ultra hover:border-kaunta-ultra/40 transition-colors"
+        >
+          <Megaphone className="h-5 w-5" />
+          {unread > 0 && (
+            <span className="absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-kaunta-ultra px-1 text-[11px] font-semibold text-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </Link>
       </div>
+
+      {/* Penalties the employee hasn't resolved — surfaced so they can't be missed. */}
+      {openPenalties > 0 && (
+        <Card className="bg-kaunta-red text-white border-none">
+          <CardContent className="p-5 flex items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-display text-lg mb-0.5">
+                  {openPenalties} open penalt{openPenalties === 1 ? "y" : "ies"}
+                </p>
+                <p className="text-sm text-white/85">
+                  {appealable > 0
+                    ? `You can still appeal ${appealable === openPenalties ? (openPenalties === 1 ? "it" : "them") : `${appealable} of them`}. The window closes soon.`
+                    : "Review the details on your penalties page."}
+                </p>
+              </div>
+            </div>
+            <Button asChild variant="secondary" size="lg">
+              <Link href="/me/violations">Review</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {presenceDue && (
         <Card className="bg-kaunta-red text-white border-none">
@@ -205,23 +255,25 @@ export default function EmployeeHome() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Announcements</CardTitle>
-            <CardDescription>From your employer</CardDescription>
+            <CardTitle>Penalties</CardTitle>
+            <CardDescription>Fines and appeals</CardDescription>
           </CardHeader>
           <CardContent>
-            {unread > 0 ? (
+            {violations.length === 0 ? (
+              <p className="text-sm text-kaunta-slate/60">No penalties. Keep it up.</p>
+            ) : openPenalties > 0 ? (
               <p className="text-sm text-kaunta-ink">
-                <span className="font-display text-2xl text-kaunta-ultra mr-1">{unread}</span>
-                unread announcement{unread === 1 ? "" : "s"}
+                <span className="font-display text-2xl text-kaunta-red mr-1">{openPenalties}</span>
+                open penalt{openPenalties === 1 ? "y" : "ies"}
               </p>
             ) : (
-              <p className="text-sm text-kaunta-slate/60">You&rsquo;re all caught up.</p>
+              <p className="text-sm text-kaunta-slate/60">All penalties resolved.</p>
             )}
             <Link
-              href="/me/announcements"
+              href="/me/violations"
               className="mt-4 flex items-center gap-1 text-sm text-kaunta-ultra hover:underline"
             >
-              View announcements <ChevronRight className="h-3.5 w-3.5" />
+              View penalties <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </CardContent>
         </Card>

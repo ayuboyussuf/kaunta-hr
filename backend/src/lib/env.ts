@@ -29,6 +29,10 @@ export const env = {
   employeeJwtSecret: () => req("EMPLOYEE_JWT_SECRET"),
   cronSecret: () => req("CRON_SECRET"),
 
+  // Background jobs (BullMQ). Optional: when unset, jobs run inline at enqueue
+  // time (no queue). Set to an Upstash Redis rediss:// URL to enable the worker.
+  redisUrl: () => opt("REDIS_URL", ""),
+
   // Africa's Talking SMS — all messaging (OTP, invites, announcements, PDF links).
   at: {
     username: () => opt("AT_USERNAME", "sandbox"),
