@@ -11,6 +11,7 @@ interface LeaveRow {
   id: string;
   start_date: string;
   end_date: string;
+  half_day: "morning" | "afternoon" | null;
   reason: string;
   status: "pending" | "approved" | "declined" | "cancelled";
   paid: boolean | null;
@@ -159,8 +160,12 @@ export default function OwnerLeavePage() {
                       ? fmtDay(r.start_date)
                       : `${fmtDay(r.start_date)} – ${fmtDay(r.end_date)}`}{" "}
                     <span className="text-kaunta-slate/60">
-                      · {dayCount(r.start_date, r.end_date)} day
-                      {dayCount(r.start_date, r.end_date) > 1 ? "s" : ""}
+                      ·{" "}
+                      {r.half_day
+                        ? `${r.half_day} only — half a day`
+                        : `${dayCount(r.start_date, r.end_date)} day${
+                            dayCount(r.start_date, r.end_date) > 1 ? "s" : ""
+                          }`}
                       {r.status === "pending" ? ` · ${noticeLeft(r.start_date)}` : ""}
                     </span>
                   </p>

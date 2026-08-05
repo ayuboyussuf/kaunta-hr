@@ -36,6 +36,9 @@ const createSchema = z.object({
   start_date: isoDate,
   end_date: isoDate,
   reason: z.string().trim().min(3, "give a reason").max(500),
+  // Half a day only makes sense for a single day — "the afternoon" of a
+  // four-day range is not something anyone means.
+  half_day: z.enum(["morning", "afternoon"]).nullable().optional(),
 });
 
 router.post("/", requireEmployee, async (req, res) => {
@@ -44,8 +47,12 @@ router.post("/", requireEmployee, async (req, res) => {
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? "invalid request" });
   }
   const { start_date, end_date, reason } = parsed.data;
+  const half_day = parsed.data.half_day ?? null;
   if (end_date < start_date) {
     return res.status(400).json({ error: "the last day cannot be before the first" });
+  }
+  if (half_day && start_date !== end_date) {
+    return res.status(400).json({ error: "Half a day can only be asked for on a single day." });
   }
 
   const db = getServiceClient();
@@ -88,8 +95,8 @@ router.post("/", requireEmployee, async (req, res) => {
 
   const { data, error } = await db
     .from("leave_requests")
-    .insert({ org_id: orgId, employee_id: employeeId, start_date, end_date, reason })
-    .select("id, start_date, end_date, reason, status, created_at")
+    .insert({ org_id: orgId, employee_id: employeeId, start_date, end_date, reason, half_day })
+    .select("id, start_date, end_date, half_day, reason, status, created_at")
     .single();
   if (error) return res.status(500).json({ error: error.message });
 
@@ -101,7 +108,7 @@ router.get("/mine", requireEmployee, async (req, res) => {
   const db = getServiceClient();
   const { data, error } = await db
     .from("leave_requests")
-    .select("id, start_date, end_date, reason, status, paid, decision_note, decided_at, created_at")
+    .select("id, start_date, end_date, half_day, reason, status, paid, decision_note, decided_at, created_at")
     .eq("employee_id", req.employee!.employeeId)
     .order("start_date", { ascending: false })
     .limit(50);
@@ -134,7 +141,7 @@ router.get("/", requireOwner, async (req, res) => {
   let q = db
     .from("leave_requests")
     .select(
-      "id, start_date, end_date, reason, status, paid, decided_at, created_at, employees(id, name, phone, workplace_id)"
+      "id, start_date, end_date, half_day, reason, status, paid, decided_at, created_at, employees(id, name, phone, workplace_id)"
     )
     .eq("org_id", req.owner!.orgId)
     .order("start_date", { ascending: true })
@@ -170,15 +177,16 @@ router.post("/:id/approve", requireOwner, async (req, res) => {
     .eq("id", req.params.id)
     .eq("org_id", req.owner!.orgId)
     .eq("status", "pending")
-    .select("id, start_date, end_date, paid, employees(name, phone)")
+    .select("id, start_date, end_date, half_day, paid, employees(name, phone)")
     .maybeSingle();
   if (error) return res.status(500).json({ error: error.message });
   if (!data) return res.status(404).json({ error: "no pending request with that id" });
 
   const emp = data.employees as unknown as { name: string; phone: string } | null;
   if (emp?.phone) {
-    const span =
-      data.start_date === data.end_date
+    const span = data.half_day
+      ? `the ${data.half_day} of ${data.start_date}`
+      : data.start_date === data.end_date
         ? `${data.start_date}`
         : `${data.start_date} to ${data.end_date}`;
     try {

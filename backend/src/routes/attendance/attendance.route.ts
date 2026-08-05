@@ -6,7 +6,8 @@
  *      time (never the device clock), validates the signed workplace token +
  *      nonce, runs geofence + integrity heuristics, compares against the
  *      employee's assigned shift for auto-lateness, and assigns a status of
- *      normal | late | flagged.
+ *      normal | late | flagged | on_leave. A day covered by approved leave is
+ *      never late: the owner already signed it off.
  *
  *  GET  /api/attendance/qr/:workplaceId (owner) — issue the signed token to
  *      print as the static QR (valid ~3 months).
@@ -23,39 +24,16 @@ import { evaluateScan } from "../../lib/attendance/geofence";
 import { uploadSelfie, signSelfie } from "../../lib/storage/selfies";
 import { evaluateScan as enforceRules } from "../../lib/rules/engine";
 import { confirmPendingCheck } from "../../lib/presence";
+import { approvedLeaveOn } from "../../lib/leave/cover";
+import { CLIENT_OUTCOMES, recordClientAttempt, recordServerAttempt } from "../../lib/attendance/attempts";
+import { nairobiDate, nairobiDayStartISO, nairobiMinutes } from "../../lib/time";
 
 const router = Router();
-
-const TZ = "Africa/Nairobi";
-
-/** Minutes since local midnight for a Date, in the given IANA timezone. */
-function minutesSinceMidnight(d: Date, tz: string): number {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: tz,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(d);
-  const h = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
-  const m = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
-  return h * 60 + m;
-}
 
 /** "08:30[:00]" → minutes since midnight. */
 function timeToMinutes(t: string): number {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + (m || 0);
-}
-
-/** Start of "today" in Nairobi (UTC+3, no DST) as an ISO instant. */
-function nairobiDayStartISO(now: Date): string {
-  const ymd = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
-  return new Date(`${ymd}T00:00:00+03:00`).toISOString();
 }
 
 const scanInput = z.object({
@@ -77,10 +55,24 @@ router.post("/scan", requireEmployee, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
   const { token, lat, lng, accuracy, selfie, faceDetected } = parsed.data;
 
-  const payload = verifyWorkplaceToken(token);
-  if (!payload) return res.status(400).json({ error: "Invalid or expired QR code." });
-
   const db = getServiceClient();
+
+  // Every rejection below is logged before it is returned. A scan that does not
+  // become attendance is exactly the thing an employee later says they tried,
+  // so it has to leave a trace on our side too — see lib/attendance/attempts.
+  const who = {
+    orgId: req.employee!.orgId,
+    employeeId: req.employee!.employeeId,
+    lat: lat ?? null,
+    lng: lng ?? null,
+    accuracyM: accuracy ?? null,
+  };
+
+  const payload = verifyWorkplaceToken(token);
+  if (!payload) {
+    await recordServerAttempt(db, "invalid_token", who, "Token failed signature or expiry check.");
+    return res.status(400).json({ error: "Invalid or expired QR code." });
+  }
 
   // Workplace referenced by the token, scoped to the employee's org.
   const { data: workplace } = await db
@@ -90,9 +82,16 @@ router.post("/scan", requireEmployee, async (req, res) => {
     .maybeSingle();
 
   if (!workplace || workplace.org_id !== req.employee!.orgId) {
+    await recordServerAttempt(db, "wrong_workplace", who, "QR belongs to a workplace outside this org.");
     return res.status(403).json({ error: "This QR code is not for your workplace." });
   }
   if (workplace.qr_nonce !== payload.nonce) {
+    await recordServerAttempt(
+      db,
+      "rotated_qr",
+      { ...who, workplaceId: workplace.id },
+      "QR was printed before the code was last rotated."
+    );
     return res.status(400).json({ error: "This QR code has been replaced. Ask for the new one." });
   }
 
@@ -103,7 +102,10 @@ router.post("/scan", requireEmployee, async (req, res) => {
     .eq("id", req.employee!.employeeId)
     .eq("org_id", req.employee!.orgId)
     .maybeSingle();
-  if (!employee) return res.status(404).json({ error: "employee not found" });
+  if (!employee) {
+    await recordServerAttempt(db, "employee_not_found", { ...who, workplaceId: workplace.id });
+    return res.status(404).json({ error: "employee not found" });
+  }
 
   // Supabase types a to-one embed as an array; normalise to a single row.
   const shiftRaw = employee.shift as unknown;
@@ -156,12 +158,17 @@ router.post("/scan", requireEmployee, async (req, res) => {
       })
     : { distanceM: null as number | null, flags: [] as string[], insideGeofence: true };
 
+  // Leave the owner already approved for today. Someone who is signed off and
+  // comes in anyway is doing us a favour — the day must not be priced as late.
+  const onDate = nairobiDate(now);
+  const leave = await approvedLeaveOn(db, req.employee!.employeeId, onDate);
+
   // Roster comparison → auto-lateness. Only clock-INs can be "late".
   let rosterExpected: { shift_id: string; expected_start: string; late_by_min: number } | null = null;
   let late = false;
-  if (shift && direction === "in") {
+  if (shift && direction === "in" && !leave) {
     const startMin = timeToMinutes(shift.start_time);
-    const nowMin = minutesSinceMidnight(now, TZ);
+    const nowMin = nairobiMinutes(now);
     let lateBy = nowMin - (startMin + (shift.grace_minutes ?? 0));
     // Guard against midnight wrap for overnight shifts: only treat as late within a 12h window.
     if (lateBy > 0 && lateBy < 12 * 60) {
@@ -178,8 +185,10 @@ router.post("/scan", requireEmployee, async (req, res) => {
   const flags = [...geo.flags];
   if (faceDetected !== true) flags.push("no_face");
 
-  // Status precedence: integrity flags → flagged; else shift lateness → late; else normal.
-  const status = flags.length > 0 ? "flagged" : late ? "late" : "normal";
+  // Status precedence: integrity flags → flagged (a signed-off day is still no
+  // excuse for a scan nobody can identify); else an approved leave day →
+  // on_leave; else shift lateness → late; else normal.
+  const status = flags.length > 0 ? "flagged" : leave ? "on_leave" : late ? "late" : "normal";
 
   const { data: entry, error } = await db
     .from("attendance_entries")
@@ -198,7 +207,15 @@ router.post("/scan", requireEmployee, async (req, res) => {
     .select("id, scanned_at, status, direction, distance_m, flags")
     .single();
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    await recordServerAttempt(
+      db,
+      "server_error",
+      { ...who, workplaceId: workplace.id },
+      "The attendance row could not be written."
+    );
+    return res.status(500).json({ error: error.message });
+  }
 
   // Store the selfie (best-effort) and stamp its path on the entry. A failed
   // upload must never fail the clock-in — the attendance record already exists.
@@ -238,6 +255,7 @@ router.post("/scan", requireEmployee, async (req, res) => {
       status,
       lateByMin: rosterExpected?.late_by_min ?? 0,
       scannedAt: entry.scanned_at,
+      onDate,
     });
   } catch (err) {
     // Enforcement must never cost the employee their clock-in.
@@ -251,10 +269,66 @@ router.post("/scan", requireEmployee, async (req, res) => {
     status,
     direction,
     flags,
+    on_leave: leave ? { id: leave.id, start_date: leave.start_date, end_date: leave.end_date } : null,
     penalty: applied
       ? { id: applied.violationId, reason: applied.reason, amount: applied.amount }
       : null,
   });
+});
+
+// ── POST /attempts (employee) — the phone reports a scan it couldn't complete ─
+//
+// When the camera won't open or the signal drops, the server never hears about
+// it, so the employee's side of "I tried" has no record. The app reports it
+// here — queued on the device and sent when it can reach us, which is why the
+// device supplies the time it happened.
+//
+// The device sends a code from a fixed list and nothing else. No free text is
+// accepted: there is no field here for a name, a number or an amount to end up
+// in, and a client-written row is marked as a claim, not as something we saw.
+const attemptInput = z.object({
+  outcome: z.enum(CLIENT_OUTCOMES as [string, ...string[]]),
+  workplace_id: z.string().uuid().nullable().optional(),
+  occurred_at: z.string().datetime().nullable().optional(),
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
+  accuracy: z.number().nonnegative().nullable().optional(),
+});
+
+router.post("/attempts", requireEmployee, async (req, res) => {
+  const parsed = attemptInput.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+
+  const db = getServiceClient();
+  const now = new Date();
+
+  // A device that reports in a loop would fill the table and drown the real
+  // signal, so the day is capped. The cap is generous — a genuinely broken
+  // phone at a genuinely broken site will retry a lot, and we want that.
+  const { count } = await db
+    .from("scan_attempts")
+    .select("id", { count: "exact", head: true })
+    .eq("employee_id", req.employee!.employeeId)
+    .eq("source", "client")
+    .gte("created_at", nairobiDayStartISO(now));
+  if ((count ?? 0) >= 60) return res.status(429).json({ error: "too many reports today" });
+
+  // Never trust a device clock beyond today, and never let it write the future.
+  const claimed = parsed.data.occurred_at ? new Date(parsed.data.occurred_at) : now;
+  const occurredAt =
+    claimed > now || claimed.getTime() < now.getTime() - 3 * 864e5 ? now : claimed;
+
+  await recordClientAttempt(db, parsed.data.outcome as never, {
+    orgId: req.employee!.orgId,
+    employeeId: req.employee!.employeeId,
+    workplaceId: parsed.data.workplace_id ?? null,
+    lat: parsed.data.lat ?? null,
+    lng: parsed.data.lng ?? null,
+    accuracyM: parsed.data.accuracy ?? null,
+    occurredAt: occurredAt.toISOString(),
+  });
+
+  res.status(201).json({ recorded: true });
 });
 
 // ── GET /selfie/:entryId (owner) — short-lived signed URL for a scan selfie ───

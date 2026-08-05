@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { AppealBrief, type Assist, type InfoRequest } from "@/components/AppealBrief";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Employee {
@@ -35,6 +36,8 @@ interface PendingAppeal {
   id: string;
   message: string;
   submitted_at: string;
+  assist: Assist | null;
+  info_requests: InfoRequest[];
   violation: {
     id: string;
     reason: string;
@@ -294,38 +297,41 @@ export default function OwnerViolationsPage() {
             <div className="space-y-3">
               {appeals.map((a) => (
                 <Card key={a.id} className="p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="font-medium text-kaunta-ink">
-                        {a.violation?.employee_name ?? "Employee"} ·{" "}
-                        <span className="text-kaunta-slate">{a.violation?.reason}</span>
-                      </p>
-                      <p className="text-sm text-kaunta-red tabular-nums mt-0.5">
-                        {fmtKes(a.violation?.amount ?? 0)}
-                      </p>
-                      <p className="text-sm text-kaunta-slate/80 mt-2 italic">“{a.message}”</p>
-                      <p className="text-xs text-kaunta-slate/50 mt-1">
-                        Appealed {fmtDate(a.submitted_at)}
-                      </p>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled={deciding === a.id}
-                        onClick={() => decide(a.id, "accept")}
-                      >
-                        Accept (waive)
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={deciding === a.id}
-                        onClick={() => decide(a.id, "reject")}
-                      >
-                        Reject (uphold)
-                      </Button>
-                    </div>
+                  {/* Their own words first. If the brief below read the claim
+                      wrongly, this is the thing that corrects it. */}
+                  <div className="min-w-0">
+                    <p className="font-medium text-kaunta-ink">
+                      {a.violation?.employee_name ?? "Employee"} ·{" "}
+                      <span className="text-kaunta-slate">{a.violation?.reason}</span>
+                    </p>
+                    <p className="text-sm text-kaunta-red tabular-nums mt-0.5">
+                      {fmtKes(a.violation?.amount ?? 0)}
+                    </p>
+                    <p className="text-sm text-kaunta-slate/80 mt-2 italic">“{a.message}”</p>
+                    <p className="text-xs text-kaunta-slate/50 mt-1">
+                      Appealed {fmtDate(a.submitted_at)}
+                    </p>
+                  </div>
+
+                  <AppealBrief assist={a.assist} infoRequests={a.info_requests ?? []} />
+
+                  <div className="mt-4 flex flex-col gap-2 border-t border-kaunta-mist pt-4 sm:flex-row">
+                    <Button
+                      variant="secondary"
+                      disabled={deciding === a.id}
+                      onClick={() => decide(a.id, "accept")}
+                      className="sm:flex-1"
+                    >
+                      Accept (waive)
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      disabled={deciding === a.id}
+                      onClick={() => decide(a.id, "reject")}
+                      className="sm:flex-1"
+                    >
+                      Reject (uphold)
+                    </Button>
                   </div>
                 </Card>
               ))}

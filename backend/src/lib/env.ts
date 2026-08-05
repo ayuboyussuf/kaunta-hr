@@ -29,6 +29,15 @@ export const env = {
   employeeJwtSecret: () => req("EMPLOYEE_JWT_SECRET"),
   cronSecret: () => req("CRON_SECRET"),
 
+  /**
+   * Operator credential for /api/admin/*. Not an owner and not a staff member:
+   * these endpoints read across every org, so they are gated on a secret that
+   * only whoever runs Kaunta holds. Unset means the admin routes refuse
+   * everything, which is the correct behaviour for a deploy that has not
+   * deliberately turned them on.
+   */
+  adminToken: () => process.env.ADMIN_API_TOKEN ?? "",
+
   // Background jobs (BullMQ). Optional: when unset, jobs run inline at enqueue
   // time (no queue). Set to an Upstash Redis rediss:// URL to enable the worker.
   redisUrl: () => opt("REDIS_URL", ""),

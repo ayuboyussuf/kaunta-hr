@@ -8,25 +8,33 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { api, getEmployeeToken } from "@/lib/api";
+import { api, getEmployeeToken, NetworkError } from "@/lib/api";
 import { captureSelfie } from "@/lib/selfie";
+import { flushScanFailures, reportScanFailure } from "@/lib/scanAttempts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 type Phase = "scanning" | "selfie" | "locating" | "sending" | "done" | "error";
 
 interface ScanResult {
-  status: "normal" | "late" | "flagged";
+  status: "normal" | "late" | "flagged" | "on_leave";
   direction: "in" | "out";
   distance_m: number | null;
   flags: string[];
   workplace: { name: string };
+  on_leave: { id: string; start_date: string; end_date: string } | null;
+  penalty: { id: string; reason: string; amount: number } | null;
 }
 
 const STATUS_COPY: Record<string, { title: string; tone: string; note: string }> = {
   normal: { title: "Clocked in — on time", tone: "text-kaunta-sage", note: "You're inside the workplace area." },
   late: { title: "Clocked in — late", tone: "text-kaunta-amber", note: "Recorded as late against your shift." },
   flagged: { title: "Clocked in — flagged", tone: "text-kaunta-red", note: "This scan was flagged for review." },
+  on_leave: {
+    title: "Clocked in — approved leave",
+    tone: "text-kaunta-ultra",
+    note: "Today is leave your employer approved. You are not marked late and there is no penalty.",
+  },
   out: { title: "Clocked out", tone: "text-kaunta-sage", note: "Your clock-out has been recorded." },
 };
 
@@ -91,7 +99,20 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
         });
         setResult(res);
         setPhase("done");
+        // The clock-in worked, so the connection does — a good moment to send
+        // any failures this phone couldn't report earlier.
+        void flushScanFailures();
       } catch (e) {
+        // Only report what the server never saw. A rejection it issued (wrong
+        // QR, replaced code) is already on its record; duplicating it here
+        // would file the employee's own claim as corroboration of itself.
+        if (e instanceof NetworkError) {
+          void reportScanFailure("network_error", {
+            lat: coords?.lat ?? null,
+            lng: coords?.lng ?? null,
+            accuracy: coords?.accuracy ?? null,
+          });
+        }
         setError((e as Error).message);
         setPhase("error");
       }
@@ -105,8 +126,13 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => sendScan({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy ?? null }),
-      // Permission denied / timeout / unavailable → still clock in via the QR scan.
-      () => sendScan(null),
+      // Permission denied / timeout / unavailable → still clock in via the QR
+      // scan, but note the refusal: a clock-in with no location is the one the
+      // geofence can't vouch for, and the reason belongs on the record.
+      (err) => {
+        if (err?.code === 1) void reportScanFailure("location_denied");
+        void sendScan(null);
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }
@@ -134,7 +160,12 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
         },
         () => {}
       )
-      .catch(() => {
+      .catch((err: unknown) => {
+        // A refused permission and a camera that won't start are different
+        // facts about the same morning, and an appeal turns on which it was.
+        const name = (err as { name?: string } | null)?.name ?? "";
+        const blocked = name === "NotAllowedError" || /permission|denied/i.test(String(err));
+        void reportScanFailure(blocked ? "camera_blocked" : "camera_failed");
         setError("Couldn't open the camera. Grant camera access and reload.");
         setPhase("error");
       });
@@ -161,6 +192,30 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
           {result.flags?.length > 0 && (
             <p className="text-xs text-kaunta-red">Flags: {result.flags.join(", ")}</p>
           )}
+
+          {/* The rule applied itself the moment the scan landed. Say so here as
+              well as by SMS — and say in the same breath that it can be argued
+              with, because a deduction you only find out about at month end is
+              the thing this product exists to stop. */}
+          {result.penalty && (
+            <div className="mt-4 rounded-xl border border-kaunta-amber/30 bg-kaunta-amber/5 p-4 text-left">
+              <p className="text-sm font-medium text-kaunta-ink">
+                {result.penalty.reason} — KES{" "}
+                {Number(result.penalty.amount).toLocaleString("en-KE")}
+              </p>
+              <p className="mt-1 text-xs text-kaunta-slate/70">
+                Applied automatically by your employer&apos;s rules. If you think
+                it is wrong, say why and it goes to them to decide.
+              </p>
+              <a
+                href="/me/violations"
+                className="mt-2 inline-block text-sm text-kaunta-ultra underline underline-offset-2"
+              >
+                Appeal this
+              </a>
+            </div>
+          )}
+
           <Button className="mt-4" onClick={() => (window.location.href = "/me")}>
             Done
           </Button>

@@ -10,24 +10,25 @@
  * headers, and any sensitive-looking keys before the event is sent.
  */
 import * as Sentry from "@sentry/node";
+import { scrub } from "./lib/privacy/scrub";
 
-// Keys whose values must never be reported. Matches substrings, case-insensitive.
-const SENSITIVE = /phone|salary|base_salary|pay_rate|gross|\bnet\b|amount|total_net|selfie|\bpin\b|otp|token|authorization|cookie|secret|password|api[_-]?key|msisdn/i;
-const REDACTED = "[redacted]";
-
-/** Recursively redact sensitive keys in place (bounded depth to stay cheap). */
-function deepRedact(value: unknown, depth = 0): unknown {
-  if (value == null || depth > 6) return value;
-  if (Array.isArray(value)) return value.map((v) => deepRedact(v, depth + 1));
-  if (typeof value === "object") {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = SENSITIVE.test(k) ? REDACTED : deepRedact(v, depth + 1);
-    }
-    return out;
-  }
-  return value;
-}
+/*
+ * Redaction is the shared scrubber, not a second one written here.
+ *
+ * It started as a key-name regex, which catches `salary: 45000` but not the
+ * error message "could not pay Grace Wanjiru KES 45,000" — and an exception
+ * message is exactly where a value like that ends up. lib/privacy/scrub runs
+ * over the text as well as the keys, so both are caught, and there is one
+ * implementation to keep correct instead of two that drift.
+ *
+ * No roster is available in this path, so names are only caught where they
+ * appear beside something with a shape. That is a floor, not a ceiling: nothing
+ * user-facing relies on Sentry, and everything that writes to our own storage
+ * passes the roster in.
+ *
+ * Safe to import here despite the load-order rule — the module has no runtime
+ * imports of its own.
+ */
 
 const dsn = process.env.SENTRY_DSN;
 if (dsn) {
@@ -52,8 +53,19 @@ if (dsn) {
         delete event.user.ip_address;
         delete (event.user as Record<string, unknown>).email;
       }
-      event.extra = deepRedact(event.extra) as typeof event.extra;
-      event.contexts = deepRedact(event.contexts) as typeof event.contexts;
+      event.extra = scrub(event.extra);
+      event.contexts = scrub(event.contexts);
+      // The message and the exception text are where a wage or a phone number
+      // most often escapes — they are prose, and prose is what the key-based
+      // pass cannot see.
+      if (event.message) event.message = scrub(event.message);
+      for (const ex of event.exception?.values ?? []) {
+        if (ex.value) ex.value = scrub(ex.value);
+      }
+      for (const b of event.breadcrumbs ?? []) {
+        if (b.message) b.message = scrub(b.message);
+        if (b.data) b.data = scrub(b.data);
+      }
       return event;
     },
   });

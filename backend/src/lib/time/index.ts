@@ -16,6 +16,28 @@ export function nairobiDate(iso: string | Date): string {
   return dt.setZone(TZ).toISODate()!;
 }
 
+/**
+ * Midnight of an instant's Nairobi day, as a UTC ISO string.
+ *
+ * For `.gte(...)` bounds on `timestamptz` columns when the question is "today"
+ * — a scan at 00:30 Nairobi belongs to today, and a UTC-midnight bound would
+ * put it in yesterday.
+ */
+export function nairobiDayStartISO(d: Date = new Date()): string {
+  return DateTime.fromJSDate(d).setZone(TZ).startOf("day").toUTC().toISO()!;
+}
+
+/**
+ * Minutes since local midnight in Nairobi.
+ *
+ * Lateness is decided in minutes against a shift's "08:00", so both sides of
+ * that comparison have to be measured from the same midnight.
+ */
+export function nairobiMinutes(d: Date = new Date()): number {
+  const dt = DateTime.fromJSDate(d).setZone(TZ);
+  return dt.hour * 60 + dt.minute;
+}
+
 /** Weekday (0=Sun..6=Sat) of a plain YYYY-MM-DD date. */
 export function weekdayOf(ymd: string): number {
   return DateTime.fromISO(ymd, { zone: "utc" }).weekday % 7; // Luxon Sun=7 → 0

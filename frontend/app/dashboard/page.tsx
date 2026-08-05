@@ -13,15 +13,19 @@ import { InsightsPanel } from "@/components/InsightsPanel";
 
 const TZ = "Africa/Nairobi";
 
-/** Start of "today" in Nairobi (UTC+3, no DST) as an ISO instant. */
-function nairobiDayStartISO(): string {
-  const ymd = new Intl.DateTimeFormat("en-CA", {
+/** "YYYY-MM-DD" for today in Nairobi. */
+function nairobiDate(): string {
+  return new Intl.DateTimeFormat("en-CA", {
     timeZone: TZ,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   }).format(new Date());
-  return new Date(`${ymd}T00:00:00+03:00`).toISOString();
+}
+
+/** Start of "today" in Nairobi (UTC+3, no DST) as an ISO instant. */
+function nairobiDayStartISO(): string {
+  return new Date(`${nairobiDate()}T00:00:00+03:00`).toISOString();
 }
 
 interface PageProps {
@@ -48,9 +52,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   if (!org.onboarding_complete) redirect("/dashboard/onboarding");
 
   const dayStart = nairobiDayStartISO();
+  const today = nairobiDate();
 
-  const [{ data: workplaces }, { data: employees }, { data: entries }, { data: violations }, { count: pendingAppeals }] =
-    await Promise.all([
+  const [
+    { data: workplaces },
+    { data: employees },
+    { data: entries },
+    { data: violations },
+    { count: pendingAppeals },
+    { data: leaveToday },
+  ] = await Promise.all([
       supabase.from("workplaces").select("id, name").eq("org_id", org.id).order("created_at"),
       supabase
         .from("employees")
@@ -70,6 +81,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         .from("appeals")
         .select("id, violations!inner(employee_id)", { count: "exact", head: true })
         .eq("decision", "pending"),
+      // Days the owner has already signed off. Someone on approved leave is not
+      // absent — showing them in the absent column is how a signed-off day ends
+      // up being chased.
+      supabase
+        .from("leave_requests")
+        .select("employee_id, paid, half_day, start_date, end_date")
+        .eq("org_id", org.id)
+        .eq("status", "approved")
+        .lte("start_date", today)
+        .gte("end_date", today),
     ]);
 
   const wps = workplaces ?? [];
@@ -82,7 +103,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const fmtTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-KE", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false });
 
-  const STATUS_RANK: Record<string, number> = { normal: 0, adjusted: 1, late: 2, flagged: 3 };
+  const leaveByEmp = new Map<string, { paid: boolean | null; half_day: string | null }>();
+  for (const l of leaveToday ?? []) {
+    leaveByEmp.set(l.employee_id, { paid: l.paid, half_day: l.half_day ?? null });
+  }
+
+  const STATUS_RANK: Record<string, number> = { normal: 0, on_leave: 0, adjusted: 1, late: 2, flagged: 3 };
 
   // Per-employee attendance for today: first clock-in, last clock-out, worst status, flags.
   interface Att {
@@ -121,7 +147,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   }
 
   const clockedInIds = new Set(attByEmp.keys());
-  const absent = wpEmployees.filter((e) => !clockedInIds.has(e.id));
+  // Absent means unaccounted for. A day the owner approved is accounted for.
+  const onLeave = wpEmployees.filter((e) => leaveByEmp.has(e.id));
+  const absent = wpEmployees.filter((e) => !clockedInIds.has(e.id) && !leaveByEmp.has(e.id));
 
   // Sort: still-in first, then out, then absent — each alphabetical.
   const roster = [...wpEmployees].sort((a, b) => a.name.localeCompare(b.name));
@@ -130,6 +158,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     { label: "Clocked in", value: clockedInIds.size, tone: "text-kaunta-sage" },
     { label: "Late", value: [...attByEmp.values()].filter((a) => a.status === "late").length, tone: "text-kaunta-amber" },
     { label: "Absent", value: absent.length, tone: "text-kaunta-slate" },
+    ...(onLeave.length > 0
+      ? [{ label: "On leave", value: onLeave.length, tone: "text-kaunta-ultra" }]
+      : []),
     { label: "Flagged", value: [...attByEmp.values()].filter((a) => a.status === "flagged").length, tone: "text-kaunta-red" },
   ];
 
@@ -138,6 +169,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     late: "bg-kaunta-amber/15 text-kaunta-amber",
     flagged: "bg-kaunta-red/10 text-kaunta-red",
     adjusted: "bg-kaunta-slate/10 text-kaunta-slate",
+    on_leave: "bg-kaunta-ultra/10 text-kaunta-ultra",
   };
 
   return (
@@ -182,7 +214,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         {selected ? (
           <>
             {/* Live stats */}
-            <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <section
+              className={`grid grid-cols-2 gap-4 ${
+                stats.length === 5 ? "md:grid-cols-5" : "md:grid-cols-4"
+              }`}
+            >
               {stats.map((s) => (
                 <div
                   key={s.label}
@@ -209,6 +245,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                     const viols = violByEmp.get(e.id) ?? [];
                     const clockedIn = !!a;
                     const stillIn = !!a && !a.outAt;
+                    const leave = leaveByEmp.get(e.id);
                     return (
                       <li key={e.id}>
                         <details className="group">
@@ -218,7 +255,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                               <p className="text-xs text-kaunta-slate/60 mt-0.5">
                                 {clockedIn
                                   ? `In ${a!.inAt ? fmtTime(a!.inAt) : "—"} · Out ${a!.outAt ? fmtTime(a!.outAt) : "—"}`
-                                  : "Not clocked in"}
+                                  : leave
+                                    ? `Approved leave${leave.half_day ? ` (${leave.half_day} only)` : ""} · ${leave.paid ? "paid" : "unpaid"}`
+                                    : "Not clocked in"}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
@@ -227,21 +266,41 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                                   {viols.length} penalt{viols.length === 1 ? "y" : "ies"}
                                 </span>
                               )}
+                              {leave && clockedIn && (
+                                <span className="rounded-full bg-kaunta-ultra/10 px-2 py-0.5 text-xs text-kaunta-ultra">
+                                  On leave
+                                </span>
+                              )}
                               <span
                                 className={`rounded-full px-2 py-0.5 text-xs ${
                                   clockedIn
                                     ? stillIn
                                       ? STATUS_BADGE[a!.status] ?? STATUS_BADGE.normal
                                       : "bg-kaunta-mist text-kaunta-slate"
-                                    : "bg-kaunta-stone text-kaunta-slate/60 border border-kaunta-mist"
+                                    : leave
+                                      ? STATUS_BADGE.on_leave
+                                      : "bg-kaunta-stone text-kaunta-slate/60 border border-kaunta-mist"
                                 }`}
                               >
-                                {clockedIn ? (stillIn ? "On site" : "Left") : "Absent"}
+                                {clockedIn ? (stillIn ? "On site" : "Left") : leave ? "On leave" : "Absent"}
                               </span>
                               <span className="text-kaunta-slate/40 text-xs transition-transform group-open:rotate-90">▸</span>
                             </div>
                           </summary>
                           <div className="px-6 pb-4 -mt-1 text-sm text-kaunta-slate/70 space-y-1">
+                            {leave && (
+                              <p className="text-kaunta-ultra">
+                                On approved leave today
+                                {leave.half_day ? ` — ${leave.half_day} only` : ""} (
+                                {leave.paid ? "paid" : "unpaid"}).
+                                {clockedIn
+                                  ? " They scanned anyway — the day is not counted late and carries no penalty."
+                                  : " Not counted absent, and no penalty applies."}{" "}
+                                <Link href="/dashboard/leave" className="underline">
+                                  Leave
+                                </Link>
+                              </p>
+                            )}
                             <p>Clock in: <span className="text-kaunta-ink">{a?.inAt ? fmtTime(a.inAt) : "—"}</span></p>
                             <p>Clock out: <span className="text-kaunta-ink">{a?.outAt ? fmtTime(a.outAt) : (clockedIn ? "still on site" : "—")}</span></p>
                             {a && (a.inSelfieId || a.outSelfieId) && (

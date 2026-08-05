@@ -15,6 +15,8 @@ import { requireOwner, requireEmployee } from "../../lib/auth";
 import { finalizeViolation } from "../../lib/violations/finalize";
 import { sendText } from "../../lib/messaging";
 import { env } from "../../lib/env";
+import { runAssist } from "../../lib/appeals/assist";
+import { signAppealDocument } from "../../lib/storage/appealDocs";
 
 const router = Router();
 
@@ -65,6 +67,16 @@ router.post("/", requireEmployee, async (req, res) => {
 
   await db.from("violations").update({ status: "appealed" }).eq("id", v.id);
 
+  // Read the reason straight away and check it against the record, so the
+  // owner opens a brief rather than a sentence. It gathers and summarises; it
+  // never decides, and it cannot touch this appeal's outcome. A failure here
+  // leaves the appeal exactly as it was.
+  try {
+    await runAssist(db, { id: appeal.id, violation_id: v.id, message: parsed.data.message }, req.employee!.orgId);
+  } catch (err) {
+    console.error("[appeals] assist failed:", (err as Error).message);
+  }
+
   // Notify the owner: drop a message in their inbox, and SMS them if a number
   // is on file. Best-effort — never fail the appeal because a notice didn't send.
   try {
@@ -114,7 +126,9 @@ router.get("/", requireOwner, async (req, res) => {
     .select(
       "id, violation_id, message, decision, submitted_at, decided_at, " +
         "violations!inner(id, reason, amount, status, created_at, employee_id, " +
-        "employees!inner(name, phone, org_id))"
+        "employees!inner(name, phone, org_id)), " +
+        "appeal_assists(claim, confidence, status, findings, summary, missing), " +
+        "appeal_info_requests(id, ask_code, question, asked_at, answered_at, answer, declined, document_path)"
     )
     .eq("violations.employees.org_id", orgId)
     .order("submitted_at", { ascending: false });
@@ -127,8 +141,11 @@ router.get("/", requireOwner, async (req, res) => {
   const appeals = (data ?? []).map((a: any) => {
     const v = Array.isArray(a.violations) ? a.violations[0] : a.violations;
     const emp = v ? (Array.isArray(v.employees) ? v.employees[0] : v.employees) : null;
+    const assist = Array.isArray(a.appeal_assists) ? a.appeal_assists[0] : a.appeal_assists;
     return {
       id: a.id,
+      assist: assist ?? null,
+      info_requests: a.appeal_info_requests ?? [],
       violation_id: a.violation_id,
       message: a.message,
       decision: a.decision,
@@ -149,6 +166,36 @@ router.get("/", requireOwner, async (req, res) => {
   });
 
   res.json({ appeals });
+});
+
+// ── Owner: view a document the employee attached ──────────────────────────────
+// Signed for two minutes. Medical documents are special-category data; the
+// owner is looking at it while deciding and nobody needs a link that outlives
+// that. See lib/storage/appealDocs.
+router.get("/info/:id/document", requireOwner, async (req, res) => {
+  const id = z.string().uuid().safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ error: "invalid id" });
+
+  const db = getServiceClient();
+  const { data } = await db
+    .from("appeal_info_requests")
+    .select("document_path, appeal_assists!inner(org_id)")
+    .eq("id", id.data)
+    .maybeSingle();
+
+  const assist = data
+    ? Array.isArray((data as any).appeal_assists)
+      ? (data as any).appeal_assists[0]
+      : (data as any).appeal_assists
+    : null;
+  if (!data || !assist || assist.org_id !== req.owner!.orgId) {
+    return res.status(404).json({ error: "not found" });
+  }
+  if (!data.document_path) return res.status(404).json({ error: "no document" });
+
+  const url = await signAppealDocument(data.document_path as string);
+  if (!url) return res.status(502).json({ error: "could not sign the document" });
+  res.json({ url });
 });
 
 // ── Owner: decide an appeal ───────────────────────────────────────────────────

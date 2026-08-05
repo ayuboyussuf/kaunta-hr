@@ -16,6 +16,7 @@ import { env } from "../../lib/env";
 import { getServiceClient } from "../../lib/supabase";
 import { pushToEmployee } from "../../lib/push";
 import { enqueue } from "../../lib/queue";
+import { approvedLeaveOn } from "../../lib/leave/cover";
 
 const router = Router();
 const TZ = "Africa/Nairobi";
@@ -150,6 +151,11 @@ router.post("/", async (req, res) => {
         .limit(1)
         .maybeSingle();
       if (!last || last.direction !== "in") continue;
+
+      // Never chase someone whose day the owner already signed off. A missed
+      // check flags the clock-in, and flagging an approved leave day is the
+      // same mistake as fining one.
+      if (await approvedLeaveOn(db, emp.id, nairobiYmd(now))) continue;
 
       // Shift window (handle overnight shifts by pushing end to the next day).
       const shiftStart = nairobiTimeToday(now, shift.start_time);
