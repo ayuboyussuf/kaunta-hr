@@ -113,7 +113,7 @@ export function LI({ children }: { children: React.ReactNode }) {
     <li className="flex gap-3">
       <span
         aria-hidden
-        className="mt-[0.6rem] h-px w-3 shrink-0 bg-kaunta-ultra-br/60"
+        className="mt-[0.6rem] h-px w-3 shrink-0 bg-aproksi-ultra-br/60"
       />
       <span className="min-w-0">{children}</span>
     </li>
@@ -160,7 +160,7 @@ export function StepItem({
         aria-hidden
         className="absolute bottom-0 left-[0.9375rem] top-8 w-px bg-white/10"
       />
-      <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-kaunta-void font-mono text-[0.6875rem] text-white/70">
+      <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-aproksi-void font-mono text-[0.6875rem] text-white/70">
         {n}
       </span>
       <div className="min-w-0 pt-1">
@@ -224,14 +224,14 @@ export function Callout({
       className={cn(
         "mt-6 max-w-2xl rounded-lg border p-5",
         tone === "note"
-          ? "border-kaunta-ultra-br/30 bg-kaunta-ultra/[0.07]"
-          : "border-kaunta-amber/40 bg-kaunta-amber/[0.08]"
+          ? "border-aproksi-ultra-br/30 bg-aproksi-ultra/[0.07]"
+          : "border-aproksi-amber/40 bg-aproksi-amber/[0.08]"
       )}
     >
       <p
         className={cn(
           "font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em]",
-          tone === "note" ? "text-kaunta-ultra-br" : "text-kaunta-amber"
+          tone === "note" ? "text-aproksi-ultra-br" : "text-aproksi-amber"
         )}
       >
         {title}

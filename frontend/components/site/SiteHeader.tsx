@@ -55,14 +55,14 @@ export function SiteHeader() {
         className={cn(
           "sticky top-0 z-50 transition-colors duration-300",
           stuck
-            ? "border-b border-white/10 bg-kaunta-void/85 backdrop-blur-md"
+            ? "border-b border-white/10 bg-aproksi-void/85 backdrop-blur-md"
             : "border-b border-transparent bg-transparent"
         )}
       >
         <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-5 sm:h-18 sm:px-8">
           <Link
             href="/"
-            aria-label="Kaunta HR — home"
+            aria-label="Aproksi HR — home"
             className="flex min-h-[44px] shrink-0 items-center"
           >
             <BrandLogo size="md" tone="dark" />
@@ -99,7 +99,7 @@ export function SiteHeader() {
             </Link>
             <Link
               href="/signup"
-              className="inline-flex h-9 items-center rounded-full bg-white px-4 text-[0.8125rem] font-medium text-kaunta-ink transition-colors duration-200 hover:bg-white/88"
+              className="inline-flex h-9 items-center rounded-full bg-white px-4 text-[0.8125rem] font-medium text-aproksi-ink transition-colors duration-200 hover:bg-white/88"
             >
               Start free
             </Link>
@@ -137,7 +137,7 @@ export function SiteHeader() {
       {/* mobile sheet */}
       <div
         className={cn(
-          "fixed inset-x-0 bottom-0 top-16 z-40 bg-kaunta-void transition-opacity duration-250 lg:hidden",
+          "fixed inset-x-0 bottom-0 top-16 z-40 bg-aproksi-void transition-opacity duration-250 lg:hidden",
           open ? "opacity-100" : "pointer-events-none opacity-0"
         )}
       >
@@ -165,7 +165,7 @@ export function SiteHeader() {
           <div className="mt-auto grid gap-3 pt-8">
             <Link
               href="/signup"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-white text-sm font-medium text-kaunta-ink"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-white text-sm font-medium text-aproksi-ink"
             >
               Start free
             </Link>

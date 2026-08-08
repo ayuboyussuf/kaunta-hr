@@ -192,7 +192,7 @@ router.post("/:id/approve", requireOwner, async (req, res) => {
     try {
       await sendText(
         emp.phone,
-        `Kaunta HR: your leave for ${span} is approved (${data.paid ? "paid" : "unpaid"}). You will not be marked absent on those days.`
+        `Aproksi HR: your leave for ${span} is approved (${data.paid ? "paid" : "unpaid"}). You will not be marked absent on those days.`
       );
     } catch (err) {
       console.error("[leave] approval notice failed:", (err as Error).message);
@@ -227,7 +227,7 @@ router.post("/:id/decline", requireOwner, async (req, res) => {
     try {
       await sendText(
         emp.phone,
-        `Kaunta HR: your leave request for ${data.start_date} was not approved.${note ? ` Reason: ${note}` : ""} Normal attendance rules apply on those days.`
+        `Aproksi HR: your leave request for ${data.start_date} was not approved.${note ? ` Reason: ${note}` : ""} Normal attendance rules apply on those days.`
       );
     } catch (err) {
       console.error("[leave] decline notice failed:", (err as Error).message);

@@ -55,7 +55,7 @@ const CAPABILITIES = [
 const FAQ_ITEMS = [
   {
     q: "What happens when a site has weak signal?",
-    a: "Kaunta HR is built for low-connectivity sites. A clock-in captured on a weak connection is held on the device and syncs when signal returns, with the original scan time preserved. The dashboard marks anything that arrived late so you can see it was a sync delay rather than a late arrival.",
+    a: "Aproksi HR is built for low-connectivity sites. A clock-in captured on a weak connection is held on the device and syncs when signal returns, with the original scan time preserved. The dashboard marks anything that arrived late so you can see it was a sync delay rather than a late arrival.",
   },
   {
     q: "Can a staff member clock in for someone else?",
@@ -106,7 +106,7 @@ export default function HomePage() {
       {/* Below lg the copy and the engraving are stacked — nothing sits on
           top of the line work, so every word stays at full contrast. From lg
           the engraving goes full-bleed behind the copy column. */}
-      <section className="relative isolate -mt-16 flex flex-col bg-kaunta-void pt-16 sm:-mt-18 sm:pt-18 lg:min-h-[94svh]">
+      <section className="relative isolate -mt-16 flex flex-col bg-aproksi-void pt-16 sm:-mt-18 sm:pt-18 lg:min-h-[94svh]">
         <Container
           width="wide"
           className="relative z-20 order-1 pb-10 pt-10 sm:pt-16 lg:pb-28 lg:pt-20"
@@ -120,7 +120,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-6 max-w-xl text-[1.0625rem] leading-[1.6] text-white/70 sm:text-[1.1rem] lg:text-[1.1rem] lg:text-white/65">
-              Kaunta HR is built for Kenyan fuel stations, restaurants and branch
+              Aproksi HR is built for Kenyan fuel stations, restaurants and branch
               networks. Staff clock in at the gate by QR, with a selfie and a GPS
               fix. The lateness rules you set apply on their own, staff appeal
               from their phones, and every outcome lands as a locked PDF and a
@@ -170,7 +170,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Spec strip ───────────────────────────────────────────── */}
-      <section className="border-y border-white/10 bg-kaunta-void">
+      <section className="border-y border-white/10 bg-aproksi-void">
         <Container width="wide">
           <dl className="grid grid-cols-2 gap-px bg-white/10 lg:grid-cols-4">
             {[
@@ -179,7 +179,7 @@ export default function HomePage() {
               ["Payslips", "Signed PDF links"],
               ["SMS sender ID", "KAUNTAHR"],
             ].map(([k, v]) => (
-              <div key={k} className="bg-kaunta-void px-5 py-7 sm:px-7">
+              <div key={k} className="bg-aproksi-void px-5 py-7 sm:px-7">
                 <dt className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
                   {k}
                 </dt>
@@ -193,7 +193,7 @@ export default function HomePage() {
       </section>
 
       {/* ── The premise ──────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-28">
           <SectionHead
             eyebrow="The problem"
@@ -226,7 +226,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Exception dashboard ──────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.72fr)] lg:items-center lg:gap-20">
             <div>
@@ -242,8 +242,8 @@ export default function HomePage() {
                   ["Absent", "A rostered shift with no scan against it."],
                   ["Flagged", "A scan that needs a person to look at it."],
                 ].map(([k, v]) => (
-                  <div key={k} className="h-full bg-kaunta-void p-6">
-                    <p className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/80">
+                  <div key={k} className="h-full bg-aproksi-void p-6">
+                    <p className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-aproksi-ultra-br/80">
                       {k}
                     </p>
                     <p className="mt-3 text-[0.875rem] leading-relaxed text-white/55">
@@ -263,7 +263,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Rules ────────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
             <Shot
@@ -299,7 +299,7 @@ export default function HomePage() {
       </section>
 
       {/* ── The record ───────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <SectionHead
             eyebrow="The record"
@@ -315,7 +315,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Appeals + locked documents ───────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-28">
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-20">
             <div>
@@ -339,7 +339,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Capability grid ──────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <SectionHead
             eyebrow="Everything in the box"
@@ -372,7 +372,7 @@ export default function HomePage() {
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="prose" className="py-14 sm:py-20 lg:py-28">
           <SectionHead eyebrow="Questions" tone="dark" title="Before you set it up" />
           <div className="mt-8 sm:mt-12">

@@ -151,7 +151,7 @@ export async function runPayrollSweep() {
           // Deduped per (org, period): re-running the cron won't re-send.
           await enqueue(
             "sms",
-            { to: org.phone, body: `Kaunta HR: draft payroll for ${trig.label} is ready (${totalStr}).${flaggedNote} Review and approve at ${env.appUrl}/dashboard/payroll` },
+            { to: org.phone, body: `Aproksi HR: draft payroll for ${trig.label} is ready (${totalStr}).${flaggedNote} Review and approve at ${env.appUrl}/dashboard/payroll` },
             `sms:payroll:${org.id}:${trig.period}`
           );
         } catch (err) {

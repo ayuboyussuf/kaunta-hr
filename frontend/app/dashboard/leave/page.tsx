@@ -103,13 +103,13 @@ export default function OwnerLeavePage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl text-kaunta-ink">
+          <h1 className="font-display text-2xl text-aproksi-ink">
             Leave{" "}
-            <Link href="/dashboard" className="text-sm text-kaunta-ultra hover:underline">
+            <Link href="/dashboard" className="text-sm text-aproksi-ultra hover:underline">
               ← Dashboard
             </Link>
           </h1>
-          <p className="mt-1 text-sm text-kaunta-slate/70">
+          <p className="mt-1 text-sm text-aproksi-slate/70">
             A day you approve is never counted as an absence, and never
             attracts a penalty.
           </p>
@@ -125,8 +125,8 @@ export default function OwnerLeavePage() {
             className={[
               "inline-flex min-h-[40px] items-center rounded-full px-4 text-sm transition-colors",
               tab === t.key
-                ? "bg-kaunta-ultra text-white"
-                : "border border-kaunta-mist bg-white text-kaunta-slate hover:border-kaunta-ultra/40",
+                ? "bg-aproksi-ultra text-white"
+                : "border border-aproksi-mist bg-white text-aproksi-slate hover:border-aproksi-ultra/40",
             ].join(" ")}
           >
             {t.label}
@@ -134,13 +134,13 @@ export default function OwnerLeavePage() {
         ))}
       </div>
 
-      {error && <p className="text-sm text-kaunta-red">{error}</p>}
+      {error && <p className="text-sm text-aproksi-red">{error}</p>}
 
       {loading ? (
-        <p className="text-sm text-kaunta-slate/60">Loading…</p>
+        <p className="text-sm text-aproksi-slate/60">Loading…</p>
       ) : rows.length === 0 ? (
         <Card className="p-6 text-center">
-          <p className="text-sm text-kaunta-slate/70">
+          <p className="text-sm text-aproksi-slate/70">
             {tab === "pending"
               ? "Nothing waiting on you."
               : "Nothing here yet."}
@@ -152,14 +152,14 @@ export default function OwnerLeavePage() {
             <Card key={r.id} className="p-4 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-medium text-kaunta-ink">
+                  <p className="font-medium text-aproksi-ink">
                     {r.employees?.name ?? "Employee"}
                   </p>
-                  <p className="mt-1 text-sm text-kaunta-slate">
+                  <p className="mt-1 text-sm text-aproksi-slate">
                     {r.start_date === r.end_date
                       ? fmtDay(r.start_date)
                       : `${fmtDay(r.start_date)} – ${fmtDay(r.end_date)}`}{" "}
-                    <span className="text-kaunta-slate/60">
+                    <span className="text-aproksi-slate/60">
                       ·{" "}
                       {r.half_day
                         ? `${r.half_day} only — half a day`
@@ -169,11 +169,11 @@ export default function OwnerLeavePage() {
                       {r.status === "pending" ? ` · ${noticeLeft(r.start_date)}` : ""}
                     </span>
                   </p>
-                  <p className="mt-2 text-sm text-kaunta-slate/70">{r.reason}</p>
+                  <p className="mt-2 text-sm text-aproksi-slate/70">{r.reason}</p>
                 </div>
 
                 {r.status !== "pending" && (
-                  <span className="shrink-0 rounded-full bg-kaunta-stone px-2.5 py-1 text-[0.6875rem] font-medium capitalize text-kaunta-slate">
+                  <span className="shrink-0 rounded-full bg-aproksi-stone px-2.5 py-1 text-[0.6875rem] font-medium capitalize text-aproksi-slate">
                     {r.status}
                     {r.status === "approved" ? (r.paid ? " · paid" : " · unpaid") : ""}
                   </span>
@@ -181,7 +181,7 @@ export default function OwnerLeavePage() {
               </div>
 
               {r.status === "pending" && (
-                <div className="mt-4 flex flex-col gap-2 border-t border-kaunta-mist pt-4 sm:flex-row">
+                <div className="mt-4 flex flex-col gap-2 border-t border-aproksi-mist pt-4 sm:flex-row">
                   <Button
                     onClick={() => decide(r.id, "approve", true)}
                     disabled={busy === r.id}

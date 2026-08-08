@@ -1,5 +1,5 @@
 /**
- * Kaunta-HR PDF templates. Each returns a Buffer; callers upload + deliver.
+ * Aproksi-HR PDF templates. Each returns a Buffer; callers upload + deliver.
  * Shared by the wizard (setup summary), appeals (outcome), and payroll (payslip).
  */
 import { renderToBuffer, drawHeader, drawFooter, BRAND, fmtKes } from "./render";

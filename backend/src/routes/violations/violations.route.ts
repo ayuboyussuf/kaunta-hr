@@ -268,7 +268,7 @@ router.post("/:id/resend-notice", requireOwner, async (req, res) => {
   try {
     await sendText(
       emp.phone as string,
-      `Kaunta HR: ${v.reason} — ${amount}. If you disagree, open your record to appeal.`
+      `Aproksi HR: ${v.reason} — ${amount}. If you disagree, open your record to appeal.`
     );
     await db
       .from("violations")

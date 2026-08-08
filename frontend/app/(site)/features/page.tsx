@@ -48,7 +48,7 @@ const CAPABILITIES: Capability[] = [
     shot: "rules",
     eyebrow: "Penalty rules engine",
     title: "Rules you configure, applied the same way every day",
-    lede: "You decide what lateness costs and when it starts costing. Kaunta HR runs those rules against every scan the moment it lands, so a penalty is never a judgement call made three weeks later by whoever is doing payroll.",
+    lede: "You decide what lateness costs and when it starts costing. Aproksi HR runs those rules against every scan the moment it lands, so a penalty is never a judgement call made three weeks later by whoever is doing payroll.",
     spec: [
       { term: "Grace", value: "Minutes after shift start that carry no penalty at all." },
       { term: "Bands", value: "Stack as many lateness bands as you need, each with its own deduction." },
@@ -135,7 +135,7 @@ export default function FeaturesPage() {
       <PageHero
         eyebrow="Product"
         title="Seven capabilities, each doing one job properly."
-        lede="Kaunta HR covers the stretch between a staff member arriving at a gate and the payslip that reflects it. Below is every part of that, in the order it happens."
+        lede="Aproksi HR covers the stretch between a staff member arriving at a gate and the payslip that reflects it. Below is every part of that, in the order it happens."
       >
         <nav className="mt-10 flex flex-wrap gap-2">
           {CAPABILITIES.map((c) => (
@@ -154,7 +154,7 @@ export default function FeaturesPage() {
         <section
           key={c.id}
           id={c.id}
-          className="scroll-mt-24 border-b border-white/10 bg-kaunta-void"
+          className="scroll-mt-24 border-b border-white/10 bg-aproksi-void"
         >
           <Container width="wide" className="py-14 sm:py-20 lg:py-28">
             <div
@@ -191,14 +191,14 @@ export default function FeaturesPage() {
         </section>
       ))}
 
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead
               align="center"
               tone="dark"
               eyebrow="What it is not"
-              title="Things Kaunta HR deliberately leaves alone."
+              title="Things Aproksi HR deliberately leaves alone."
               lede="It is an attendance and payroll-record system for people who run sites. It is not a full HRIS, and it does not pretend to be."
             />
           </>
@@ -208,7 +208,7 @@ export default function FeaturesPage() {
                 tone="dark"
                 items={[
                   { term: "No recruitment", value: "No applicant tracking, no interview pipelines." },
-                  { term: "No payments", value: "Kaunta HR produces the payslip. Moving the money stays with your bank or mobile money." },
+                  { term: "No payments", value: "Aproksi HR produces the payslip. Moving the money stays with your bank or mobile money." },
                   { term: "No surveillance", value: "Location is checked at the moment of a scan. Staff are not tracked between scans." },
                   { term: "No per-scan billing", value: "Clock in as many times a day as the roster requires." },
                 ]}

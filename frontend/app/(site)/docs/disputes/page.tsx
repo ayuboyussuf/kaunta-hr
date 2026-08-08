@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "Running disputes",
   description:
-    "Handle a Kaunta HR appeal from the moment a staff member raises it to the locked, tamper-evident PDF that closes the case.",
+    "Handle a Aproksi HR appeal from the moment a staff member raises it to the locked, tamper-evident PDF that closes the case.",
 };
 
 export default function DisputesDocPage() {

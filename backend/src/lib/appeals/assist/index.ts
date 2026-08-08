@@ -3,7 +3,7 @@
  *
  * The shape of the whole thing, in order:
  *
- *   1. Read the appeal. Route it — keywords, in Kaunta, never a fact.
+ *   1. Read the appeal. Route it — keywords, in Aproksi, never a fact.
  *   2. Gather what the record says, with the tools in facts.ts.
  *   3. Assemble a brief by template.
  *   4. If one specific thing is missing, ask for that one thing by SMS with a
@@ -111,7 +111,7 @@ async function assess(
       break;
 
     // Sick notes and road closures are the two checks that need something from
-    // outside Kaunta — a document to read, a road to ask about. Until those are
+    // outside Aproksi — a document to read, a road to ask about. Until those are
     // built, an appeal routed here gets the facts of the penalty and an honest
     // statement that the claim itself has not been checked, rather than a brief
     // that looks complete and is not.
@@ -235,7 +235,7 @@ async function baseline(
     confidence,
     findings,
     summary: summarise(claim, facts, findings),
-    missing: ["A check of the claim itself, which Kaunta cannot yet perform."],
+    missing: ["A check of the claim itself, which Aproksi cannot yet perform."],
     ask: null,
   };
 }
@@ -321,7 +321,7 @@ async function askEmployee(
 
     await sendText(
       emp.phone as string,
-      `Kaunta HR: about your appeal — ${brief.ask.question} Answer at ${env.appUrl}/me/violations. If you can't, choose "not available" there and it still goes to your employer.`
+      `Aproksi HR: about your appeal — ${brief.ask.question} Answer at ${env.appUrl}/me/violations. If you can't, choose "not available" there and it still goes to your employer.`
     );
   } catch (err) {
     console.error("[assist] could not ask the employee:", (err as Error).message);

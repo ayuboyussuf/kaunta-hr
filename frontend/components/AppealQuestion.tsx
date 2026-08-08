@@ -110,12 +110,12 @@ export function AppealQuestion() {
   }
 
   return (
-    <Card className="border-kaunta-ultra/30 bg-kaunta-ultra-lt/40 p-5">
-      <p className="text-xs font-medium uppercase tracking-wider text-kaunta-ultra">
+    <Card className="border-aproksi-ultra/30 bg-aproksi-ultra-lt/40 p-5">
+      <p className="text-xs font-medium uppercase tracking-wider text-aproksi-ultra">
         About your appeal
       </p>
-      <p className="mt-2 text-sm font-medium text-kaunta-ink">{current.question}</p>
-      <p className="mt-1 text-xs text-kaunta-slate/70">
+      <p className="mt-2 text-sm font-medium text-aproksi-ink">{current.question}</p>
+      <p className="mt-1 text-xs text-aproksi-slate/70">
         Whatever you send goes to your employer, who decides. Answering this
         doesn&apos;t settle anything on its own.
       </p>
@@ -128,7 +128,7 @@ export function AppealQuestion() {
         placeholder={
           wantsDocument ? "Anything you want to add (optional)" : "Which road, and roughly when"
         }
-        className="mt-3 w-full rounded-lg border border-kaunta-mist bg-white p-3 text-sm text-kaunta-ink placeholder:text-kaunta-slate/40 focus:border-kaunta-ultra focus:outline-none"
+        className="mt-3 w-full rounded-lg border border-aproksi-mist bg-white p-3 text-sm text-aproksi-ink placeholder:text-aproksi-slate/40 focus:border-aproksi-ultra focus:outline-none"
       />
 
       {wantsDocument && (
@@ -144,14 +144,14 @@ export function AppealQuestion() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="inline-flex min-h-[44px] items-center rounded-lg border border-kaunta-mist bg-white px-4 text-sm text-kaunta-slate hover:border-kaunta-ultra/40"
+            className="inline-flex min-h-[44px] items-center rounded-lg border border-aproksi-mist bg-white px-4 text-sm text-aproksi-slate hover:border-aproksi-ultra/40"
           >
             {document ? "Photo attached — tap to replace" : "Take a photo of the note"}
           </button>
         </div>
       )}
 
-      {error && <p className="mt-3 text-sm text-kaunta-red">{error}</p>}
+      {error && <p className="mt-3 text-sm text-aproksi-red">{error}</p>}
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Button

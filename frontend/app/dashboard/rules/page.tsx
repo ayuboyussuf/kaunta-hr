@@ -28,10 +28,10 @@ interface Ruleset {
   penalty_rules: Rule[];
 }
 
-const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
+const cardCls = "rounded-[12px] border border-aproksi-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
-const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
+  "w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra";
+const labelCls = "block text-xs font-medium text-aproksi-slate mb-1";
 
 interface RuleDraft {
   id?: string;
@@ -147,12 +147,12 @@ export default function RulesPage() {
   });
 
   return (
-    <main className="min-h-screen bg-kaunta-stone">
-      <header className="border-b border-kaunta-mist bg-white">
+    <main className="min-h-screen bg-aproksi-stone">
+      <header className="border-b border-aproksi-mist bg-white">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <span className="font-display text-2xl text-kaunta-ink">Rules</span>
-            <Link href="/dashboard" className="text-sm text-kaunta-ultra hover:underline ml-3">
+            <span className="font-display text-2xl text-aproksi-ink">Rules</span>
+            <Link href="/dashboard" className="text-sm text-aproksi-ultra hover:underline ml-3">
               ← Dashboard
             </Link>
           </div>
@@ -161,7 +161,7 @@ export default function RulesPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         {error && (
-          <div className="rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-4 py-3 text-sm text-kaunta-red">
+          <div className="rounded-lg border border-aproksi-red/30 bg-aproksi-red/5 px-4 py-3 text-sm text-aproksi-red">
             {error}
           </div>
         )}
@@ -184,21 +184,21 @@ export default function RulesPage() {
 
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
+            <Loader2 className="h-6 w-6 animate-spin text-aproksi-ultra" />
           </div>
         ) : rulesets.length === 0 ? (
           <div className={`${cardCls} p-10 text-center`}>
-            <Scale className="h-8 w-8 text-kaunta-slate/30 mx-auto mb-3" />
-            <p className="text-kaunta-slate/70">No rulesets yet.</p>
-            <p className="text-sm text-kaunta-slate/50 mt-1">Add one above, then attach penalty rules to it.</p>
+            <Scale className="h-8 w-8 text-aproksi-slate/30 mx-auto mb-3" />
+            <p className="text-aproksi-slate/70">No rulesets yet.</p>
+            <p className="text-sm text-aproksi-slate/50 mt-1">Add one above, then attach penalty rules to it.</p>
           </div>
         ) : (
           rulesets.map((rs) => (
             <div key={rs.id} className={`${cardCls} p-5`}>
               <div className="flex items-start justify-between">
-                <h3 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
-                  <Scale className="h-4 w-4 text-kaunta-ultra" /> {rs.name}
-                  {rs.is_shared && <span className="text-xs text-kaunta-sage">(shared)</span>}
+                <h3 className="font-display text-xl text-aproksi-ink inline-flex items-center gap-2">
+                  <Scale className="h-4 w-4 text-aproksi-ultra" /> {rs.name}
+                  {rs.is_shared && <span className="text-xs text-aproksi-sage">(shared)</span>}
                 </h3>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setRuleDraft(blankRule(rs.id))}>
@@ -206,7 +206,7 @@ export default function RulesPage() {
                   </Button>
                   <button
                     onClick={() => removeRuleset(rs.id)}
-                    className="text-kaunta-red/60 hover:text-kaunta-red p-1"
+                    className="text-aproksi-red/60 hover:text-aproksi-red p-1"
                     aria-label="Delete ruleset"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -226,17 +226,17 @@ export default function RulesPage() {
                 </div>
               )}
 
-              <div className="mt-4 divide-y divide-kaunta-mist">
+              <div className="mt-4 divide-y divide-aproksi-mist">
                 {rs.penalty_rules.length === 0 && (
-                  <p className="text-sm text-kaunta-slate/50 py-2">
+                  <p className="text-sm text-aproksi-slate/50 py-2">
                     No rules yet — pick a preset above, or add one by hand.
                   </p>
                 )}
                 {rs.penalty_rules.map((r) => (
                   <div key={r.id} className="flex items-center justify-between py-2.5">
                     <div>
-                      <p className="text-sm text-kaunta-ink">{r.reason}</p>
-                      <p className="text-xs text-kaunta-slate/60">
+                      <p className="text-sm text-aproksi-ink">{r.reason}</p>
+                      <p className="text-xs text-aproksi-slate/60">
                         {r.code} · KES {Number(r.amount).toLocaleString()} · appeal window {r.appeal_window_hours}h
                       </p>
                     </div>
@@ -252,14 +252,14 @@ export default function RulesPage() {
                             appeal_window_hours: r.appeal_window_hours,
                           })
                         }
-                        className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
+                        className="text-aproksi-slate/60 hover:text-aproksi-ultra p-1"
                         aria-label="Edit rule"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => removeRule(r.id)}
-                        className="text-kaunta-red/60 hover:text-kaunta-red p-1"
+                        className="text-aproksi-red/60 hover:text-aproksi-red p-1"
                         aria-label="Delete rule"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -277,7 +277,7 @@ export default function RulesPage() {
       {ruleDraft && (
         <div className="fixed inset-0 z-40 grid place-items-center bg-black/30 p-4" onClick={() => setRuleDraft(null)}>
           <div className={`${cardCls} p-6 w-full max-w-md space-y-4`} onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-display text-xl text-kaunta-ink">{ruleDraft.id ? "Edit rule" : "New rule"}</h2>
+            <h2 className="font-display text-xl text-aproksi-ink">{ruleDraft.id ? "Edit rule" : "New rule"}</h2>
             <div>
               <label className={labelCls}>Reason (shown to the employee)</label>
               <input

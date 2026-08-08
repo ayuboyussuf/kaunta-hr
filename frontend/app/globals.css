@@ -1,33 +1,33 @@
 @import "tailwindcss";
 
-/* ── Kaunta-HR Design System ────────────────────────────────────────
-   Sibling to Kaunta main (copper #C4622D / navy #0F1923): same
+/* ── Aproksi-HR Design System ────────────────────────────────────────
+   Sibling to Aproksi main (copper #C4622D / navy #0F1923): same
    typographic system, spacing and restraint — ultramarine identity.
    ------------------------------------------------------------------ */
 @theme {
   /* Grounds — cool, near-black */
-  --color-kaunta-void:       #06090F;
-  --color-kaunta-ink:        #0B1120;
-  --color-kaunta-slate:      #1B2540;
+  --color-aproksi-void:       #06090F;
+  --color-aproksi-ink:        #0B1120;
+  --color-aproksi-slate:      #1B2540;
 
   /* Primary — ultramarine */
-  --color-kaunta-ultra:      #1E3FD8;
-  --color-kaunta-ultra-dp:   #1631A8;
-  --color-kaunta-ultra-br:   #4A6BF5;
-  --color-kaunta-ultra-lt:   #E6EAFD;
+  --color-aproksi-ultra:      #1E3FD8;
+  --color-aproksi-ultra-dp:   #1631A8;
+  --color-aproksi-ultra-br:   #4A6BF5;
+  --color-aproksi-ultra-lt:   #E6EAFD;
 
   /* Support */
-  --color-kaunta-sage:       #176B58;
-  --color-kaunta-sage-lt:    #DCEFE9;
-  --color-kaunta-amber:      #B5820C;
-  --color-kaunta-amber-lt:   #FBF0D6;
-  --color-kaunta-red:        #C0362F;
-  --color-kaunta-red-lt:     #FBE5E3;
+  --color-aproksi-sage:       #176B58;
+  --color-aproksi-sage-lt:    #DCEFE9;
+  --color-aproksi-amber:      #B5820C;
+  --color-aproksi-amber-lt:   #FBF0D6;
+  --color-aproksi-red:        #C0362F;
+  --color-aproksi-red-lt:     #FBE5E3;
 
   /* Neutrals — cooled to sit under ultramarine */
-  --color-kaunta-stone:      #F5F6FA;
-  --color-kaunta-mist:       #E3E7F2;
-  --color-kaunta-white:      #FFFFFF;
+  --color-aproksi-stone:      #F5F6FA;
+  --color-aproksi-mist:       #E3E7F2;
+  --color-aproksi-white:      #FFFFFF;
 
   /* Typography */
   --font-display: var(--font-instrument-serif), "Georgia", serif;
@@ -153,14 +153,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-kaunta-stone);
+  background: var(--color-aproksi-stone);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-kaunta-mist);
+  background: var(--color-aproksi-mist);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-kaunta-ultra);
+  background: var(--color-aproksi-ultra);
 }
 
 /* ── Focus ring ─────────────────────────────────────────────────── */

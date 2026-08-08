@@ -28,8 +28,8 @@ export const ANNOUNCEMENT_TYPES: Record<string, string> = {
 
 /** Attendance status → display label + tailwind colour token. */
 export const ATTENDANCE_STATUS: Record<string, { label: string; color: string }> = {
-  normal: { label: "On time", color: "kaunta-sage" },
-  late: { label: "Late", color: "kaunta-amber" },
-  flagged: { label: "Flagged", color: "kaunta-red" },
-  adjusted: { label: "Adjusted", color: "kaunta-slate" },
+  normal: { label: "On time", color: "aproksi-sage" },
+  late: { label: "Late", color: "aproksi-amber" },
+  flagged: { label: "Flagged", color: "aproksi-red" },
+  adjusted: { label: "Adjusted", color: "aproksi-slate" },
 };

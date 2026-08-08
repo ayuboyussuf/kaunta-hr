@@ -13,13 +13,13 @@ export function FAQ({
 }) {
   const dark = tone === "dark";
   return (
-    <div className={cn("border-t", dark ? "border-white/10" : "border-kaunta-mist")}>
+    <div className={cn("border-t", dark ? "border-white/10" : "border-aproksi-mist")}>
       {items.map((item) => (
         <details
           key={item.q}
           className={cn(
             "group border-b",
-            dark ? "border-white/10" : "border-kaunta-mist"
+            dark ? "border-white/10" : "border-aproksi-mist"
           )}
         >
             <summary
@@ -27,7 +27,7 @@ export function FAQ({
                 "flex cursor-pointer list-none items-start justify-between gap-6 py-5 text-left text-[0.975rem] leading-snug transition-colors duration-200 sm:text-[1.05rem]",
                 dark
                   ? "text-white/85 hover:text-white"
-                  : "text-kaunta-ink hover:text-kaunta-ultra"
+                  : "text-aproksi-ink hover:text-aproksi-ultra"
               )}
             >
               {item.q}
@@ -35,7 +35,7 @@ export function FAQ({
                 aria-hidden
                 className={cn(
                   "mt-0.5 shrink-0 transition-transform duration-300 group-open:rotate-45",
-                  dark ? "text-white/40" : "text-kaunta-slate/40"
+                  dark ? "text-white/40" : "text-aproksi-slate/40"
                 )}
               >
                 <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4">
@@ -51,7 +51,7 @@ export function FAQ({
             <div
               className={cn(
                 "max-w-2xl pb-6 pr-8 text-[0.9rem] leading-relaxed",
-                dark ? "text-white/55" : "text-kaunta-slate/70"
+                dark ? "text-white/55" : "text-aproksi-slate/70"
               )}
             >
               {item.a}
@@ -72,7 +72,7 @@ export function CTASection({
   body?: string;
 }) {
   return (
-    <section className="ultra-glow border-t border-white/10 bg-kaunta-void">
+    <section className="ultra-glow border-t border-white/10 bg-aproksi-void">
       <Container className="py-14 sm:py-20 lg:py-28">
         <>
           <div className="mx-auto max-w-2xl text-center">
@@ -111,7 +111,7 @@ export function PageHero({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="ultra-glow-top relative overflow-hidden border-b border-white/10 bg-kaunta-void">
+    <section className="ultra-glow-top relative overflow-hidden border-b border-white/10 bg-aproksi-void">
       <Container className="pb-12 pt-10 sm:pb-16 sm:pt-14 lg:pb-24 lg:pt-20">
         <>
           <Eyebrow tone="dark">{eyebrow}</Eyebrow>
@@ -152,7 +152,7 @@ export function Step({
             "flex h-8 w-8 items-center justify-center rounded-full border font-mono text-[0.6875rem]",
             dark
               ? "border-white/20 text-white/70"
-              : "border-kaunta-ultra/30 text-kaunta-ultra"
+              : "border-aproksi-ultra/30 text-aproksi-ultra"
           )}
         >
           {n}
@@ -161,7 +161,7 @@ export function Step({
           aria-hidden
           className={cn(
             "mt-2 w-px flex-1",
-            dark ? "bg-white/10" : "bg-kaunta-mist"
+            dark ? "bg-white/10" : "bg-aproksi-mist"
           )}
         />
       </div>
@@ -169,7 +169,7 @@ export function Step({
         <h3
           className={cn(
             "font-display text-xl leading-snug tracking-[-0.01em] sm:text-2xl",
-            dark ? "text-white" : "text-kaunta-ink"
+            dark ? "text-white" : "text-aproksi-ink"
           )}
         >
           {title}
@@ -177,7 +177,7 @@ export function Step({
         <div
           className={cn(
             "mt-3 max-w-xl text-[0.9rem] leading-relaxed",
-            dark ? "text-white/55" : "text-kaunta-slate/70"
+            dark ? "text-white/55" : "text-aproksi-slate/70"
           )}
         >
           {children}
@@ -195,7 +195,7 @@ export function NextLinks({
   links: { href: string; label: string; blurb: string }[];
 }) {
   return (
-    <section className="border-t border-white/10 bg-kaunta-void">
+    <section className="border-t border-white/10 bg-aproksi-void">
       <Container className="py-12 sm:py-16 lg:py-20">
         <SectionHead eyebrow="Keep reading" title="Related" tone="dark" />
         <div className="mt-10 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
@@ -203,7 +203,7 @@ export function NextLinks({
               <Link
                 key={l.href}
                 href={l.href}
-                className="flex h-full flex-col bg-kaunta-void p-6 transition-colors duration-300 hover:bg-white/[0.03]"
+                className="flex h-full flex-col bg-aproksi-void p-6 transition-colors duration-300 hover:bg-white/[0.03]"
               >
                 <span className="font-display text-lg text-white">{l.label}</span>
                 <span className="mt-2 text-[0.85rem] leading-relaxed text-white/50">

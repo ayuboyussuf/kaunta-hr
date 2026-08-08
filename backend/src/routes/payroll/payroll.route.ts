@@ -1,5 +1,5 @@
 /**
- * Payroll — compliance-grade, human-gated, calculate-only. Kaunta computes and
+ * Payroll — compliance-grade, human-gated, calculate-only. Aproksi computes and
  * prepares payment but NEVER moves money and NEVER auto-approves. Every figure is
  * traceable (payslips.breakdown); missing/ambiguous data is flagged, not guessed;
  * the owner reviews + overrides (audited), approves with a PIN, and the run locks

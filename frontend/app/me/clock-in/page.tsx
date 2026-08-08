@@ -15,8 +15,8 @@ export default function ClockInPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl text-kaunta-ink mb-1">Clock in</h1>
-        <p className="text-kaunta-slate/70 text-sm">
+        <h1 className="font-display text-3xl text-aproksi-ink mb-1">Clock in</h1>
+        <p className="text-aproksi-slate/70 text-sm">
           Scan the QR code posted at your workplace. Your time and location are recorded on the server.
         </p>
       </div>

@@ -160,7 +160,7 @@ router.post("/check/:employeeId", requireOwner, async (req, res) => {
   try {
     pushed = await pushToEmployee(emp.id, {
       title: "Confirm you're at work",
-      body: `Open Kaunta HR and scan within ${windowMin} minutes to confirm your presence.`,
+      body: `Open Aproksi HR and scan within ${windowMin} minutes to confirm your presence.`,
       url: "/me/clock-in",
     });
   } catch {
@@ -172,7 +172,7 @@ router.post("/check/:employeeId", requireOwner, async (req, res) => {
         "sms",
         {
           to: emp.phone as string,
-          body: `Kaunta HR: please open the app and scan within ${windowMin} minutes to confirm you're at work.`,
+          body: `Aproksi HR: please open the app and scan within ${windowMin} minutes to confirm you're at work.`,
         },
         `sms:presence:${check.id}`
       );

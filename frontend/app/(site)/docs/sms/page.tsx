@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "SMS setup",
   description:
-    "How Kaunta HR sends SMS under the KAUNTAHR sender ID, what messages go out, and how delivery and costs work.",
+    "How Aproksi HR sends SMS under the KAUNTAHR sender ID, what messages go out, and how delivery and costs work.",
 };
 
 export default function SmsDocPage() {
@@ -63,7 +63,7 @@ export default function SmsDocPage() {
       />
 
       <Callout title="Nothing marketing goes out" tone="note">
-        Kaunta HR only sends messages tied to a specific event on a staff
+        Aproksi HR only sends messages tied to a specific event on a staff
         member&rsquo;s own record, plus announcements you write yourself. There
         are no promotional sends on your sender ID.
       </Callout>

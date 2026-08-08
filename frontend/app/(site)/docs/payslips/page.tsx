@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "Generating payslips",
   description:
-    "Produce PDF payslips for a payroll period in Kaunta HR and send them to staff as signed, expiring links over SMS.",
+    "Produce PDF payslips for a payroll period in Aproksi HR and send them to staff as signed, expiring links over SMS.",
 };
 
 export default function PayslipsDocPage() {
@@ -27,7 +27,7 @@ export default function PayslipsDocPage() {
     <DocPage
       href="/docs/payslips"
       title="Generating payslips"
-      lede="Every deduction on a Kaunta HR payslip points back at a scan, a rule and — where it was challenged — a closed appeal. Nothing is reconstructed at month end, because nothing was left undecided."
+      lede="Every deduction on a Aproksi HR payslip points back at a scan, a rule and — where it was challenged — a closed appeal. Nothing is reconstructed at month end, because nothing was left undecided."
     >
       <H2 id="period">1. Close the period</H2>
       <P>

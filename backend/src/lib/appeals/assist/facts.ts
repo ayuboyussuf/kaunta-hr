@@ -1,5 +1,5 @@
 /**
- * The tools. Each one answers a single question from Kaunta's own records.
+ * The tools. Each one answers a single question from Aproksi's own records.
  *
  * They live here rather than being expressed as prompts because every one of
  * them is a counting problem, and counting is the thing a model is worst at and
@@ -7,7 +7,7 @@
  * function returns numbers and the ids they came from, so any line in a brief
  * can be traced back to rows an owner could go and read themselves.
  *
- * Nothing here needs anything outside Kaunta. Two later checks will — reading a
+ * Nothing here needs anything outside Aproksi. Two later checks will — reading a
  * sick note, asking whether a road was actually closed — and those are the only
  * two places anything external belongs.
  */

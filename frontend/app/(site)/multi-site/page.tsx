@@ -15,7 +15,7 @@ import { SealedRecord } from "@/components/site/Engravings";
 export const metadata: Metadata = {
   title: "For multi-site owners",
   description:
-    "Written for owners running fuel stations, restaurant branches and retail outlets across several locations — how Kaunta HR gives one view of who showed up where, and what it cost.",
+    "Written for owners running fuel stations, restaurant branches and retail outlets across several locations — how Aproksi HR gives one view of who showed up where, and what it cost.",
 };
 
 const SEGMENTS = [
@@ -93,7 +93,7 @@ export default function MultiSitePage() {
       </PageHero>
 
       {/* ── What changes at site two ──────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
             <>
@@ -130,7 +130,7 @@ export default function MultiSitePage() {
       </section>
 
       {/* ── The morning ───────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
@@ -181,7 +181,7 @@ export default function MultiSitePage() {
       </section>
 
       {/* ── Segments ──────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
@@ -195,7 +195,7 @@ export default function MultiSitePage() {
             {SEGMENTS.map((s) => (
               <div key={s.tag}>
                 <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/[0.02] p-7">
-                  <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br/70">
+                  <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-aproksi-ultra-br/70">
                     {s.tag}
                   </span>
                   <h3 className="font-display mt-4 text-xl leading-snug text-white">
@@ -209,7 +209,7 @@ export default function MultiSitePage() {
                       >
                         <span
                           aria-hidden
-                          className="mt-[0.55rem] h-px w-3 shrink-0 bg-kaunta-ultra-br/60"
+                          className="mt-[0.55rem] h-px w-3 shrink-0 bg-aproksi-ultra-br/60"
                         />
                         {p}
                       </li>
@@ -226,7 +226,7 @@ export default function MultiSitePage() {
       </section>
 
       {/* ── Rolling out ───────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-20">
             <div className="order-2 lg:order-1">
@@ -266,7 +266,7 @@ export default function MultiSitePage() {
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="prose" className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead

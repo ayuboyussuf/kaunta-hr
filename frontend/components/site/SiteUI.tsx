@@ -47,7 +47,7 @@ export function Eyebrow({
     <p
       className={cn(
         "eyebrow",
-        tone === "dark" ? "text-white/45" : "text-kaunta-slate/50",
+        tone === "dark" ? "text-white/45" : "text-aproksi-slate/50",
         className
       )}
     >
@@ -82,7 +82,7 @@ export function SectionHead({
       <h2
         className={cn(
           "font-display mt-4 text-[2rem] leading-[1.08] tracking-[-0.02em] sm:text-[2.75rem] lg:text-[3.25rem]",
-          tone === "dark" ? "text-white" : "text-kaunta-ink"
+          tone === "dark" ? "text-white" : "text-aproksi-ink"
         )}
       >
         {title}
@@ -91,7 +91,7 @@ export function SectionHead({
         <p
           className={cn(
             "mt-5 text-[0.975rem] leading-relaxed sm:text-lg",
-            tone === "dark" ? "text-white/60" : "text-kaunta-slate/70",
+            tone === "dark" ? "text-white/60" : "text-aproksi-slate/70",
             align === "center" ? "mx-auto max-w-xl" : "max-w-xl"
           )}
         >
@@ -105,7 +105,7 @@ export function SectionHead({
 export function Divider({ className }: { className?: string }) {
   return (
     <div className={cn("flex justify-center py-2", className)}>
-      <RuleMark className="h-2 w-[120px] text-kaunta-slate/30" />
+      <RuleMark className="h-2 w-[120px] text-aproksi-slate/30" />
     </div>
   );
 }
@@ -135,13 +135,13 @@ export function SiteButton({
         btnBase,
         size === "md" ? "h-11 px-5 sm:h-9 sm:px-4" : "h-12 px-6 text-sm sm:h-11",
         variant === "primary" &&
-          "bg-kaunta-ultra text-white hover:bg-kaunta-ultra-dp",
+          "bg-aproksi-ultra text-white hover:bg-aproksi-ultra-dp",
         variant === "light" &&
-          "bg-white text-kaunta-ink hover:bg-white/88",
+          "bg-white text-aproksi-ink hover:bg-white/88",
         variant === "outline" &&
           "border border-white/25 bg-white/[0.06] text-white backdrop-blur-sm hover:border-white/50 hover:bg-white/[0.12]",
         variant === "ghost" &&
-          "border border-kaunta-mist bg-white text-kaunta-ink hover:border-kaunta-slate/25",
+          "border border-aproksi-mist bg-white text-aproksi-ink hover:border-aproksi-slate/25",
         className
       )}
     >
@@ -269,7 +269,7 @@ export function FeatureCard({
         "group relative flex h-full flex-col rounded-xl border p-6 transition-colors duration-300 sm:p-7",
         dark
           ? "border-white/10 bg-white/[0.02] hover:border-white/22"
-          : "border-kaunta-mist bg-white hover:border-kaunta-ultra/35",
+          : "border-aproksi-mist bg-white hover:border-aproksi-ultra/35",
         className
       )}
     >
@@ -277,7 +277,7 @@ export function FeatureCard({
         <span
           className={cn(
             "font-mono text-[0.6875rem] sm:text-[0.625rem] tracking-[0.16em]",
-            dark ? "text-white/30" : "text-kaunta-slate/35"
+            dark ? "text-white/30" : "text-aproksi-slate/35"
           )}
         >
           {index}
@@ -286,7 +286,7 @@ export function FeatureCard({
       <h3
         className={cn(
           "font-display mt-4 text-xl leading-snug tracking-[-0.01em] sm:text-[1.375rem]",
-          dark ? "text-white" : "text-kaunta-ink"
+          dark ? "text-white" : "text-aproksi-ink"
         )}
       >
         {title}
@@ -294,7 +294,7 @@ export function FeatureCard({
       <div
         className={cn(
           "mt-3 text-[0.95rem] leading-relaxed sm:text-[0.9rem]",
-          dark ? "text-white/60" : "text-kaunta-slate/70"
+          dark ? "text-white/60" : "text-aproksi-slate/70"
         )}
       >
         {body}
@@ -322,13 +322,13 @@ export function SpecList({
           key={it.term}
           className={cn(
             "grid grid-cols-1 gap-1 border-t py-4 sm:grid-cols-[minmax(0,11rem)_1fr] sm:gap-6",
-            dark ? "border-white/10" : "border-kaunta-mist"
+            dark ? "border-white/10" : "border-aproksi-mist"
           )}
         >
           <dt
             className={cn(
               "font-mono text-xs uppercase tracking-[0.14em] leading-5 sm:text-[0.6875rem]",
-              dark ? "text-white/40" : "text-kaunta-slate/45"
+              dark ? "text-white/40" : "text-aproksi-slate/45"
             )}
           >
             {it.term}
@@ -336,7 +336,7 @@ export function SpecList({
           <dd
             className={cn(
               "text-[0.9rem] leading-relaxed",
-              dark ? "text-white/70" : "text-kaunta-slate/75"
+              dark ? "text-white/70" : "text-aproksi-slate/75"
             )}
           >
             {it.value}

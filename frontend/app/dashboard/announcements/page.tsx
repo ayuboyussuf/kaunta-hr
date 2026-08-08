@@ -28,7 +28,7 @@ interface Announcement {
 }
 
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
+  "w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra";
 
 /** Owner announcement composer + posted feed (spec §7). */
 export default function AnnouncementsPage() {
@@ -114,21 +114,21 @@ export default function AnnouncementsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-kaunta-stone px-6 py-10">
-        <p className="text-sm text-kaunta-slate/60 max-w-3xl mx-auto">Loading…</p>
+      <main className="min-h-screen bg-aproksi-stone px-6 py-10">
+        <p className="text-sm text-aproksi-slate/60 max-w-3xl mx-auto">Loading…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-kaunta-stone">
+    <main className="min-h-screen bg-aproksi-stone">
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
         <div>
-          <h1 className="font-display text-3xl text-kaunta-ink mb-1 flex items-center gap-2">
-            <Megaphone className="h-7 w-7 text-kaunta-ultra" />
+          <h1 className="font-display text-3xl text-aproksi-ink mb-1 flex items-center gap-2">
+            <Megaphone className="h-7 w-7 text-aproksi-ultra" />
             Announcements
           </h1>
-          <p className="text-kaunta-slate/70 text-sm">
+          <p className="text-aproksi-slate/70 text-sm">
             Post an update to all employees, or a single workplace, by SMS.
           </p>
         </div>
@@ -142,7 +142,7 @@ export default function AnnouncementsPage() {
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-kaunta-slate mb-1">Type</label>
+                  <label className="block text-xs font-medium text-aproksi-slate mb-1">Type</label>
                   <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
                     {Object.entries(ANNOUNCEMENT_TYPES).map(([value, label]) => (
                       <option key={value} value={value}>
@@ -152,7 +152,7 @@ export default function AnnouncementsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-kaunta-slate mb-1">Scope</label>
+                  <label className="block text-xs font-medium text-aproksi-slate mb-1">Scope</label>
                   <select
                     value={scope}
                     onChange={(e) => {
@@ -170,7 +170,7 @@ export default function AnnouncementsPage() {
 
               {scope === "workplace" && (
                 <div>
-                  <label className="block text-xs font-medium text-kaunta-slate mb-1">Workplace</label>
+                  <label className="block text-xs font-medium text-aproksi-slate mb-1">Workplace</label>
                   <select
                     value={workplaceId}
                     onChange={(e) => setWorkplaceId(e.target.value)}
@@ -184,13 +184,13 @@ export default function AnnouncementsPage() {
                     ))}
                   </select>
                   {workplaces.length === 0 && (
-                    <p className="text-xs text-kaunta-slate/50 mt-1">No workplaces set up yet.</p>
+                    <p className="text-xs text-aproksi-slate/50 mt-1">No workplaces set up yet.</p>
                   )}
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-kaunta-slate mb-1">Title</label>
+                <label className="block text-xs font-medium text-aproksi-slate mb-1">Title</label>
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -201,7 +201,7 @@ export default function AnnouncementsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-kaunta-slate mb-1">Message</label>
+                <label className="block text-xs font-medium text-aproksi-slate mb-1">Message</label>
                 <textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
@@ -212,8 +212,8 @@ export default function AnnouncementsPage() {
                 />
               </div>
 
-              {error && <p className="text-sm text-kaunta-red">{error}</p>}
-              {notice && <p className="text-sm text-kaunta-sage">{notice}</p>}
+              {error && <p className="text-sm text-aproksi-red">{error}</p>}
+              {notice && <p className="text-sm text-aproksi-sage">{notice}</p>}
 
               <Button type="submit" disabled={!canSubmit}>
                 {posting ? "Posting…" : "Post announcement"}
@@ -223,10 +223,10 @@ export default function AnnouncementsPage() {
         </Card>
 
         <div>
-          <h2 className="font-display text-xl text-kaunta-ink mb-3">Posted</h2>
+          <h2 className="font-display text-xl text-aproksi-ink mb-3">Posted</h2>
           {announcements.length === 0 ? (
             <Card>
-              <CardContent className="p-6 text-sm text-kaunta-slate/60">
+              <CardContent className="p-6 text-sm text-aproksi-slate/60">
                 No announcements posted yet.
               </CardContent>
             </Card>
@@ -236,16 +236,16 @@ export default function AnnouncementsPage() {
                 <Card key={a.id}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between gap-3 mb-2">
-                      <span className="text-xs font-medium px-2 py-1 rounded-full border border-kaunta-ultra/20 bg-kaunta-ultra/10 text-kaunta-ultra">
+                      <span className="text-xs font-medium px-2 py-1 rounded-full border border-aproksi-ultra/20 bg-aproksi-ultra/10 text-aproksi-ultra">
                         {ANNOUNCEMENT_TYPES[a.type] ?? "Other"}
                       </span>
-                      <span className="text-xs text-kaunta-slate/50 shrink-0">
+                      <span className="text-xs text-aproksi-slate/50 shrink-0">
                         {formatDate(a.posted_at)} · {formatTime(a.posted_at)}
                       </span>
                     </div>
-                    <h3 className="font-display text-lg text-kaunta-ink mb-1">{a.title}</h3>
-                    <p className="text-sm text-kaunta-slate/80 whitespace-pre-wrap">{a.body}</p>
-                    <p className="text-xs text-kaunta-slate/40 mt-3">
+                    <h3 className="font-display text-lg text-aproksi-ink mb-1">{a.title}</h3>
+                    <p className="text-sm text-aproksi-slate/80 whitespace-pre-wrap">{a.body}</p>
+                    <p className="text-xs text-aproksi-slate/40 mt-3">
                       {a.scope === "all" ? "All workplaces" : a.workplaces?.name ?? "This workplace"}
                     </p>
                   </CardContent>

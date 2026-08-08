@@ -103,7 +103,7 @@ async function claim(job: Job): Promise<boolean> {
     // One key per job per minute: two instances waking in the same minute
     // contend for it, and exactly one wins.
     const minute = Math.floor(Date.now() / 60_000);
-    const key = `kaunta:cron:${job.name}:${minute}`;
+    const key = `aproksi:cron:${job.name}:${minute}`;
     const won = await redis.set(key, "1", "EX", job.ttlSec, "NX");
     return won === "OK";
   } catch (err) {

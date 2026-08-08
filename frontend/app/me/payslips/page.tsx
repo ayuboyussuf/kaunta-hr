@@ -38,16 +38,16 @@ export default function PayslipsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl text-kaunta-ink mb-1">Payslips</h1>
-        <p className="text-kaunta-slate/70 text-sm">Your pay history, newest first.</p>
+        <h1 className="font-display text-3xl text-aproksi-ink mb-1">Payslips</h1>
+        <p className="text-aproksi-slate/70 text-sm">Your pay history, newest first.</p>
       </div>
 
-      {error && <p className="text-sm text-kaunta-red">{error}</p>}
-      {!payslips && !error && <p className="text-sm text-kaunta-slate/60">Loading…</p>}
+      {error && <p className="text-sm text-aproksi-red">{error}</p>}
+      {!payslips && !error && <p className="text-sm text-aproksi-slate/60">Loading…</p>}
 
       {payslips && payslips.length === 0 && (
         <Card>
-          <CardContent className="p-6 text-sm text-kaunta-slate/60">
+          <CardContent className="p-6 text-sm text-aproksi-slate/60">
             No payslips yet.
           </CardContent>
         </Card>
@@ -59,17 +59,17 @@ export default function PayslipsPage() {
             <Card key={p.id}>
               <CardContent className="p-6 flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-kaunta-ink">
+                  <p className="text-sm font-medium text-aproksi-ink">
                     {p.pay_cycle?.label ?? "Pay cycle"}
                   </p>
-                  <p className="text-xs text-kaunta-slate/60 mt-0.5">
+                  <p className="text-xs text-aproksi-slate/60 mt-0.5">
                     {p.pay_cycle
                       ? `${formatDate(p.pay_cycle.start_date)} – ${formatDate(p.pay_cycle.end_date)} · paid ${formatDate(p.pay_cycle.pay_date)}`
                       : formatDate(p.created_at)}
                   </p>
-                  <p className="text-sm text-kaunta-ink mt-2 tabular-nums">
+                  <p className="text-sm text-aproksi-ink mt-2 tabular-nums">
                     Net {formatKES(p.net)}
-                    <span className="text-kaunta-slate/50">
+                    <span className="text-aproksi-slate/50">
                       {" "}
                       (gross {formatKES(p.gross)}
                       {p.deductions?.length ? `, ${p.deductions.length} deduction${p.deductions.length === 1 ? "" : "s"}` : ""})
@@ -84,7 +84,7 @@ export default function PayslipsPage() {
                     </a>
                   </Button>
                 ) : (
-                  <span className="text-xs text-kaunta-slate/50 shrink-0">Not ready</span>
+                  <span className="text-xs text-aproksi-slate/50 shrink-0">Not ready</span>
                 )}
               </CardContent>
             </Card>

@@ -2,17 +2,17 @@
 
 import { cn } from "@/lib/utils";
 
-interface KauntaBellProps {
+interface AproksiBellProps {
   className?: string;
   size?: number;
   color?: string;
 }
 
-export function KauntaBell({
+export function AproksiBell({
   className,
   size = 32,
   color = "currentColor",
-}: KauntaBellProps) {
+}: AproksiBellProps) {
   return (
     <svg
       width={size}
@@ -20,7 +20,7 @@ export function KauntaBell({
       viewBox="38 68 214 214"
       xmlns="http://www.w3.org/2000/svg"
       className={cn(className)}
-      aria-label="Kaunta logo"
+      aria-label="Aproksi logo"
     >
       {/* Σ letterform — user's exact Canva paths */}
       <path
@@ -44,8 +44,8 @@ export function KauntaBell({
   );
 }
 
-/** Full wordmark: mark + "Kaunta" text */
-export function KauntaWordmark({
+/** Full wordmark: mark + "Aproksi" text */
+export function AproksiWordmark({
   className,
   size = "md",
   theme = "dark",
@@ -65,15 +65,15 @@ export function KauntaWordmark({
 
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <KauntaBell size={sizeMap[size]} color={c.bell} />
+      <AproksiBell size={sizeMap[size]} color={c.bell} />
       <span
         className={cn("font-display tracking-tight leading-none", textSizeMap[size])}
         style={{ color: c.text }}
       >
-        Kaunta
+        Aproksi
       </span>
     </div>
   );
 }
 
-export default KauntaWordmark;
+export default AproksiWordmark;

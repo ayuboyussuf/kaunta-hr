@@ -1,8 +1,8 @@
 /**
  * "The app wouldn't let me clock in."
  *
- * The one appeal Kaunta can genuinely check, because the thing being appealed
- * about is Kaunta. Every question worth asking has an answer in our own tables:
+ * The one appeal Aproksi can genuinely check, because the thing being appealed
+ * about is Aproksi. Every question worth asking has an answer in our own tables:
  * did their phone report failures that morning, did we reject any of their
  * scans ourselves, and were their colleagues clocking in normally at the same
  * site in the same minutes.
@@ -87,14 +87,14 @@ export async function assessSystemNotWorking(
       kind: "attempts",
       stance: "supports",
       headline: witnessed
-        ? `Kaunta itself rejected ${attempts.serverWitnessed} of their scans between ${attempts.firstAt} and ${attempts.lastAt}`
+        ? `Aproksi itself rejected ${attempts.serverWitnessed} of their scans between ${attempts.firstAt} and ${attempts.lastAt}`
         : `Their phone reported ${attempts.deviceReported} failed attempt(s) between ${attempts.firstAt} and ${attempts.lastAt}`,
       detail: witnessed
         ? `These are rejections we issued, not something the phone told us: ${attempts.outcomes.join("; ")}.`
-        : `These come from the device, so they are the employee's account rather than something Kaunta observed: ${attempts.outcomes.join("; ")}.`,
+        : `These come from the device, so they are the employee's account rather than something Aproksi observed: ${attempts.outcomes.join("; ")}.`,
       evidence: {
         total: attempts.total,
-        witnessed_by_kaunta: attempts.serverWitnessed,
+        witnessed_by_aproksi: attempts.serverWitnessed,
         reported_by_phone: attempts.deviceReported,
       },
       source: "scan_attempts",
@@ -129,7 +129,7 @@ export async function assessSystemNotWorking(
         headline: `${site.distinctOthersWhoScanned} other ${site.distinctOthersWhoScanned === 1 ? "person" : "people"} clocked in normally at ${facts.workplaceName ?? "the same site"} in the same window`,
         detail:
           `${site.successfulScansByOthers} scan(s) went through while this one was failing. ` +
-          "That does not rule out a problem with one phone, one camera or one printed code — it does mean Kaunta was reachable and the site's QR was being read.",
+          "That does not rule out a problem with one phone, one camera or one printed code — it does mean Aproksi was reachable and the site's QR was being read.",
         evidence: {
           successful_scans_by_others: site.successfulScansByOthers,
           distinct_people: site.distinctOthersWhoScanned,
@@ -144,8 +144,8 @@ export async function assessSystemNotWorking(
         headline: `Nobody at ${facts.workplaceName ?? "this site"} could clock in during that window`,
         detail: `${site.failedAttemptsByOthers} failed attempt(s) from other staff and no successful scans. ${
           site.serverSideFailures > 0
-            ? `${site.serverSideFailures} of those were rejections Kaunta issued itself.`
-            : "All of them were reported by the phones rather than seen by Kaunta."
+            ? `${site.serverSideFailures} of those were rejections Aproksi issued itself.`
+            : "All of them were reported by the phones rather than seen by Aproksi."
         }`,
         evidence: {
           failed_attempts_by_others: site.failedAttemptsByOthers,

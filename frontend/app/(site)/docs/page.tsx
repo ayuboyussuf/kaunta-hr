@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "Getting started",
   description:
-    "Create your Kaunta HR organisation, add your first site, draw the geofence, print the QR code and take your first clock-in.",
+    "Create your Aproksi HR organisation, add your first site, draw the geofence, print the QR code and take your first clock-in.",
 };
 
 export default function DocsIndexPage() {

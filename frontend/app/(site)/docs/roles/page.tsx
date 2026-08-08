@@ -15,7 +15,7 @@ import {
 export const metadata: Metadata = {
   title: "Roles & permissions",
   description:
-    "How the owner and staff roles differ in Kaunta HR, and how access is enforced on the server rather than hidden in the interface.",
+    "How the owner and staff roles differ in Aproksi HR, and how access is enforced on the server rather than hidden in the interface.",
 };
 
 export default function RolesDocPage() {

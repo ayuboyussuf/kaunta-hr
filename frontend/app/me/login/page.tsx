@@ -127,18 +127,18 @@ export default function EmployeeLoginPage() {
   }
 
   const input =
-    "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
+    "w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra";
 
   return (
-    <main className="min-h-screen grid place-items-center bg-kaunta-stone px-4">
+    <main className="min-h-screen grid place-items-center bg-aproksi-stone px-4">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-4xl text-kaunta-ink mb-1">Kaunta HR</h1>
-        <p className="text-kaunta-slate/70 text-sm mb-8">Employee sign in</p>
+        <h1 className="font-display text-4xl text-aproksi-ink mb-1">Aproksi HR</h1>
+        <p className="text-aproksi-slate/70 text-sm mb-8">Employee sign in</p>
 
         {step === "phone" && (
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-kaunta-slate mb-1">
+              <label className="block text-xs font-medium text-aproksi-slate mb-1">
                 Phone number
               </label>
               <input
@@ -149,13 +149,13 @@ export default function EmployeeLoginPage() {
                 className={input}
               />
             </div>
-            {error && <p className="text-sm text-kaunta-red">{error}</p>}
+            {error && <p className="text-sm text-aproksi-red">{error}</p>}
             <Button onClick={() => requestOtp()} disabled={loading || !phone} className="w-full">
               {loading ? "Sending…" : "Send code by SMS"}
             </Button>
             <button
               onClick={tryPinFirst}
-              className="w-full text-sm text-kaunta-ultra hover:underline"
+              className="w-full text-sm text-aproksi-ultra hover:underline"
             >
               I have a PIN on this device
             </button>
@@ -164,7 +164,7 @@ export default function EmployeeLoginPage() {
 
         {step === "otp" && (
           <div className="space-y-4">
-            <p className="text-sm text-kaunta-slate">
+            <p className="text-sm text-aproksi-slate">
               Enter the 6-digit code sent by SMS{phone ? ` to ${phone}` : ""}.
             </p>
             <input
@@ -174,8 +174,8 @@ export default function EmployeeLoginPage() {
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               className={`${input} tracking-[0.5em] text-center text-lg`}
             />
-            {notice && <p className="text-sm text-kaunta-sage">{notice}</p>}
-            {error && <p className="text-sm text-kaunta-red">{error}</p>}
+            {notice && <p className="text-sm text-aproksi-sage">{notice}</p>}
+            {error && <p className="text-sm text-aproksi-red">{error}</p>}
             <Button onClick={verifyOtp} disabled={loading || code.length !== 6} className="w-full">
               {loading ? "Verifying…" : "Verify"}
             </Button>
@@ -183,7 +183,7 @@ export default function EmployeeLoginPage() {
               <button
                 onClick={() => requestOtp(true)}
                 disabled={loading || resendIn > 0}
-                className="text-kaunta-ultra hover:underline disabled:text-kaunta-slate/40 disabled:no-underline"
+                className="text-aproksi-ultra hover:underline disabled:text-aproksi-slate/40 disabled:no-underline"
               >
                 {resendIn > 0 ? `Resend code in ${resendIn}s` : "Didn't get it? Resend code"}
               </button>
@@ -194,7 +194,7 @@ export default function EmployeeLoginPage() {
                   setError(null);
                   setNotice(null);
                 }}
-                className="text-kaunta-slate/60 hover:underline"
+                className="text-aproksi-slate/60 hover:underline"
               >
                 Change number
               </button>
@@ -205,7 +205,7 @@ export default function EmployeeLoginPage() {
         {step === "pin" && (
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-kaunta-slate mb-1">Phone</label>
+              <label className="block text-xs font-medium text-aproksi-slate mb-1">Phone</label>
               <input
                 type="tel"
                 value={phone}
@@ -214,7 +214,7 @@ export default function EmployeeLoginPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-kaunta-slate mb-1">PIN</label>
+              <label className="block text-xs font-medium text-aproksi-slate mb-1">PIN</label>
               <input
                 inputMode="numeric"
                 maxLength={6}
@@ -223,7 +223,7 @@ export default function EmployeeLoginPage() {
                 className={`${input} tracking-[0.4em] text-center`}
               />
             </div>
-            {error && <p className="text-sm text-kaunta-red">{error}</p>}
+            {error && <p className="text-sm text-aproksi-red">{error}</p>}
             <Button onClick={loginPin} disabled={loading || pin.length < 4} className="w-full">
               {loading ? "Signing in…" : "Sign in"}
             </Button>
@@ -232,7 +232,7 @@ export default function EmployeeLoginPage() {
 
         {step === "setpin" && (
           <div className="space-y-4">
-            <p className="text-sm text-kaunta-slate">
+            <p className="text-sm text-aproksi-slate">
               Create a PIN for faster sign-in on this device.
             </p>
             <input
@@ -243,7 +243,7 @@ export default function EmployeeLoginPage() {
               onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
               className={`${input} tracking-[0.4em] text-center`}
             />
-            {error && <p className="text-sm text-kaunta-red">{error}</p>}
+            {error && <p className="text-sm text-aproksi-red">{error}</p>}
             <Button onClick={setNewPin} disabled={loading || pin.length < 4} className="w-full">
               {loading ? "Saving…" : "Save PIN"}
             </Button>

@@ -26,7 +26,7 @@ import { env } from "../../lib/env";
 const router = Router();
 
 const ENDPOINT = "https://nominatim.openstreetmap.org/search";
-const UA = `KauntaHR/1.0 (${env.appUrl})`;
+const UA = `AproksiHR/1.0 (${env.appUrl})`;
 
 interface Place {
   label: string;

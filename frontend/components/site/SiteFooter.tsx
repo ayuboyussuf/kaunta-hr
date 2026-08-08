@@ -40,7 +40,7 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 bg-kaunta-void">
+    <footer className="border-t border-white/10 bg-aproksi-void">
       <Container width="wide" className="py-14 sm:py-20">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.1fr)]">
           <div>
@@ -80,7 +80,7 @@ export function SiteFooter() {
 
         <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[0.8125rem] text-white/35">
-            © {new Date().getFullYear()} Kaunta HR. Part of the Kaunta family.
+            © {new Date().getFullYear()} Aproksi HR. Part of the Aproksi family.
           </p>
           <p className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-white/30">
             SMS sender ID · KAUNTAHR

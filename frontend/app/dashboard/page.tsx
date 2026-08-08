@@ -195,10 +195,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
    * ragged grid and a divider running under an empty cell — which is exactly
    * what "on leave" appearing as a fifth headline did. */
   const stats = [
-    { label: "In", value: clockedInIds.size, tone: "text-kaunta-sage" },
-    { label: "Late", value: [...attByEmp.values()].filter((a) => a.status === "late").length, tone: "text-kaunta-amber" },
-    { label: "Absent", value: absent.length, tone: "text-kaunta-slate" },
-    { label: "Flagged", value: [...attByEmp.values()].filter((a) => a.status === "flagged").length, tone: "text-kaunta-red" },
+    { label: "In", value: clockedInIds.size, tone: "text-aproksi-sage" },
+    { label: "Late", value: [...attByEmp.values()].filter((a) => a.status === "late").length, tone: "text-aproksi-amber" },
+    { label: "Absent", value: absent.length, tone: "text-aproksi-slate" },
+    { label: "Flagged", value: [...attByEmp.values()].filter((a) => a.status === "flagged").length, tone: "text-aproksi-red" },
   ];
 
   // What actually wants the owner's attention, most costly first. Renders
@@ -207,7 +207,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     {
       count: pendingAppeals ?? 0,
       label: "Appeals to decide",
-      detail: "Kaunta has already checked each one against the record.",
+      detail: "Aproksi has already checked each one against the record.",
       href: "/dashboard/violations",
       tone: "urgent",
     },
@@ -239,19 +239,19 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     .filter((x): x is { employeeId: string; name: string; at: string; status: string } => x !== null);
 
   const STATUS_BADGE: Record<string, string> = {
-    normal: "bg-kaunta-sage-lt text-kaunta-sage",
-    late: "bg-kaunta-amber/15 text-kaunta-amber",
-    flagged: "bg-kaunta-red/10 text-kaunta-red",
-    adjusted: "bg-kaunta-slate/10 text-kaunta-slate",
-    on_leave: "bg-kaunta-ultra/10 text-kaunta-ultra",
+    normal: "bg-aproksi-sage-lt text-aproksi-sage",
+    late: "bg-aproksi-amber/15 text-aproksi-amber",
+    flagged: "bg-aproksi-red/10 text-aproksi-red",
+    adjusted: "bg-aproksi-slate/10 text-aproksi-slate",
+    on_leave: "bg-aproksi-ultra/10 text-aproksi-ultra",
   };
 
   return (
-    <main className="min-h-screen bg-kaunta-stone">
-      <header className="border-b border-kaunta-mist bg-white">
+    <main className="min-h-screen bg-aproksi-stone">
+      <header className="border-b border-aproksi-mist bg-white">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="font-display text-2xl text-kaunta-ink">{org.name}</span>
-          <span className="hidden text-sm text-kaunta-slate/70 sm:inline">{user.email}</span>
+          <span className="font-display text-2xl text-aproksi-ink">{org.name}</span>
+          <span className="hidden text-sm text-aproksi-slate/70 sm:inline">{user.email}</span>
         </div>
       </header>
 
@@ -265,8 +265,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 href={`/dashboard?w=${x.id}`}
                 className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm ${
                   x.id === selectedId
-                    ? "bg-kaunta-ink text-white"
-                    : "bg-white text-kaunta-slate/70 border border-kaunta-mist hover:bg-kaunta-mist/40"
+                    ? "bg-aproksi-ink text-white"
+                    : "bg-white text-aproksi-slate/70 border border-aproksi-mist hover:bg-aproksi-mist/40"
                 }`}
               >
                 {x.name}
@@ -285,32 +285,32 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 divider running under nothing. Leave and headcount are context,
                 not headline numbers, so they sit on the caption line below. */}
             <section aria-label="Today at this site" className="space-y-2">
-              <div className="grid grid-cols-2 overflow-hidden rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.06)] sm:grid-cols-4">
+              <div className="grid grid-cols-2 overflow-hidden rounded-[12px] border border-aproksi-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.06)] sm:grid-cols-4">
                 {stats.map((s, i) => (
                   <div
                     key={s.label}
                     className={[
                       "px-5 py-4",
                       // Interior hairlines only — never one along an outer edge.
-                      i % 2 === 0 ? "border-r border-kaunta-mist" : "",
-                      i < 2 ? "border-b border-kaunta-mist" : "",
+                      i % 2 === 0 ? "border-r border-aproksi-mist" : "",
+                      i < 2 ? "border-b border-aproksi-mist" : "",
                       "sm:border-b-0 sm:border-r sm:last:border-r-0",
                     ].join(" ")}
                   >
                     <p
                       className={`font-display text-3xl tabular-nums ${
-                        s.value === 0 ? "text-kaunta-slate/25" : s.tone
+                        s.value === 0 ? "text-aproksi-slate/25" : s.tone
                       }`}
                     >
                       {s.value}
                     </p>
-                    <p className="mt-0.5 text-xs uppercase tracking-wide text-kaunta-slate/55">
+                    <p className="mt-0.5 text-xs uppercase tracking-wide text-aproksi-slate/55">
                       {s.label}
                     </p>
                   </div>
                 ))}
               </div>
-              <p className="px-1 text-xs text-kaunta-slate/60">
+              <p className="px-1 text-xs text-aproksi-slate/60">
                 {roster.length} on the books at {selected.name}
                 {onLeave.length > 0 && ` · ${onLeave.length} on approved leave`}
               </p>
@@ -322,12 +322,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             {accessToken && <InsightsPanel token={accessToken} />}
 
             {/* Attendance today — per employee, expandable */}
-            <section className="rounded-[12px] border border-kaunta-mist bg-white overflow-hidden">
-              <h2 className="font-display text-xl text-kaunta-ink px-6 pt-6 pb-2">Attendance today</h2>
+            <section className="rounded-[12px] border border-aproksi-mist bg-white overflow-hidden">
+              <h2 className="font-display text-xl text-aproksi-ink px-6 pt-6 pb-2">Attendance today</h2>
               {roster.length === 0 ? (
-                <p className="px-6 pb-6 text-sm text-kaunta-slate/60">No employees assigned to this workplace yet.</p>
+                <p className="px-6 pb-6 text-sm text-aproksi-slate/60">No employees assigned to this workplace yet.</p>
               ) : (
-                <ul className="divide-y divide-kaunta-mist/70">
+                <ul className="divide-y divide-aproksi-mist/70">
                   {roster.map((e) => {
                     const a = attByEmp.get(e.id);
                     const viols = violByEmp.get(e.id) ?? [];
@@ -337,10 +337,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                     return (
                       <li key={e.id}>
                         <details className="group">
-                          <summary className="flex items-center justify-between gap-3 px-6 py-4 cursor-pointer list-none hover:bg-kaunta-stone/60">
+                          <summary className="flex items-center justify-between gap-3 px-6 py-4 cursor-pointer list-none hover:bg-aproksi-stone/60">
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-kaunta-ink truncate">{e.name}</p>
-                              <p className="text-xs text-kaunta-slate/60 mt-0.5">
+                              <p className="text-sm font-medium text-aproksi-ink truncate">{e.name}</p>
+                              <p className="text-xs text-aproksi-slate/60 mt-0.5">
                                 {clockedIn
                                   ? `In ${a!.inAt ? fmtTime(a!.inAt) : "—"} · Out ${a!.outAt ? fmtTime(a!.outAt) : "—"}`
                                   : leave
@@ -350,12 +350,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               {viols.length > 0 && (
-                                <span className="rounded-full bg-kaunta-red/10 px-2 py-0.5 text-xs text-kaunta-red">
+                                <span className="rounded-full bg-aproksi-red/10 px-2 py-0.5 text-xs text-aproksi-red">
                                   {viols.length} penalt{viols.length === 1 ? "y" : "ies"}
                                 </span>
                               )}
                               {leave && clockedIn && (
-                                <span className="rounded-full bg-kaunta-ultra/10 px-2 py-0.5 text-xs text-kaunta-ultra">
+                                <span className="rounded-full bg-aproksi-ultra/10 px-2 py-0.5 text-xs text-aproksi-ultra">
                                   On leave
                                 </span>
                               )}
@@ -364,20 +364,20 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                                   clockedIn
                                     ? stillIn
                                       ? STATUS_BADGE[a!.status] ?? STATUS_BADGE.normal
-                                      : "bg-kaunta-mist text-kaunta-slate"
+                                      : "bg-aproksi-mist text-aproksi-slate"
                                     : leave
                                       ? STATUS_BADGE.on_leave
-                                      : "bg-kaunta-stone text-kaunta-slate/60 border border-kaunta-mist"
+                                      : "bg-aproksi-stone text-aproksi-slate/60 border border-aproksi-mist"
                                 }`}
                               >
                                 {clockedIn ? (stillIn ? "On site" : "Left") : leave ? "On leave" : "Absent"}
                               </span>
-                              <span className="text-kaunta-slate/40 text-xs transition-transform group-open:rotate-90">▸</span>
+                              <span className="text-aproksi-slate/40 text-xs transition-transform group-open:rotate-90">▸</span>
                             </div>
                           </summary>
-                          <div className="px-6 pb-4 -mt-1 text-sm text-kaunta-slate/70 space-y-1">
+                          <div className="px-6 pb-4 -mt-1 text-sm text-aproksi-slate/70 space-y-1">
                             {leave && (
-                              <p className="text-kaunta-ultra">
+                              <p className="text-aproksi-ultra">
                                 On approved leave today
                                 {leave.half_day ? ` — ${leave.half_day} only` : ""} (
                                 {leave.paid ? "paid" : "unpaid"}).
@@ -389,8 +389,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                                 </Link>
                               </p>
                             )}
-                            <p>Clock in: <span className="text-kaunta-ink">{a?.inAt ? fmtTime(a.inAt) : "—"}</span></p>
-                            <p>Clock out: <span className="text-kaunta-ink">{a?.outAt ? fmtTime(a.outAt) : (clockedIn ? "still on site" : "—")}</span></p>
+                            <p>Clock in: <span className="text-aproksi-ink">{a?.inAt ? fmtTime(a.inAt) : "—"}</span></p>
+                            <p>Clock out: <span className="text-aproksi-ink">{a?.outAt ? fmtTime(a.outAt) : (clockedIn ? "still on site" : "—")}</span></p>
                             {a && (a.inSelfieId || a.outSelfieId) && (
                               <div className="flex items-center gap-3 pt-1">
                                 {a.inSelfieId && <SelfieThumb entryId={a.inSelfieId} label="clock-in" />}
@@ -398,15 +398,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                               </div>
                             )}
                             {a && a.checks > 0 && (
-                              <p className="text-kaunta-sage">
+                              <p className="text-aproksi-sage">
                                 Answered {a.checks} presence check{a.checks === 1 ? "" : "s"} today.
                               </p>
                             )}
                             {a && a.status !== "normal" && (
-                              <p>Status: <span className="capitalize text-kaunta-ink">{a.status}</span></p>
+                              <p>Status: <span className="capitalize text-aproksi-ink">{a.status}</span></p>
                             )}
                             {a && a.flags.length > 0 && (
-                              <p className="text-kaunta-red">Flags: {a.flags.join(", ")}</p>
+                              <p className="text-aproksi-red">Flags: {a.flags.join(", ")}</p>
                             )}
                             {/* The other half of presence checks: the schedule
                                 draws the random ones, this is the owner asking
@@ -421,13 +421,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                             {viols.length > 0 && (
                               <div className="pt-1">
                                 {viols.map((v) => (
-                                  <p key={v.id} className="text-kaunta-ink">
+                                  <p key={v.id} className="text-aproksi-ink">
                                     ⚠ {v.reason} — KES {v.amount}
                                   </p>
                                 ))}
                                 <Link
                                   href="/dashboard/violations"
-                                  className="inline-block mt-1 text-kaunta-ultra hover:underline text-xs"
+                                  className="inline-block mt-1 text-aproksi-ultra hover:underline text-xs"
                                 >
                                   Open in Penalties →
                                 </Link>
@@ -443,10 +443,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             </section>
           </>
         ) : (
-          <div className="rounded-[12px] border border-kaunta-mist bg-white p-8">
-            <p className="text-kaunta-slate/70">
+          <div className="rounded-[12px] border border-aproksi-mist bg-white p-8">
+            <p className="text-aproksi-slate/70">
               No workplaces yet.{" "}
-              <Link href="/dashboard/workplaces" className="text-kaunta-ultra hover:underline">
+              <Link href="/dashboard/workplaces" className="text-aproksi-ultra hover:underline">
                 Add one
               </Link>{" "}
               to start tracking attendance.

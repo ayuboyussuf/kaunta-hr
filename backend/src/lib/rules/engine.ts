@@ -206,7 +206,7 @@ async function notify(
   try {
     await sendText(
       emp.phone as string,
-      `Kaunta HR: ${applied.reason} — ${amount}. ${detail} If you disagree, open your record to appeal.`
+      `Aproksi HR: ${applied.reason} — ${amount}. ${detail} If you disagree, open your record to appeal.`
     );
     await db
       .from("violations")

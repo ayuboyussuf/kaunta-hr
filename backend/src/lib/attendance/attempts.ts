@@ -47,10 +47,10 @@ export const OUTCOME_LABEL: Record<ServerOutcome | ClientOutcome, string> = {
   wrong_workplace: "scanned a QR belonging to another workplace",
   rotated_qr: "scanned a QR that had since been replaced",
   employee_not_found: "the staff record could not be loaded",
-  server_error: "Kaunta failed to record the scan",
+  server_error: "Aproksi failed to record the scan",
   camera_blocked: "camera permission was refused on the phone",
   camera_failed: "the camera would not open",
-  network_error: "the phone could not reach Kaunta",
+  network_error: "the phone could not reach Aproksi",
   location_denied: "location permission was refused on the phone",
   unreadable_qr: "the code would not scan",
 };

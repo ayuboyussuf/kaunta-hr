@@ -32,7 +32,7 @@ export const env = {
   /**
    * Operator credential for /api/admin/*. Not an owner and not a staff member:
    * these endpoints read across every org, so they are gated on a secret that
-   * only whoever runs Kaunta holds. Unset means the admin routes refuse
+   * only whoever runs Aproksi holds. Unset means the admin routes refuse
    * everything, which is the correct behaviour for a deploy that has not
    * deliberately turned them on.
    */
@@ -54,7 +54,7 @@ export const env = {
   vapid: {
     publicKey: () => opt("VAPID_PUBLIC_KEY", ""),
     privateKey: () => opt("VAPID_PRIVATE_KEY", ""),
-    subject: () => opt("VAPID_SUBJECT", "mailto:support@kaunta.app"),
+    subject: () => opt("VAPID_SUBJECT", "mailto:support@aproksi.app"),
     configured: () => !!process.env.VAPID_PUBLIC_KEY && !!process.env.VAPID_PRIVATE_KEY,
   },
 };

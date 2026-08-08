@@ -1,17 +1,17 @@
 import { cn } from "@/lib/utils";
-import { KauntaBell } from "@/components/KauntaLogo";
+import { AproksiBell } from "@/components/AproksiLogo";
 
 /* ─────────────────────────────────────────────────────────────────
  * LOGO SLOT
  *
- * This is the single place the Kaunta-HR logo asset gets dropped in.
- * Put the file at `public/brand/kaunta-hr.svg`, then replace the
- * <KauntaBell /> line below with:
+ * This is the single place the Aproksi-HR logo asset gets dropped in.
+ * Put the file at `public/brand/aproksi-hr.svg`, then replace the
+ * <AproksiBell /> line below with:
  *
- *   <Image src="/brand/kaunta-hr.svg" alt="" width={28} height={28}
+ *   <Image src="/brand/aproksi-hr.svg" alt="" width={28} height={28}
  *          priority className="h-7 w-7" />
  *
- * Until then this renders the Kaunta mark plus the HR wordmark, so
+ * Until then this renders the Aproksi mark plus the HR wordmark, so
  * header and footer are never missing a brand anchor.
  * ───────────────────────────────────────────────────────────────── */
 
@@ -31,19 +31,19 @@ export function BrandLogo({
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       {/* ↓ logo slot — swap this element for the supplied asset */}
-      <KauntaBell size={mark} color={markColor} />
+      <AproksiBell size={mark} color={markColor} />
       <span
         className={cn(
           "font-display leading-none tracking-[-0.015em]",
           text,
-          tone === "dark" ? "text-white" : "text-kaunta-ink"
+          tone === "dark" ? "text-white" : "text-aproksi-ink"
         )}
       >
-        Kaunta
+        Aproksi
         <span
           className={cn(
             "ml-1 font-sans text-[0.5em] font-medium uppercase tracking-[0.2em] align-middle",
-            tone === "dark" ? "text-white/55" : "text-kaunta-ultra"
+            tone === "dark" ? "text-white/55" : "text-aproksi-ultra"
           )}
         >
           HR

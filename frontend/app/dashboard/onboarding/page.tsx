@@ -17,7 +17,7 @@ import dynamic from "next/dynamic";
 const WorkplaceMapPicker = dynamic(() => import("@/components/WorkplaceMapPicker"), {
   ssr: false,
   loading: () => (
-    <div className="h-[300px] w-full animate-pulse rounded-xl border border-kaunta-mist bg-white sm:h-[380px]" />
+    <div className="h-[300px] w-full animate-pulse rounded-xl border border-aproksi-mist bg-white sm:h-[380px]" />
   ),
 });
 import {
@@ -101,10 +101,10 @@ const newWorkplace = (rulesetKey: string): Workplace => ({
 });
 
 // ── Small UI atoms ────────────────────────────────────────────────────────────
-const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
+const cardCls = "rounded-[12px] border border-aproksi-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
-const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
+  "w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra";
+const labelCls = "block text-xs font-medium text-aproksi-slate mb-1";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -355,21 +355,21 @@ export default function OnboardingWizard() {
 
   if (!ready) {
     return (
-      <main className="min-h-screen grid place-items-center bg-kaunta-stone">
-        <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
+      <main className="min-h-screen grid place-items-center bg-aproksi-stone">
+        <Loader2 className="h-6 w-6 animate-spin text-aproksi-ultra" />
       </main>
     );
   }
 
   if (done) {
     return (
-      <main className="min-h-screen bg-kaunta-stone grid place-items-center px-4">
+      <main className="min-h-screen bg-aproksi-stone grid place-items-center px-4">
         <div className={`${cardCls} max-w-md w-full p-8 text-center`}>
-          <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-kaunta-sage-lt">
-            <Check className="h-6 w-6 text-kaunta-sage" />
+          <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-aproksi-sage-lt">
+            <Check className="h-6 w-6 text-aproksi-sage" />
           </div>
-          <h1 className="font-display text-3xl text-kaunta-ink mb-2">You&apos;re all set</h1>
-          <p className="text-sm text-kaunta-slate/70 mb-6">
+          <h1 className="font-display text-3xl text-aproksi-ink mb-2">You&apos;re all set</h1>
+          <p className="text-sm text-aproksi-slate/70 mb-6">
             {name} is configured. Download your setup summary below.
           </p>
           {pdfUrl ? (
@@ -379,7 +379,7 @@ export default function OnboardingWizard() {
               </Button>
             </a>
           ) : (
-            <p className="text-xs text-kaunta-amber mb-3">
+            <p className="text-xs text-aproksi-amber mb-3">
               Setup saved, but the PDF could not be generated. You can regenerate it later.
             </p>
           )}
@@ -394,11 +394,11 @@ export default function OnboardingWizard() {
   }
 
   return (
-    <main className="min-h-screen bg-kaunta-stone">
-      <header className="border-b border-kaunta-mist bg-white">
+    <main className="min-h-screen bg-aproksi-stone">
+      <header className="border-b border-aproksi-mist bg-white">
         <div className="max-w-4xl mx-auto px-6 py-4">
-          <span className="font-display text-2xl text-kaunta-ink">Kaunta HR</span>
-          <span className="text-sm text-kaunta-slate/60 ml-3">Setup wizard</span>
+          <span className="font-display text-2xl text-aproksi-ink">Aproksi HR</span>
+          <span className="text-sm text-aproksi-slate/60 ml-3">Setup wizard</span>
         </div>
       </header>
 
@@ -415,28 +415,28 @@ export default function OnboardingWizard() {
                   <span
                     className={`grid h-9 w-9 place-items-center rounded-full border ${
                       active
-                        ? "border-kaunta-ultra bg-kaunta-ultra text-white"
+                        ? "border-aproksi-ultra bg-aproksi-ultra text-white"
                         : complete
-                        ? "border-kaunta-sage bg-kaunta-sage-lt text-kaunta-sage"
-                        : "border-kaunta-mist bg-white text-kaunta-slate/50"
+                        ? "border-aproksi-sage bg-aproksi-sage-lt text-aproksi-sage"
+                        : "border-aproksi-mist bg-white text-aproksi-slate/50"
                     }`}
                   >
                     {complete ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
                   </span>
                   <span
-                    className={`text-sm ${active ? "text-kaunta-ink font-medium" : "text-kaunta-slate/60"} hidden sm:inline`}
+                    className={`text-sm ${active ? "text-aproksi-ink font-medium" : "text-aproksi-slate/60"} hidden sm:inline`}
                   >
                     {s.label}
                   </span>
                 </div>
-                {i < STEPS.length - 1 && <span className="flex-1 h-px bg-kaunta-mist mx-3" />}
+                {i < STEPS.length - 1 && <span className="flex-1 h-px bg-aproksi-mist mx-3" />}
               </li>
             );
           })}
         </ol>
 
         {error && (
-          <div className="mb-4 rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-4 py-3 text-sm text-kaunta-red">
+          <div className="mb-4 rounded-lg border border-aproksi-red/30 bg-aproksi-red/5 px-4 py-3 text-sm text-aproksi-red">
             {error}
           </div>
         )}
@@ -508,8 +508,8 @@ function StepBusiness(props: {
   return (
     <div className={`${cardCls} p-6 space-y-6`}>
       <div>
-        <h2 className="font-display text-2xl text-kaunta-ink mb-1">Tell us about your business</h2>
-        <p className="text-sm text-kaunta-slate/60">This sets up your organisation on Kaunta HR.</p>
+        <h2 className="font-display text-2xl text-aproksi-ink mb-1">Tell us about your business</h2>
+        <p className="text-sm text-aproksi-slate/60">This sets up your organisation on Aproksi HR.</p>
       </div>
       <Field label="Business name">
         <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Java House Westlands" />
@@ -538,11 +538,11 @@ function Choice({ active, onClick, title, desc }: { active: boolean; onClick: ()
       type="button"
       onClick={onClick}
       className={`text-left rounded-lg border px-4 py-3 transition-colors ${
-        active ? "border-kaunta-ultra bg-kaunta-ultra-lt" : "border-kaunta-mist bg-white hover:bg-kaunta-stone"
+        active ? "border-aproksi-ultra bg-aproksi-ultra-lt" : "border-aproksi-mist bg-white hover:bg-aproksi-stone"
       }`}
     >
-      <span className="block text-sm font-medium text-kaunta-ink">{title}</span>
-      <span className="block text-xs text-kaunta-slate/60">{desc}</span>
+      <span className="block text-sm font-medium text-aproksi-ink">{title}</span>
+      <span className="block text-xs text-aproksi-slate/60">{desc}</span>
     </button>
   );
 }
@@ -563,8 +563,8 @@ function StepRules({
   return (
     <div className="space-y-4">
       <div className={`${cardCls} p-6`}>
-        <h2 className="font-display text-2xl text-kaunta-ink mb-1">Attendance rules & penalties</h2>
-        <p className="text-sm text-kaunta-slate/60">
+        <h2 className="font-display text-2xl text-aproksi-ink mb-1">Attendance rules & penalties</h2>
+        <p className="text-sm text-aproksi-slate/60">
           {sharedRules
             ? "Define one ruleset that applies across your business."
             : "Define one or more rulesets. You'll assign one to each workplace next."}
@@ -583,7 +583,7 @@ function StepRules({
               <button
                 type="button"
                 onClick={() => setRulesets((r) => r.filter((_, idx) => idx !== i))}
-                className="mt-5 text-kaunta-red/70 hover:text-kaunta-red"
+                className="mt-5 text-aproksi-red/70 hover:text-aproksi-red"
                 aria-label="Remove ruleset"
               >
                 <Trash2 className="h-4 w-4" />
@@ -621,7 +621,7 @@ function StepRules({
               <button
                 type="button"
                 onClick={() => update(i, { penalties: [...rs.penalties, newPenalty()] })}
-                className="text-xs text-kaunta-ultra hover:underline inline-flex items-center gap-1"
+                className="text-xs text-aproksi-ultra hover:underline inline-flex items-center gap-1"
               >
                 <Plus className="h-3 w-3" /> Add penalty
               </button>
@@ -630,7 +630,7 @@ function StepRules({
               {rs.penalties.map((p, pi) => (
                 <div key={pi} className="grid grid-cols-12 gap-2 items-end">
                   <div className="col-span-3">
-                    <label className="text-[10px] text-kaunta-slate/60">Code</label>
+                    <label className="text-[10px] text-aproksi-slate/60">Code</label>
                     <input
                       className={inputCls}
                       value={p.code}
@@ -640,7 +640,7 @@ function StepRules({
                     />
                   </div>
                   <div className="col-span-4">
-                    <label className="text-[10px] text-kaunta-slate/60">Reason</label>
+                    <label className="text-[10px] text-aproksi-slate/60">Reason</label>
                     <input
                       className={inputCls}
                       value={p.reason}
@@ -650,7 +650,7 @@ function StepRules({
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="text-[10px] text-kaunta-slate/60">Amount</label>
+                    <label className="text-[10px] text-aproksi-slate/60">Amount</label>
                     <input
                       type="number"
                       min={0}
@@ -662,7 +662,7 @@ function StepRules({
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="text-[10px] text-kaunta-slate/60">Appeal (h)</label>
+                    <label className="text-[10px] text-aproksi-slate/60">Appeal (h)</label>
                     <input
                       type="number"
                       min={0}
@@ -682,7 +682,7 @@ function StepRules({
                       <button
                         type="button"
                         onClick={() => update(i, { penalties: rs.penalties.filter((_, xi) => xi !== pi) })}
-                        className="text-kaunta-red/70 hover:text-kaunta-red pb-2"
+                        className="text-aproksi-red/70 hover:text-aproksi-red pb-2"
                         aria-label="Remove penalty"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -700,7 +700,7 @@ function StepRules({
         <button
           type="button"
           onClick={() => setRulesets((rs) => [...rs, newRuleset(false, `Ruleset ${rs.length + 1}`)])}
-          className={`${cardCls} w-full p-4 text-sm text-kaunta-ultra hover:bg-kaunta-stone inline-flex items-center justify-center gap-2`}
+          className={`${cardCls} w-full p-4 text-sm text-aproksi-ultra hover:bg-aproksi-stone inline-flex items-center justify-center gap-2`}
         >
           <Plus className="h-4 w-4" /> Add another ruleset
         </button>
@@ -727,8 +727,8 @@ function StepWorkplaces({
   return (
     <div className="space-y-4">
       <div className={`${cardCls} p-6`}>
-        <h2 className="font-display text-2xl text-kaunta-ink mb-1">Your workplaces</h2>
-        <p className="text-sm text-kaunta-slate/60">
+        <h2 className="font-display text-2xl text-aproksi-ink mb-1">Your workplaces</h2>
+        <p className="text-sm text-aproksi-slate/60">
           Set each location, its geofence, ruleset, and shifts. Employees clock in inside the geofence.
         </p>
       </div>
@@ -745,7 +745,7 @@ function StepWorkplaces({
               <button
                 type="button"
                 onClick={() => setWorkplaces((ws) => ws.filter((_, idx) => idx !== i))}
-                className="mt-5 text-kaunta-red/70 hover:text-kaunta-red"
+                className="mt-5 text-aproksi-red/70 hover:text-aproksi-red"
                 aria-label="Remove workplace"
               >
                 <Trash2 className="h-4 w-4" />
@@ -789,7 +789,7 @@ function StepWorkplaces({
       <button
         type="button"
         onClick={() => setWorkplaces((ws) => [...ws, newWorkplace(rulesets[0]?.key ?? "")])}
-        className={`${cardCls} w-full p-4 text-sm text-kaunta-ultra hover:bg-kaunta-stone inline-flex items-center justify-center gap-2`}
+        className={`${cardCls} w-full p-4 text-sm text-aproksi-ultra hover:bg-aproksi-stone inline-flex items-center justify-center gap-2`}
       >
         <Plus className="h-4 w-4" /> Add workplace
       </button>
@@ -809,20 +809,20 @@ function ShiftEditor({ shifts, onChange }: { shifts: Shift[]; onChange: (s: Shif
     <div>
       <div className="flex items-center justify-between mb-2">
         <span className={labelCls}>Shifts</span>
-        <button type="button" onClick={() => onChange([...shifts, newShift()])} className="text-xs text-kaunta-ultra hover:underline inline-flex items-center gap-1">
+        <button type="button" onClick={() => onChange([...shifts, newShift()])} className="text-xs text-aproksi-ultra hover:underline inline-flex items-center gap-1">
           <Plus className="h-3 w-3" /> Add shift
         </button>
       </div>
       <div className="space-y-3">
         {shifts.map((s, i) => (
-          <div key={i} className="rounded-lg border border-kaunta-mist p-3 space-y-3">
+          <div key={i} className="rounded-lg border border-aproksi-mist p-3 space-y-3">
             <div className="grid grid-cols-12 gap-2">
               <div className="col-span-5">
-                <label className="text-[10px] text-kaunta-slate/60">Name</label>
+                <label className="text-[10px] text-aproksi-slate/60">Name</label>
                 <input className={inputCls} value={s.name} onChange={(e) => update(i, { name: e.target.value })} />
               </div>
               <div className="col-span-3">
-                <label className="text-[10px] text-kaunta-slate/60">Kind</label>
+                <label className="text-[10px] text-aproksi-slate/60">Kind</label>
                 <select className={inputCls} value={s.kind} onChange={(e) => update(i, { kind: e.target.value as Shift["kind"] })}>
                   <option value="day">Day</option>
                   <option value="night">Night</option>
@@ -830,7 +830,7 @@ function ShiftEditor({ shifts, onChange }: { shifts: Shift[]; onChange: (s: Shif
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="text-[10px] text-kaunta-slate/60">Grace (m)</label>
+                <label className="text-[10px] text-aproksi-slate/60">Grace (m)</label>
                 <input
                   type="number"
                   min={0}
@@ -841,7 +841,7 @@ function ShiftEditor({ shifts, onChange }: { shifts: Shift[]; onChange: (s: Shif
               </div>
               <div className="col-span-2 flex items-end justify-end">
                 {shifts.length > 1 && (
-                  <button type="button" onClick={() => onChange(shifts.filter((_, idx) => idx !== i))} className="text-kaunta-red/70 hover:text-kaunta-red pb-2" aria-label="Remove shift">
+                  <button type="button" onClick={() => onChange(shifts.filter((_, idx) => idx !== i))} className="text-aproksi-red/70 hover:text-aproksi-red pb-2" aria-label="Remove shift">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 )}
@@ -849,16 +849,16 @@ function ShiftEditor({ shifts, onChange }: { shifts: Shift[]; onChange: (s: Shif
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-kaunta-slate/60">Start</label>
+                <label className="text-[10px] text-aproksi-slate/60">Start</label>
                 <input type="time" className={inputCls} value={s.start_time} onChange={(e) => update(i, { start_time: e.target.value })} />
               </div>
               <div>
-                <label className="text-[10px] text-kaunta-slate/60">End</label>
+                <label className="text-[10px] text-aproksi-slate/60">End</label>
                 <input type="time" className={inputCls} value={s.end_time} onChange={(e) => update(i, { end_time: e.target.value })} />
               </div>
             </div>
             <div>
-              <label className="text-[10px] text-kaunta-slate/60 block mb-1">Days</label>
+              <label className="text-[10px] text-aproksi-slate/60 block mb-1">Days</label>
               <div className="flex flex-wrap gap-1">
                 {DAYS.map((d, di) => (
                   <button
@@ -867,8 +867,8 @@ function ShiftEditor({ shifts, onChange }: { shifts: Shift[]; onChange: (s: Shif
                     onClick={() => toggleDay(i, di)}
                     className={`h-7 w-9 rounded-md text-xs ${
                       s.days_of_week.includes(di)
-                        ? "bg-kaunta-ultra text-white"
-                        : "bg-kaunta-stone text-kaunta-slate/70 hover:bg-kaunta-mist"
+                        ? "bg-aproksi-ultra text-white"
+                        : "bg-aproksi-stone text-aproksi-slate/70 hover:bg-aproksi-mist"
                     }`}
                   >
                     {d}
@@ -901,8 +901,8 @@ function StepReview({
   return (
     <div className="space-y-4">
       <div className={`${cardCls} p-6`}>
-        <h2 className="font-display text-2xl text-kaunta-ink mb-1">Review & finish</h2>
-        <p className="text-sm text-kaunta-slate/60">
+        <h2 className="font-display text-2xl text-aproksi-ink mb-1">Review & finish</h2>
+        <p className="text-sm text-aproksi-slate/60">
           {name} · {workplaceMode} workplace · {rulesMode} rules
         </p>
       </div>
@@ -910,19 +910,19 @@ function StepReview({
         const rs = rsByKey.get(w.rulesetKey);
         return (
           <div key={i} className={`${cardCls} p-6`}>
-            <h3 className="font-display text-xl text-kaunta-ink mb-2 inline-flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-kaunta-ultra" /> {w.name || "Untitled"}
+            <h3 className="font-display text-xl text-aproksi-ink mb-2 inline-flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-aproksi-ultra" /> {w.name || "Untitled"}
             </h3>
-            <p className="text-xs text-kaunta-slate/60 mb-3">
+            <p className="text-xs text-aproksi-slate/60 mb-3">
               {w.lat != null && w.lng != null ? `${w.lat}, ${w.lng}` : "No coordinates"} · {w.geofence_radius_m} m ·{" "}
               {rs?.name ?? "no ruleset"}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-xs font-medium text-kaunta-sage mb-1 inline-flex items-center gap-1">
+                <p className="text-xs font-medium text-aproksi-sage mb-1 inline-flex items-center gap-1">
                   <Clock className="h-3 w-3" /> Shifts
                 </p>
-                <ul className="text-kaunta-slate/80 space-y-0.5">
+                <ul className="text-aproksi-slate/80 space-y-0.5">
                   {w.shifts.map((s, si) => (
                     <li key={si}>
                       {s.name} ({s.kind}) {s.start_time}–{s.end_time}
@@ -931,10 +931,10 @@ function StepReview({
                 </ul>
               </div>
               <div>
-                <p className="text-xs font-medium text-kaunta-sage mb-1 inline-flex items-center gap-1">
+                <p className="text-xs font-medium text-aproksi-sage mb-1 inline-flex items-center gap-1">
                   <Scale className="h-3 w-3" /> Penalties
                 </p>
-                <ul className="text-kaunta-slate/80 space-y-0.5">
+                <ul className="text-aproksi-slate/80 space-y-0.5">
                   {(rs?.penalties ?? []).map((p, pi) => (
                     <li key={pi}>
                       {p.reason} — KES {p.amount}

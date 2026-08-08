@@ -46,16 +46,16 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   if (!ready) return null;
 
   return (
-    <div className="min-h-screen bg-kaunta-stone flex flex-col">
-      <header className="border-b border-kaunta-mist bg-white sticky top-0 z-10">
+    <div className="min-h-screen bg-aproksi-stone flex flex-col">
+      <header className="border-b border-aproksi-mist bg-white sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="font-display text-2xl text-kaunta-ink">Kaunta HR</span>
+          <span className="font-display text-2xl text-aproksi-ink">Aproksi HR</span>
           <button
             onClick={() => {
               clearEmployeeToken();
               router.replace("/me/login");
             }}
-            className="flex items-center gap-1.5 text-sm text-kaunta-ultra hover:underline"
+            className="flex items-center gap-1.5 text-sm text-aproksi-ultra hover:underline"
           >
             <LogOut className="h-4 w-4" />
             Sign out
@@ -70,8 +70,8 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 href={href}
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${
                   active
-                    ? "bg-kaunta-ultra/10 text-kaunta-ultra font-medium"
-                    : "text-kaunta-slate/70 hover:bg-kaunta-stone hover:text-kaunta-ink"
+                    ? "bg-aproksi-ultra/10 text-aproksi-ultra font-medium"
+                    : "text-aproksi-slate/70 hover:bg-aproksi-stone hover:text-aproksi-ink"
                 }`}
               >
                 <Icon className="h-4 w-4" />

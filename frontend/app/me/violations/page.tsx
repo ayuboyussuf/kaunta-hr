@@ -50,10 +50,10 @@ function windowLeft(ms: number | null): string {
 /* Keyed on the derived stage, not on the database status — a row still sitting
  * at "open" whose window shut a fortnight ago must not look actionable. */
 const STAGE_STYLE: Record<Stage, string> = {
-  open: "bg-kaunta-amber/15 text-kaunta-amber",
-  appealed: "bg-kaunta-ultra/15 text-kaunta-ultra",
-  closed_no_appeal: "bg-kaunta-slate/10 text-kaunta-slate",
-  settled: "bg-kaunta-ink/10 text-kaunta-ink",
+  open: "bg-aproksi-amber/15 text-aproksi-amber",
+  appealed: "bg-aproksi-ultra/15 text-aproksi-ultra",
+  closed_no_appeal: "bg-aproksi-slate/10 text-aproksi-slate",
+  settled: "bg-aproksi-ink/10 text-aproksi-ink",
 };
 
 export default function MyViolationsPage() {
@@ -144,20 +144,20 @@ export default function MyViolationsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-kaunta-stone grid place-items-center">
-        <p className="text-kaunta-slate/60">Loading…</p>
+      <main className="min-h-screen bg-aproksi-stone grid place-items-center">
+        <p className="text-aproksi-slate/60">Loading…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-kaunta-stone">
-      <header className="border-b border-kaunta-mist bg-white">
+    <main className="min-h-screen bg-aproksi-stone">
+      <header className="border-b border-aproksi-mist bg-white">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="font-display text-2xl text-kaunta-ink">My penalties</span>
+          <span className="font-display text-2xl text-aproksi-ink">My penalties</span>
           <button
             onClick={() => router.push("/me")}
-            className="text-sm text-kaunta-ultra hover:underline"
+            className="text-sm text-aproksi-ultra hover:underline"
           >
             Back
           </button>
@@ -165,19 +165,19 @@ export default function MyViolationsPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-4">
-        {/* Anything Kaunta needs from them about an appeal already filed. Sits
+        {/* Anything Aproksi needs from them about an appeal already filed. Sits
             at the top because it is the only thing on this page waiting on
             them; it renders nothing when there is nothing outstanding. */}
         <AppealQuestion />
 
         {error && (
-          <div className="rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-4 py-3 text-sm text-kaunta-red">
+          <div className="rounded-lg border border-aproksi-red/30 bg-aproksi-red/5 px-4 py-3 text-sm text-aproksi-red">
             {error}
           </div>
         )}
 
         {violations.length === 0 ? (
-          <Card className="p-8 text-center text-sm text-kaunta-slate/60">
+          <Card className="p-8 text-center text-sm text-aproksi-slate/60">
             You have no penalties. Keep it up.
           </Card>
         ) : (
@@ -185,15 +185,15 @@ export default function MyViolationsPage() {
             <Card key={v.id} className="p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="font-medium text-kaunta-ink">{v.reason}</p>
+                  <p className="font-medium text-aproksi-ink">{v.reason}</p>
                   {v.workplace_name && (
-                    <p className="text-xs text-kaunta-slate/60">{v.workplace_name}</p>
+                    <p className="text-xs text-aproksi-slate/60">{v.workplace_name}</p>
                   )}
-                  <p className="text-lg text-kaunta-red tabular-nums mt-1">{fmtKes(v.amount)}</p>
+                  <p className="text-lg text-aproksi-red tabular-nums mt-1">{fmtKes(v.amount)}</p>
                 </div>
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    STAGE_STYLE[v.stage] ?? "bg-kaunta-mist text-kaunta-slate"
+                    STAGE_STYLE[v.stage] ?? "bg-aproksi-mist text-aproksi-slate"
                   }`}
                 >
                   {v.stage_label}
@@ -201,9 +201,9 @@ export default function MyViolationsPage() {
               </div>
 
               {v.evidence && (
-                <p className="text-sm text-kaunta-slate/80 mt-3 whitespace-pre-line">{v.evidence}</p>
+                <p className="text-sm text-aproksi-slate/80 mt-3 whitespace-pre-line">{v.evidence}</p>
               )}
-              <p className="text-xs text-kaunta-slate/50 mt-2">
+              <p className="text-xs text-aproksi-slate/50 mt-2">
                 Logged {fmtDate(v.created_at)}
                 {v.notified_at
                   ? ` · you were texted ${fmtDate(v.notified_at)}`
@@ -212,16 +212,16 @@ export default function MyViolationsPage() {
 
               {/* ── What happens next, spelled out for every state ── */}
               {v.appeal ? (
-                <div className="mt-3 rounded-lg bg-kaunta-stone px-3 py-2">
-                  <p className="text-xs font-medium text-kaunta-slate">
+                <div className="mt-3 rounded-lg bg-aproksi-stone px-3 py-2">
+                  <p className="text-xs font-medium text-aproksi-slate">
                     {v.appeal.decision === "pending"
                       ? "You appealed. Your employer has not decided yet."
                       : v.appeal.decision === "accepted"
                         ? "You appealed and it was waived."
                         : "You appealed and the penalty was upheld."}
                   </p>
-                  <p className="text-sm text-kaunta-slate/80 mt-0.5 italic">“{v.appeal.message}”</p>
-                  {v.outcome && <p className="text-xs text-kaunta-ink mt-1">Outcome: {v.outcome}</p>}
+                  <p className="text-sm text-aproksi-slate/80 mt-0.5 italic">“{v.appeal.message}”</p>
+                  {v.outcome && <p className="text-xs text-aproksi-ink mt-1">Outcome: {v.outcome}</p>}
                 </div>
               ) : v.can_appeal ? (
                 appealFor === v.id ? (
@@ -231,7 +231,7 @@ export default function MyViolationsPage() {
                       onChange={(e) => setMessage(e.target.value)}
                       rows={3}
                       placeholder="Say what happened, in your own words…"
-                      className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
+                      className="w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra"
                     />
                     <div className="flex gap-2">
                       <Button
@@ -265,19 +265,19 @@ export default function MyViolationsPage() {
                     >
                       Appeal this
                     </Button>
-                    <span className="text-xs text-kaunta-amber">{windowLeft(v.ms_left)}</span>
+                    <span className="text-xs text-aproksi-amber">{windowLeft(v.ms_left)}</span>
                   </div>
                 )
               ) : (
                 /* The state that used to be a blank card. It stands, it says
                    why, and it says what could still be done about it. */
-                <div className="mt-3 rounded-lg bg-kaunta-stone px-3 py-2">
-                  <p className="text-sm text-kaunta-ink">
+                <div className="mt-3 rounded-lg bg-aproksi-stone px-3 py-2">
+                  <p className="text-sm text-aproksi-ink">
                     {v.stage === "closed_no_appeal"
                       ? "The time to appeal has passed, so this penalty stands."
                       : "This is closed and cannot be changed here."}
                   </p>
-                  <p className="mt-0.5 text-xs text-kaunta-slate/70">
+                  <p className="mt-0.5 text-xs text-aproksi-slate/70">
                     {v.stage === "closed_no_appeal"
                       ? `Appeals closed ${fmtDate(v.appeal_window_end)}. If you think it is wrong, speak to your employer — they can still waive it.`
                       : "It will appear on your payslip as recorded."}
@@ -292,12 +292,12 @@ export default function MyViolationsPage() {
                 <button
                   type="button"
                   onClick={() => acknowledge(v.id)}
-                  className="mt-3 inline-flex min-h-[40px] items-center rounded-lg border border-kaunta-mist bg-white px-4 text-sm text-kaunta-slate hover:border-kaunta-ultra/40"
+                  className="mt-3 inline-flex min-h-[40px] items-center rounded-lg border border-aproksi-mist bg-white px-4 text-sm text-aproksi-slate hover:border-aproksi-ultra/40"
                 >
                   I&apos;ve seen this
                 </button>
               ) : (
-                <p className="mt-3 text-xs text-kaunta-sage">
+                <p className="mt-3 text-xs text-aproksi-sage">
                   You confirmed you saw this on {fmtDate(v.acknowledged_at)}.
                 </p>
               )}
@@ -306,7 +306,7 @@ export default function MyViolationsPage() {
                 <button
                   type="button"
                   onClick={() => openDocument(v.id)}
-                  className="mt-3 block text-sm text-kaunta-ultra hover:underline"
+                  className="mt-3 block text-sm text-aproksi-ultra hover:underline"
                 >
                   Open the outcome document
                 </button>

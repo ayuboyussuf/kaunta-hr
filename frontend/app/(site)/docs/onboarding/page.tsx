@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "Onboarding staff",
   description:
-    "Add staff to Kaunta HR by phone number and verify them with an SMS code. No app to install and no staff passwords.",
+    "Add staff to Aproksi HR by phone number and verify them with an SMS code. No app to install and no staff passwords.",
 };
 
 export default function OnboardingDocPage() {

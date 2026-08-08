@@ -1,5 +1,5 @@
 /**
- * Telling Kaunta about a clock-in that never happened.
+ * Telling Aproksi about a clock-in that never happened.
  *
  * The failures that matter most to an employee are the ones the server never
  * sees: the camera won't open, the signal drops, GPS is refused. From the
@@ -32,7 +32,7 @@ interface QueuedReport {
   accuracy?: number | null;
 }
 
-const QUEUE_KEY = "kaunta_hr_scan_attempts";
+const QUEUE_KEY = "aproksi_hr_scan_attempts";
 const MAX_QUEUED = 40;
 
 function readQueue(): QueuedReport[] {

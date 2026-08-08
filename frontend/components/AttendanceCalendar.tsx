@@ -31,19 +31,19 @@ const todayYmd = () => DateTime.now().setZone(TZ).toISODate()!;
 type DayState = "present" | "late" | "flagged" | "absent" | "off" | "future";
 
 const STATE_STYLE: Record<DayState, string> = {
-  present: "bg-kaunta-sage/20 text-kaunta-sage",
-  late: "bg-kaunta-amber/20 text-kaunta-amber",
-  flagged: "bg-kaunta-red/15 text-kaunta-red",
-  absent: "bg-kaunta-red/5 text-kaunta-red/70 ring-1 ring-inset ring-kaunta-red/30",
-  off: "text-kaunta-slate/40",
-  future: "text-kaunta-slate/20",
+  present: "bg-aproksi-sage/20 text-aproksi-sage",
+  late: "bg-aproksi-amber/20 text-aproksi-amber",
+  flagged: "bg-aproksi-red/15 text-aproksi-red",
+  absent: "bg-aproksi-red/5 text-aproksi-red/70 ring-1 ring-inset ring-aproksi-red/30",
+  off: "text-aproksi-slate/40",
+  future: "text-aproksi-slate/20",
 };
 
 const LEGEND: { label: string; cls: string }[] = [
-  { label: "On site", cls: "bg-kaunta-sage/20" },
-  { label: "Late", cls: "bg-kaunta-amber/20" },
-  { label: "Flagged", cls: "bg-kaunta-red/15" },
-  { label: "Absent", cls: "bg-kaunta-red/5 ring-1 ring-inset ring-kaunta-red/30" },
+  { label: "On site", cls: "bg-aproksi-sage/20" },
+  { label: "Late", cls: "bg-aproksi-amber/20" },
+  { label: "Flagged", cls: "bg-aproksi-red/15" },
+  { label: "Absent", cls: "bg-aproksi-red/5 ring-1 ring-inset ring-aproksi-red/30" },
 ];
 
 export default function AttendanceCalendar({
@@ -131,16 +131,16 @@ export default function AttendanceCalendar({
         <button
           onClick={() => setCursor(new Date(year, month - 1, 1))}
           disabled={atMin}
-          className="p-1 text-kaunta-slate/60 hover:text-kaunta-ink disabled:opacity-30"
+          className="p-1 text-aproksi-slate/60 hover:text-aproksi-ink disabled:opacity-30"
           aria-label="Previous month"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <span className="text-sm font-medium text-kaunta-ink">{monthLabel}</span>
+        <span className="text-sm font-medium text-aproksi-ink">{monthLabel}</span>
         <button
           onClick={() => setCursor(new Date(year, month + 1, 1))}
           disabled={atCurrent}
-          className="p-1 text-kaunta-slate/60 hover:text-kaunta-ink disabled:opacity-30"
+          className="p-1 text-aproksi-slate/60 hover:text-aproksi-ink disabled:opacity-30"
           aria-label="Next month"
         >
           <ChevronRight className="h-4 w-4" />
@@ -149,7 +149,7 @@ export default function AttendanceCalendar({
 
       <div className="grid grid-cols-7 gap-1 text-center">
         {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-          <div key={i} className="text-[10px] text-kaunta-slate/50 py-1">{d}</div>
+          <div key={i} className="text-[10px] text-aproksi-slate/50 py-1">{d}</div>
         ))}
         {Array.from({ length: firstWeekday }).map((_, i) => <div key={`b${i}`} />)}
         {cells.map((c) => {
@@ -160,11 +160,11 @@ export default function AttendanceCalendar({
               key={c.ymd}
               type="button"
               onClick={clickable ? () => onSelectDay!(c.ymd) : undefined}
-              className={`relative aspect-square rounded-md text-xs flex items-center justify-center ${STATE_STYLE[st]} ${clickable ? "hover:ring-1 hover:ring-kaunta-ultra cursor-pointer" : "cursor-default"}`}
+              className={`relative aspect-square rounded-md text-xs flex items-center justify-center ${STATE_STYLE[st]} ${clickable ? "hover:ring-1 hover:ring-aproksi-ultra cursor-pointer" : "cursor-default"}`}
             >
               {c.day}
               {missedByDay.has(c.ymd) && (
-                <span className="absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-kaunta-red" title="Missed presence check" />
+                <span className="absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-aproksi-red" title="Missed presence check" />
               )}
             </button>
           );
@@ -173,12 +173,12 @@ export default function AttendanceCalendar({
 
       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
         {LEGEND.map((l) => (
-          <span key={l.label} className="inline-flex items-center gap-1 text-[11px] text-kaunta-slate/60">
+          <span key={l.label} className="inline-flex items-center gap-1 text-[11px] text-aproksi-slate/60">
             <span className={`h-3 w-3 rounded ${l.cls}`} /> {l.label}
           </span>
         ))}
-        <span className="inline-flex items-center gap-1 text-[11px] text-kaunta-slate/60">
-          <span className="h-1.5 w-1.5 rounded-full bg-kaunta-red" /> Missed check
+        <span className="inline-flex items-center gap-1 text-[11px] text-aproksi-slate/60">
+          <span className="h-1.5 w-1.5 rounded-full bg-aproksi-red" /> Missed check
         </span>
       </div>
     </div>

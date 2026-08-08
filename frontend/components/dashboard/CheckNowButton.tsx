@@ -62,7 +62,7 @@ export function CheckNowButton({
 
   if (state.kind === "sent") {
     return (
-      <p className="text-xs text-kaunta-sage">
+      <p className="text-xs text-aproksi-sage">
         Asked {name.split(" ")[0]} to confirm — they have until {state.until}.
       </p>
     );
@@ -79,11 +79,11 @@ export function CheckNowButton({
             ? "Send a check now — they must scan the workplace QR to confirm"
             : "They are not clocked in, so there is nothing to confirm"
         }
-        className="inline-flex min-h-[36px] items-center rounded-lg border border-kaunta-mist bg-white px-3 text-xs text-kaunta-slate transition-colors hover:border-kaunta-ultra/40 hover:text-kaunta-ultra disabled:cursor-not-allowed disabled:opacity-40"
+        className="inline-flex min-h-[36px] items-center rounded-lg border border-aproksi-mist bg-white px-3 text-xs text-aproksi-slate transition-colors hover:border-aproksi-ultra/40 hover:text-aproksi-ultra disabled:cursor-not-allowed disabled:opacity-40"
       >
         {state.kind === "sending" ? "Sending…" : "Check on them now"}
       </button>
-      {state.kind === "refused" && <p className="text-xs text-kaunta-red">{state.why}</p>}
+      {state.kind === "refused" && <p className="text-xs text-aproksi-red">{state.why}</p>}
     </div>
   );
 }

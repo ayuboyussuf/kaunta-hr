@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Persistent dashboard chrome: a top navbar with the Kaunta logo, links to every
+ * Persistent dashboard chrome: a top navbar with the Aproksi logo, links to every
  * management section, and sign-out — shown on all /dashboard/* pages except the
  * standalone onboarding wizard.
  */
@@ -10,7 +10,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
-import { KauntaWordmark } from "@/components/KauntaLogo";
+import { AproksiWordmark } from "@/components/AproksiLogo";
 import { LogOut, Bell } from "lucide-react";
 
 // Messages live behind the bell icon (top right), not in the nav.
@@ -69,12 +69,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     exact ? pathname === href : pathname === href || pathname?.startsWith(href + "/");
 
   return (
-    <div className="min-h-screen bg-kaunta-stone">
-      <nav className="sticky top-0 z-30 border-b border-kaunta-mist bg-white/95 backdrop-blur">
+    <div className="min-h-screen bg-aproksi-stone">
+      <nav className="sticky top-0 z-30 border-b border-aproksi-mist bg-white/95 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
-            <Link href="/dashboard" aria-label="Kaunta HR — Overview">
-              <KauntaWordmark size="md" theme="dark" />
+            <Link href="/dashboard" aria-label="Aproksi HR — Overview">
+              <AproksiWordmark size="md" theme="dark" />
             </Link>
             <div className="flex items-center gap-2">
               <Link
@@ -82,20 +82,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 aria-label={`Messages${unread > 0 ? `, ${unread} unread` : ""}`}
                 className={`relative grid h-9 w-9 place-items-center rounded-full border transition-colors ${
                   isActive("/dashboard/messages")
-                    ? "border-kaunta-ultra/40 text-kaunta-ultra bg-kaunta-ultra/5"
-                    : "border-kaunta-mist text-kaunta-slate/70 hover:text-kaunta-ink hover:border-kaunta-slate/30"
+                    ? "border-aproksi-ultra/40 text-aproksi-ultra bg-aproksi-ultra/5"
+                    : "border-aproksi-mist text-aproksi-slate/70 hover:text-aproksi-ink hover:border-aproksi-slate/30"
                 }`}
               >
                 <Bell className="h-[18px] w-[18px]" />
                 {unread > 0 && (
-                  <span className="absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-kaunta-ultra px-1 text-[11px] font-semibold text-white">
+                  <span className="absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-aproksi-ultra px-1 text-[11px] font-semibold text-white">
                     {unread > 9 ? "9+" : unread}
                   </span>
                 )}
               </Link>
               <button
                 onClick={signOut}
-                className="inline-flex items-center gap-1.5 text-sm text-kaunta-slate/70 hover:text-kaunta-ink"
+                className="inline-flex items-center gap-1.5 text-sm text-aproksi-slate/70 hover:text-aproksi-ink"
               >
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Sign out</span>
@@ -111,8 +111,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   href={item.href}
                   className={`whitespace-nowrap px-3 py-2.5 text-sm border-b-2 transition-colors ${
                     active
-                      ? "border-kaunta-ultra text-kaunta-ink font-medium"
-                      : "border-transparent text-kaunta-slate/60 hover:text-kaunta-ink"
+                      ? "border-aproksi-ultra text-aproksi-ink font-medium"
+                      : "border-transparent text-aproksi-slate/60 hover:text-aproksi-ink"
                   }`}
                 >
                   {item.label}

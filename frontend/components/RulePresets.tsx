@@ -92,7 +92,7 @@ export function RulePresets({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex min-h-[40px] items-center rounded-lg border border-dashed border-kaunta-mist px-3.5 text-sm text-kaunta-slate transition-colors hover:border-kaunta-ultra/50 hover:text-kaunta-ink"
+        className="inline-flex min-h-[40px] items-center rounded-lg border border-dashed border-aproksi-mist px-3.5 text-sm text-aproksi-slate transition-colors hover:border-aproksi-ultra/50 hover:text-aproksi-ink"
       >
         Start from a preset
       </button>
@@ -102,13 +102,13 @@ export function RulePresets({
   const selected = presets.find((p) => p.key === chosen) ?? null;
 
   return (
-    <div className="rounded-xl border border-kaunta-mist bg-kaunta-stone/60 p-4">
+    <div className="rounded-xl border border-aproksi-mist bg-aproksi-stone/60 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-kaunta-ink">
+          <p className="text-sm font-medium text-aproksi-ink">
             Presets for &ldquo;{rulesetName}&rdquo;
           </p>
-          <p className="mt-1 text-xs text-kaunta-slate/70">
+          <p className="mt-1 text-xs text-aproksi-slate/70">
             These write normal rules you can edit afterwards. Nothing is applied
             until you choose.
           </p>
@@ -119,14 +119,14 @@ export function RulePresets({
             setOpen(false);
             setChosen(null);
           }}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-kaunta-slate hover:bg-white"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-aproksi-slate hover:bg-white"
           aria-label="Close presets"
         >
           ✕
         </button>
       </div>
 
-      {error && <p className="mt-3 text-sm text-kaunta-red">{error}</p>}
+      {error && <p className="mt-3 text-sm text-aproksi-red">{error}</p>}
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {presets.map((p) => (
@@ -137,15 +137,15 @@ export function RulePresets({
             className={[
               "rounded-lg border p-3 text-left transition-colors",
               chosen === p.key
-                ? "border-kaunta-ultra bg-white"
-                : "border-kaunta-mist bg-white/70 hover:border-kaunta-ultra/40",
+                ? "border-aproksi-ultra bg-white"
+                : "border-aproksi-mist bg-white/70 hover:border-aproksi-ultra/40",
             ].join(" ")}
           >
-            <p className="text-sm font-medium text-kaunta-ink">{p.name}</p>
-            <p className="mt-1 text-xs leading-relaxed text-kaunta-slate/70">
+            <p className="text-sm font-medium text-aproksi-ink">{p.name}</p>
+            <p className="mt-1 text-xs leading-relaxed text-aproksi-slate/70">
               {p.blurb}
             </p>
-            <p className="mt-2 text-[0.6875rem] uppercase tracking-wider text-kaunta-slate/50">
+            <p className="mt-2 text-[0.6875rem] uppercase tracking-wider text-aproksi-slate/50">
               {p.suits}
             </p>
           </button>
@@ -153,28 +153,28 @@ export function RulePresets({
       </div>
 
       {selected && (
-        <div className="mt-4 rounded-lg border border-kaunta-mist bg-white p-4">
-          <p className="text-xs uppercase tracking-wider text-kaunta-slate/50">
+        <div className="mt-4 rounded-lg border border-aproksi-mist bg-white p-4">
+          <p className="text-xs uppercase tracking-wider text-aproksi-slate/50">
             What this adds
           </p>
           <ul className="mt-3 space-y-2.5">
             {selected.rules.map((r) => (
               <li key={r.code} className="flex flex-wrap items-baseline gap-x-2">
-                <span className="text-sm text-kaunta-ink">{r.reason}</span>
-                <span className="text-sm text-kaunta-slate">
+                <span className="text-sm text-aproksi-ink">{r.reason}</span>
+                <span className="text-sm text-aproksi-slate">
                   — {ruleSummary(r)}
                 </span>
                 <span
                   className={[
                     "rounded-full px-2 py-0.5 text-[0.625rem] font-medium",
                     r.automatic
-                      ? "bg-kaunta-ultra/10 text-kaunta-ultra"
-                      : "bg-kaunta-stone text-kaunta-slate/70",
+                      ? "bg-aproksi-ultra/10 text-aproksi-ultra"
+                      : "bg-aproksi-stone text-aproksi-slate/70",
                   ].join(" ")}
                 >
                   {r.automatic ? "automatic" : "you raise it"}
                 </span>
-                <span className="w-full text-xs text-kaunta-slate/60">{r.note}</span>
+                <span className="w-full text-xs text-aproksi-slate/60">{r.note}</span>
               </li>
             ))}
           </ul>

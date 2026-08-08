@@ -28,7 +28,7 @@ export async function sendText(phone: string, body: string): Promise<void> {
 export async function sendOtp(phone: string, code: string): Promise<void> {
   await sendSms(
     toMsisdn(phone),
-    `Your Kaunta HR verification code is ${code}. It expires in 5 minutes. Do not share it.`
+    `Your Aproksi HR verification code is ${code}. It expires in 5 minutes. Do not share it.`
   );
 }
 

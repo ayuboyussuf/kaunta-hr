@@ -4,7 +4,7 @@
  * The shape enforces the rule. There is no `verdict`, no `recommendation`, no
  * `confidence_it_is_true`, no score — because the moment one exists, an owner
  * with forty staff and ten minutes starts reading it instead of the findings,
- * and Kaunta has quietly begun deciding who gets paid.
+ * and Aproksi has quietly begun deciding who gets paid.
  *
  * What it can say is: here is what the record shows, here is which parts point
  * which way, and here is what would settle it that we do not have.

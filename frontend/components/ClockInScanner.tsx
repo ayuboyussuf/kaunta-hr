@@ -28,25 +28,25 @@ interface ScanResult {
 }
 
 const STATUS_COPY: Record<string, { title: string; tone: string; note: string }> = {
-  normal: { title: "Clocked in — on time", tone: "text-kaunta-sage", note: "You're inside the workplace area." },
-  late: { title: "Clocked in — late", tone: "text-kaunta-amber", note: "Recorded as late against your shift." },
-  flagged: { title: "Clocked in — flagged", tone: "text-kaunta-red", note: "This scan was flagged for review." },
+  normal: { title: "Clocked in — on time", tone: "text-aproksi-sage", note: "You're inside the workplace area." },
+  late: { title: "Clocked in — late", tone: "text-aproksi-amber", note: "Recorded as late against your shift." },
+  flagged: { title: "Clocked in — flagged", tone: "text-aproksi-red", note: "This scan was flagged for review." },
   on_leave: {
     title: "Clocked in — approved leave",
-    tone: "text-kaunta-ultra",
+    tone: "text-aproksi-ultra",
     note: "Today is leave your employer approved. You are not marked late and there is no penalty.",
   },
-  out: { title: "Clocked out", tone: "text-kaunta-sage", note: "Your clock-out has been recorded." },
+  out: { title: "Clocked out", tone: "text-aproksi-sage", note: "Your clock-out has been recorded." },
   /* Answering a check is not leaving. Reporting "Clocked out" here is how
      somebody concludes the app has just ended their shift by mistake. */
   check: {
     title: "Presence confirmed",
-    tone: "text-kaunta-sage",
+    tone: "text-aproksi-sage",
     note: "You answered the check. You are still clocked in — this did not end your shift.",
   },
 };
 
-const SCANNER_ID = "kaunta-qr-reader";
+const SCANNER_ID = "aproksi-qr-reader";
 
 /** The printed QR encodes a `…/scan?w=<token>` deep link; accept that or a raw token. */
 function extractToken(decoded: string): string {
@@ -197,13 +197,13 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
       <Card>
         <CardContent className="p-6 text-center space-y-2">
           <p className={`font-display text-2xl ${copy.tone}`}>{copy.title}</p>
-          <p className="text-sm text-kaunta-ink">{result.workplace?.name}</p>
-          <p className="text-xs text-kaunta-slate/60">
+          <p className="text-sm text-aproksi-ink">{result.workplace?.name}</p>
+          <p className="text-xs text-aproksi-slate/60">
             {copy.note}
             {result.distance_m != null ? ` · ${result.distance_m}m from the workplace` : ""}
           </p>
           {result.flags?.length > 0 && (
-            <p className="text-xs text-kaunta-red">Flags: {result.flags.join(", ")}</p>
+            <p className="text-xs text-aproksi-red">Flags: {result.flags.join(", ")}</p>
           )}
 
           {/* The answer counted even when the location could not back it up —
@@ -211,7 +211,7 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
               with no way to comply. Said out loud so it is not a surprise if
               the employer asks about it. */}
           {result.presence_check?.confirmed && result.presence_check.location_verified === false && (
-            <p className="text-xs text-kaunta-amber">
+            <p className="text-xs text-aproksi-amber">
               Your location did not confirm you were inside the workplace area, so
               your employer will see that alongside the check. The check itself is
               answered.
@@ -223,18 +223,18 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
               with, because a deduction you only find out about at month end is
               the thing this product exists to stop. */}
           {result.penalty && (
-            <div className="mt-4 rounded-xl border border-kaunta-amber/30 bg-kaunta-amber/5 p-4 text-left">
-              <p className="text-sm font-medium text-kaunta-ink">
+            <div className="mt-4 rounded-xl border border-aproksi-amber/30 bg-aproksi-amber/5 p-4 text-left">
+              <p className="text-sm font-medium text-aproksi-ink">
                 {result.penalty.reason} — KES{" "}
                 {Number(result.penalty.amount).toLocaleString("en-KE")}
               </p>
-              <p className="mt-1 text-xs text-kaunta-slate/70">
+              <p className="mt-1 text-xs text-aproksi-slate/70">
                 Applied automatically by your employer&apos;s rules. If you think
                 it is wrong, say why and it goes to them to decide.
               </p>
               <a
                 href="/me/violations"
-                className="mt-2 inline-block text-sm text-kaunta-ultra underline underline-offset-2"
+                className="mt-2 inline-block text-sm text-aproksi-ultra underline underline-offset-2"
               >
                 Appeal this
               </a>
@@ -253,7 +253,7 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
     return (
       <Card>
         <CardContent className="p-6 text-center space-y-3">
-          <p className="text-sm text-kaunta-red">{error}</p>
+          <p className="text-sm text-aproksi-red">{error}</p>
           <Button variant="outline" onClick={() => window.location.reload()}>
             Try again
           </Button>
@@ -280,7 +280,7 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
           }`}
           style={{ transform: "scaleX(-1)" }}
         />
-        <p className="text-center text-sm text-kaunta-slate/70">
+        <p className="text-center text-sm text-aproksi-slate/70">
           {phase === "scanning" && "Point your camera at the workplace QR code."}
           {phase === "selfie" && "Look at the camera to confirm it's you…"}
           {phase === "locating" && "Reading your location…"}
