@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SelfieThumb from "@/components/SelfieThumb";
 import { InsightsPanel } from "@/components/InsightsPanel";
+import { AttentionQueue, type AttentionItem } from "@/components/dashboard/AttentionQueue";
+import { ArrivalsRail } from "@/components/dashboard/ArrivalsRail";
 
 /**
  * Owner live dashboard + hub (spec §9). Shows, per workplace, who's clocked in /
@@ -21,6 +23,11 @@ function nairobiDate(): string {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date());
+}
+
+/** An ISO instant N days back. Wrapped so the clock read is not in the render body. */
+function daysAgoISO(days: number): string {
+  return new Date(new Date().getTime() - days * 864e5).toISOString();
 }
 
 /** Start of "today" in Nairobi (UTC+3, no DST) as an ISO instant. */
@@ -61,6 +68,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     { data: violations },
     { count: pendingAppeals },
     { data: leaveToday },
+    { count: pendingLeave },
+    { count: undelivered },
+    { data: shifts },
   ] = await Promise.all([
       supabase.from("workplaces").select("id, name").eq("org_id", org.id).order("created_at"),
       supabase
@@ -91,6 +101,22 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         .eq("status", "approved")
         .lte("start_date", today)
         .gte("end_date", today),
+      // Leave the owner has not answered yet.
+      supabase
+        .from("leave_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("org_id", org.id)
+        .eq("status", "pending"),
+      // Penalties whose notice never reached the employee. Invisible until now,
+      // and the likeliest single source of "nobody told me" at payday.
+      supabase
+        .from("violations")
+        .select("id, employees!inner(org_id)", { count: "exact", head: true })
+        .eq("employees.org_id", org.id)
+        .is("notified_at", null)
+        .gte("created_at", daysAgoISO(30)),
+      // Shift starts, for the arrivals rail.
+      supabase.from("shifts").select("workplace_id, start_time, grace_minutes").order("start_time"),
     ]);
 
   const wps = workplaces ?? [];
@@ -155,7 +181,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const roster = [...wpEmployees].sort((a, b) => a.name.localeCompare(b.name));
 
   const stats = [
-    { label: "Clocked in", value: clockedInIds.size, tone: "text-kaunta-sage" },
+    { label: "In", value: clockedInIds.size, tone: "text-kaunta-sage" },
     { label: "Late", value: [...attByEmp.values()].filter((a) => a.status === "late").length, tone: "text-kaunta-amber" },
     { label: "Absent", value: absent.length, tone: "text-kaunta-slate" },
     ...(onLeave.length > 0
@@ -163,6 +189,43 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       : []),
     { label: "Flagged", value: [...attByEmp.values()].filter((a) => a.status === "flagged").length, tone: "text-kaunta-red" },
   ];
+
+  // What actually wants the owner's attention, most costly first. Renders
+  // nothing when there is nothing — see components/dashboard/AttentionQueue.
+  const attention: AttentionItem[] = [
+    {
+      count: pendingAppeals ?? 0,
+      label: "Appeals to decide",
+      detail: "Kaunta has already checked each one against the record.",
+      href: "/dashboard/violations",
+      tone: "urgent",
+    },
+    {
+      count: pendingLeave ?? 0,
+      label: "Leave requests",
+      detail: "Approve as paid or unpaid, or decline.",
+      href: "/dashboard/leave",
+      tone: "normal",
+    },
+    {
+      count: undelivered ?? 0,
+      label: "Penalties nobody received",
+      detail: "The text never went out. Check the phone number on file.",
+      href: "/dashboard/violations",
+      tone: "urgent",
+    },
+  ];
+
+  // The earliest shift at this site anchors the rail.
+  const siteShifts = (shifts ?? []).filter((sh) => sh.workplace_id === selectedId);
+  const railStart = siteShifts[0]?.start_time?.slice(0, 5) ?? null;
+  const railGrace = Number(siteShifts[0]?.grace_minutes ?? 0);
+  const arrivals = roster
+    .map((e) => {
+      const a = attByEmp.get(e.id);
+      return a?.inAt ? { employeeId: e.id, name: e.name, at: a.inAt, status: a.status } : null;
+    })
+    .filter((x): x is { employeeId: string; name: string; at: string; status: string } => x !== null);
 
   const STATUS_BADGE: Record<string, string> = {
     normal: "bg-kaunta-sage-lt text-kaunta-sage",
@@ -177,17 +240,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       <header className="border-b border-kaunta-mist bg-white">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <span className="font-display text-2xl text-kaunta-ink">{org.name}</span>
-          <div className="flex items-center gap-3">
-            {(pendingAppeals ?? 0) > 0 && (
-              <Link
-                href="/dashboard/violations"
-                className="rounded-full bg-kaunta-ultra/10 px-3 py-1 text-sm text-kaunta-ultra hover:bg-kaunta-ultra/20"
-              >
-                {pendingAppeals} pending appeal{pendingAppeals === 1 ? "" : "s"}
-              </Link>
-            )}
-            <span className="text-sm text-kaunta-slate/70 hidden sm:inline">{user.email}</span>
-          </div>
+          <span className="hidden text-sm text-kaunta-slate/70 sm:inline">{user.email}</span>
         </div>
       </header>
 
@@ -213,22 +266,29 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
         {selected ? (
           <>
+            <AttentionQueue items={attention} />
             {/* Live stats */}
+            {/* One strip, not four boxes. At 375px this is a 2x2 that fits
+                above the fold instead of a screen and a half of zeros. */}
             <section
-              className={`grid grid-cols-2 gap-4 ${
-                stats.length === 5 ? "md:grid-cols-5" : "md:grid-cols-4"
-              }`}
+              aria-label="Today at this site"
+              className="grid grid-cols-2 divide-kaunta-mist overflow-hidden rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.06)] sm:grid-cols-4 sm:divide-x lg:grid-cols-5"
             >
               {stats.map((s) => (
-                <div
-                  key={s.label}
-                  className="rounded-[12px] border border-kaunta-mist bg-white p-5 shadow-[0_2px_16px_rgba(15,25,35,0.06)]"
-                >
-                  <p className={`font-display text-4xl tabular-nums ${s.tone}`}>{s.value}</p>
-                  <p className="text-sm text-kaunta-slate/60 mt-1">{s.label}</p>
+                <div key={s.label} className="border-b border-kaunta-mist px-5 py-4 sm:border-b-0 lg:last:border-r-0">
+                  <p className={`font-display text-3xl tabular-nums ${s.value === 0 ? "text-kaunta-slate/25" : s.tone}`}>
+                    {s.value}
+                  </p>
+                  <p className="mt-0.5 text-xs uppercase tracking-wide text-kaunta-slate/55">{s.label}</p>
                 </div>
               ))}
+              <div className="border-b border-kaunta-mist px-5 py-4 sm:border-b-0 sm:col-span-2 lg:col-span-1">
+                <p className="font-display text-3xl tabular-nums text-kaunta-ink">{roster.length}</p>
+                <p className="mt-0.5 text-xs uppercase tracking-wide text-kaunta-slate/55">On the books</p>
+              </div>
             </section>
+
+            <ArrivalsRail arrivals={arrivals} shiftStart={railStart} graceMinutes={railGrace} />
 
             {/* Patterns across the record — deterministic, never inferred. */}
             {accessToken && <InsightsPanel token={accessToken} />}

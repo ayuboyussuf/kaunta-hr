@@ -1,10 +1,11 @@
 /**
  * Operator endpoints. Not owner endpoints, and never staff endpoints.
  *
- *   GET   /api/admin/logs          → what the assist has been doing
- *   GET   /api/admin/logs/:id      → one run, with its trace
- *   PATCH /api/admin/logs/:id      → mark golden / attach a note
- *   GET   /api/admin/sites/health  → whether clocking in is working, per site
+ *   GET   /api/admin/logs             → what the assist has been doing
+ *   GET   /api/admin/logs/:id         → one run, with its trace
+ *   PATCH /api/admin/logs/:id         → mark golden / attach a note
+ *   GET   /api/admin/messaging/health → whether notices are actually arriving
+ *   GET   /api/admin/sites/health     → whether clocking in is working, per site
  *
  * These read across every org, which is exactly why they are gated on an
  * operator secret rather than on a session. An owner authenticating here would
@@ -27,6 +28,7 @@ import { z } from "zod";
 import { env } from "../../lib/env";
 import { getServiceClient } from "../../lib/supabase";
 import { nairobiDayStartISO } from "../../lib/time";
+import { sendText } from "../../lib/messaging";
 
 const router = Router();
 
@@ -173,6 +175,85 @@ router.patch("/logs/:id", async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   if (!data) return res.status(404).json({ error: "not found" });
   res.json({ log: data });
+});
+
+/* ── GET /messaging/health ────────────────────────────────────────────── */
+
+/**
+ * Whether messages are actually arriving.
+ *
+ * Every notice in Kaunta goes out over one SMS provider and every send is
+ * best-effort — so a wrong API key, an empty balance or an unapproved sender ID
+ * produces a system that looks completely healthy and silently tells nobody
+ * anything. The first symptom is an employee saying they never heard about a
+ * deduction, weeks later, and being right.
+ *
+ * This answers it from the record: how many penalty notices were accepted by
+ * the provider, how many failed, and what the failures said. `?to=+2547…` also
+ * sends one real test message, which is the only way to prove the credentials
+ * work end to end.
+ */
+router.get("/messaging/health", async (req, res) => {
+  const db = getServiceClient();
+  const since = new Date(Date.now() - 14 * 864e5).toISOString();
+
+  const { data } = await db
+    .from("violations")
+    .select("notified_at, notify_error, created_at")
+    .gte("created_at", since)
+    .limit(1000);
+
+  const rows = (data ?? []) as { notified_at: string | null; notify_error: string | null }[];
+  const delivered = rows.filter((r) => r.notified_at).length;
+  const failed = rows.filter((r) => !r.notified_at && r.notify_error).length;
+  const pending = rows.length - delivered - failed;
+
+  // The distinct reasons, not every occurrence — one misconfiguration produces
+  // hundreds of identical failures and the point is which fault it is.
+  const reasons = [...new Set(rows.map((r) => r.notify_error).filter(Boolean))].slice(0, 10);
+
+  const config = {
+    provider: "africastalking",
+    username: process.env.AT_USERNAME || "sandbox",
+    sandbox: (process.env.AT_USERNAME || "sandbox") === "sandbox",
+    api_key_set: Boolean(process.env.AT_API_KEY),
+    sender_id: process.env.AT_SENDER_ID || null,
+  };
+
+  // A live send, only when explicitly asked for. Costs money and reaches a real
+  // handset, so it is never part of the plain health read.
+  let testSend: { ok: boolean; detail: string } | null = null;
+  const to = typeof req.query.to === "string" ? req.query.to : "";
+  if (to) {
+    try {
+      await sendText(to, "Kaunta HR: test message. Messaging is working — no action needed.");
+      testSend = { ok: true, detail: "accepted by the provider" };
+    } catch (err) {
+      testSend = { ok: false, detail: (err as Error).message.slice(0, 300) };
+    }
+  }
+
+  res.json({
+    config,
+    window_days: 14,
+    penalty_notices: {
+      total: rows.length,
+      delivered,
+      failed,
+      pending,
+      delivery_rate: rows.length === 0 ? null : Number((delivered / rows.length).toFixed(3)),
+      distinct_failures: reasons,
+    },
+    test_send: testSend,
+    // Stated rather than inferred: with no penalties raised there is no
+    // evidence either way, and a green light on no data is a lie.
+    verdict:
+      rows.length === 0
+        ? "No notices sent in this window — nothing to judge. Use ?to=+2547… to prove it end to end."
+        : failed === 0
+          ? "Every notice was accepted by the provider."
+          : `${failed} of ${rows.length} notices never went out.`,
+  });
 });
 
 /* ── GET /sites/health ────────────────────────────────────────────────── */

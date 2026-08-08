@@ -8,17 +8,25 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AppealQuestion } from "@/components/AppealQuestion";
 
+type Stage = "open" | "appealed" | "closed_no_appeal" | "settled";
+
 interface MyViolation {
   id: string;
   reason: string;
   evidence: string | null;
   amount: number;
   status: string;
+  /** Derived from the deadline server-side — never from whether a job has run. */
+  stage: Stage;
+  stage_label: string;
+  ms_left: number | null;
   workplace_name: string | null;
   appeal_window_end: string;
   can_appeal: boolean;
   outcome: string | null;
-  pdf_url: string | null;
+  has_document: boolean;
+  notified_at: string | null;
+  acknowledged_at: string | null;
   created_at: string;
   appeal: {
     message: string;
@@ -32,18 +40,20 @@ const fmtKes = (n: number) =>
   `KES ${Number(n ?? 0).toLocaleString("en-KE", { maximumFractionDigits: 0 })}`;
 const fmtDate = (s: string) => new Date(s).toLocaleString("en-KE");
 
-function windowLeft(end: string): string {
-  const ms = new Date(end).getTime() - Date.now();
-  if (ms <= 0) return "closed";
+function windowLeft(ms: number | null): string {
+  if (ms == null || ms <= 0) return "closed";
   const h = Math.floor(ms / 3600000);
   const m = Math.floor((ms % 3600000) / 60000);
-  return h > 0 ? `${h}h ${m}m left` : `${m}m left`;
+  return h > 0 ? `${h}h ${m}m left to appeal` : `${m}m left to appeal`;
 }
 
-const STATUS_STYLE: Record<string, string> = {
+/* Keyed on the derived stage, not on the database status — a row still sitting
+ * at "open" whose window shut a fortnight ago must not look actionable. */
+const STAGE_STYLE: Record<Stage, string> = {
   open: "bg-kaunta-amber/15 text-kaunta-amber",
   appealed: "bg-kaunta-ultra/15 text-kaunta-ultra",
-  locked: "bg-kaunta-ink/10 text-kaunta-ink",
+  closed_no_appeal: "bg-kaunta-slate/10 text-kaunta-slate",
+  settled: "bg-kaunta-ink/10 text-kaunta-ink",
 };
 
 export default function MyViolationsPage() {
@@ -102,6 +112,36 @@ export default function MyViolationsPage() {
     }
   }
 
+  /**
+   * Record that they have seen it. Optimistic — the button vanishing is the
+   * feedback, and a failed write leaves the penalty exactly as it was.
+   */
+  async function acknowledge(violationId: string) {
+    if (!token) return;
+    const at = new Date().toISOString();
+    setViolations((vs) =>
+      vs.map((v) => (v.id === violationId ? { ...v, acknowledged_at: at } : v))
+    );
+    try {
+      await api(`/api/violations/${violationId}/acknowledge`, { method: "POST", token });
+    } catch {
+      await load(token).catch(() => {});
+    }
+  }
+
+  /** Signed for five minutes, on demand — stored links expire. */
+  async function openDocument(violationId: string) {
+    if (!token) return;
+    try {
+      const { url } = await api<{ url: string }>(`/api/violations/${violationId}/document`, {
+        token,
+      });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-kaunta-stone grid place-items-center">
@@ -153,28 +193,35 @@ export default function MyViolationsPage() {
                 </div>
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    STATUS_STYLE[v.status] ?? "bg-kaunta-mist text-kaunta-slate"
+                    STAGE_STYLE[v.stage] ?? "bg-kaunta-mist text-kaunta-slate"
                   }`}
                 >
-                  {v.status}
+                  {v.stage_label}
                 </span>
               </div>
 
               {v.evidence && (
                 <p className="text-sm text-kaunta-slate/80 mt-3 whitespace-pre-line">{v.evidence}</p>
               )}
-              <p className="text-xs text-kaunta-slate/50 mt-2">Logged {fmtDate(v.created_at)}</p>
+              <p className="text-xs text-kaunta-slate/50 mt-2">
+                Logged {fmtDate(v.created_at)}
+                {v.notified_at
+                  ? ` · you were texted ${fmtDate(v.notified_at)}`
+                  : " · we could not reach your phone about this"}
+              </p>
 
-              {/* Appeal state */}
+              {/* ── What happens next, spelled out for every state ── */}
               {v.appeal ? (
                 <div className="mt-3 rounded-lg bg-kaunta-stone px-3 py-2">
                   <p className="text-xs font-medium text-kaunta-slate">
-                    Appeal · {v.appeal.decision}
+                    {v.appeal.decision === "pending"
+                      ? "You appealed. Your employer has not decided yet."
+                      : v.appeal.decision === "accepted"
+                        ? "You appealed and it was waived."
+                        : "You appealed and the penalty was upheld."}
                   </p>
                   <p className="text-sm text-kaunta-slate/80 mt-0.5 italic">“{v.appeal.message}”</p>
-                  {v.outcome && v.status === "locked" && (
-                    <p className="text-xs text-kaunta-ink mt-1">Outcome: {v.outcome}</p>
-                  )}
+                  {v.outcome && <p className="text-xs text-kaunta-ink mt-1">Outcome: {v.outcome}</p>}
                 </div>
               ) : v.can_appeal ? (
                 appealFor === v.id ? (
@@ -183,7 +230,7 @@ export default function MyViolationsPage() {
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       rows={3}
-                      placeholder="Explain why this penalty should be waived…"
+                      placeholder="Say what happened, in your own words…"
                       className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
                     />
                     <div className="flex gap-2">
@@ -192,7 +239,7 @@ export default function MyViolationsPage() {
                         disabled={submitting || !message.trim()}
                         onClick={() => submitAppeal(v.id)}
                       >
-                        {submitting ? "Submitting…" : "Submit appeal"}
+                        {submitting ? "Sending…" : "Send appeal"}
                       </Button>
                       <Button
                         size="sm"
@@ -207,7 +254,7 @@ export default function MyViolationsPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-3 flex items-center gap-3">
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
                     <Button
                       size="sm"
                       variant="outline"
@@ -216,28 +263,53 @@ export default function MyViolationsPage() {
                         setMessage("");
                       }}
                     >
-                      Appeal
+                      Appeal this
                     </Button>
-                    <span className="text-xs text-kaunta-amber">
-                      {windowLeft(v.appeal_window_end)}
-                    </span>
+                    <span className="text-xs text-kaunta-amber">{windowLeft(v.ms_left)}</span>
                   </div>
                 )
               ) : (
-                v.status !== "locked" && (
-                  <p className="text-xs text-kaunta-slate/50 mt-3">Appeal window closed.</p>
-                )
+                /* The state that used to be a blank card. It stands, it says
+                   why, and it says what could still be done about it. */
+                <div className="mt-3 rounded-lg bg-kaunta-stone px-3 py-2">
+                  <p className="text-sm text-kaunta-ink">
+                    {v.stage === "closed_no_appeal"
+                      ? "The time to appeal has passed, so this penalty stands."
+                      : "This is closed and cannot be changed here."}
+                  </p>
+                  <p className="mt-0.5 text-xs text-kaunta-slate/70">
+                    {v.stage === "closed_no_appeal"
+                      ? `Appeals closed ${fmtDate(v.appeal_window_end)}. If you think it is wrong, speak to your employer — they can still waive it.`
+                      : "It will appear on your payslip as recorded."}
+                  </p>
+                </div>
               )}
 
-              {v.pdf_url && (
-                <a
-                  href={v.pdf_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-block text-sm text-kaunta-ultra hover:underline mt-3"
+              {/* Acknowledgement. Not a confession and not an appeal — it is the
+                  employee putting on the record that they saw this, which is the
+                  one thing that makes "nobody told me" answerable either way. */}
+              {!v.acknowledged_at ? (
+                <button
+                  type="button"
+                  onClick={() => acknowledge(v.id)}
+                  className="mt-3 inline-flex min-h-[40px] items-center rounded-lg border border-kaunta-mist bg-white px-4 text-sm text-kaunta-slate hover:border-kaunta-ultra/40"
                 >
-                  Download outcome PDF
-                </a>
+                  I&apos;ve seen this
+                </button>
+              ) : (
+                <p className="mt-3 text-xs text-kaunta-sage">
+                  You confirmed you saw this on {fmtDate(v.acknowledged_at)}.
+                </p>
+              )}
+
+              {v.has_document && (
+                <button
+                  type="button"
+                  onClick={() => openDocument(v.id)}
+                  className="mt-3 block text-sm text-kaunta-ultra hover:underline"
+                >
+                  Open the outcome document
+                </button>
               )}
             </Card>
           ))

@@ -12,7 +12,9 @@
 import { Router } from "express";
 import { z } from "zod";
 import { getServiceClient } from "../../lib/supabase";
-import { requireOwner, requireEmployee } from "../../lib/auth";
+import { requireOwner, requireEmployee, resolveOwner, verifyEmployeeSession } from "../../lib/auth";
+import { canAppeal, msLeft, stageOf, STAGE_LABEL, STAGE_LABEL_OWNER } from "../../lib/violations/stage";
+import { signViolationDocument } from "../../lib/violations/finalize";
 
 const router = Router();
 
@@ -122,7 +124,8 @@ router.get("/", requireOwner, async (req, res) => {
     .from("violations")
     .select(
       "id, employee_id, workplace_id, rule_id, reason, evidence, amount, status, " +
-        "appeal_window_end, outcome, pdf_url, pay_cycle_id, created_at, " +
+        "appeal_window_end, outcome, pdf_url, pdf_path, pay_cycle_id, created_at, " +
+        "notified_at, notify_error, acknowledged_at, " +
         "employees!inner(name, phone, org_id), " +
         "appeals(id, message, decision, submitted_at, decided_at)"
     )
@@ -135,9 +138,12 @@ router.get("/", requireOwner, async (req, res) => {
   const { data, error } = await q;
   if (error) return res.status(500).json({ error: error.message });
 
+  const nowMs = Date.now();
   const violations = (data ?? []).map((v: any) => {
     const emp = Array.isArray(v.employees) ? v.employees[0] : v.employees;
     const appeal = Array.isArray(v.appeals) ? v.appeals[0] : v.appeals;
+    const s = { status: v.status, appeal_window_end: v.appeal_window_end, hasAppeal: !!appeal };
+    const stage = stageOf(s, nowMs);
     return {
       id: v.id,
       employee_id: v.employee_id,
@@ -148,9 +154,16 @@ router.get("/", requireOwner, async (req, res) => {
       evidence: v.evidence,
       amount: Number(v.amount),
       status: v.status,
+      stage,
+      stage_label: STAGE_LABEL_OWNER[stage],
       appeal_window_end: v.appeal_window_end,
       outcome: v.outcome,
-      pdf_url: v.pdf_url,
+      has_document: Boolean(v.pdf_path || v.pdf_url),
+      // Whether the employee was actually told. An undelivered penalty is the
+      // owner's problem to fix, so it belongs on their screen, not in a log.
+      notified_at: v.notified_at ?? null,
+      notify_error: v.notify_error ?? null,
+      acknowledged_at: v.acknowledged_at ?? null,
       pay_cycle_id: v.pay_cycle_id,
       created_at: v.created_at,
       appeal: appeal
@@ -168,6 +181,80 @@ router.get("/", requireOwner, async (req, res) => {
   res.json({ violations });
 });
 
+// ── The outcome document, signed on demand ────────────────────────────────────
+//
+// Reachable by the employee it concerns and by an owner in the same org. Signed
+// per request rather than stored: `pdf_url` used to hold a seven-day signed link
+// written into the row permanently, so the document that exists precisely to be
+// producible months later stopped opening after a week.
+// Both principals reach the same document, so the token decides which check
+// applies: an employee JWT means "must be yours", a Supabase session means
+// "must be in your org". Either way a failure is 404, never 403 — the existence
+// of another org's penalty is not something to confirm.
+router.get("/:id/document", async (req, res) => {
+  const id = z.string().uuid().safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ error: "invalid id" });
+
+  const bearer = String(req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+  if (!bearer) return res.status(401).json({ error: "unauthorized" });
+
+  const db = getServiceClient();
+  const { data } = await db
+    .from("violations")
+    .select("id, employee_id, pdf_path, pdf_url, employees!inner(org_id)")
+    .eq("id", id.data)
+    .maybeSingle();
+  if (!data) return res.status(404).json({ error: "not found" });
+
+  const empRow = Array.isArray((data as any).employees)
+    ? (data as any).employees[0]
+    : (data as any).employees;
+
+  const asEmployee = verifyEmployeeSession(bearer);
+  let permitted = false;
+  if (asEmployee) {
+    permitted = data.employee_id === asEmployee.employeeId;
+  } else {
+    const owner = await resolveOwner(bearer);
+    permitted = Boolean(owner && empRow?.org_id === owner.orgId);
+  }
+  if (!permitted) return res.status(404).json({ error: "not found" });
+
+  const url = await signViolationDocument(
+    (data.pdf_path as string | null) ?? null,
+    (data.pdf_url as string | null) ?? null
+  );
+  if (!url) return res.status(404).json({ error: "no document yet" });
+  res.json({ url });
+});
+
+// ── Employee: acknowledge a penalty ───────────────────────────────────────────
+//
+// "Nobody told me" is the commonest thing said about a deduction, and until now
+// nothing could answer it. The SMS is best-effort and can silently fail; this is
+// the employee confirming, in the app, that they have seen it. It changes
+// nothing about the penalty or the appeal window — it only records that they
+// know, which protects them as much as the owner: an unacknowledged penalty
+// shows up on the owner's screen as one that may never have arrived.
+router.post("/:id/acknowledge", requireEmployee, async (req, res) => {
+  const id = z.string().uuid().safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ error: "invalid id" });
+
+  const db = getServiceClient();
+  const { data, error } = await db
+    .from("violations")
+    .update({ acknowledged_at: new Date().toISOString() })
+    .eq("id", id.data)
+    .eq("employee_id", req.employee!.employeeId)
+    .is("acknowledged_at", null) // first time only; never overwrite the record
+    .select("id, acknowledged_at")
+    .maybeSingle();
+
+  if (error) return res.status(500).json({ error: error.message });
+  // Already acknowledged is a success, not an error — the tap was a no-op.
+  res.json({ acknowledged_at: data?.acknowledged_at ?? null, ok: true });
+});
+
 // ── Employee: my own violations + appeal state ────────────────────────────────
 router.get("/mine", requireEmployee, async (req, res) => {
   const db = getServiceClient();
@@ -176,7 +263,8 @@ router.get("/mine", requireEmployee, async (req, res) => {
   const { data, error } = await db
     .from("violations")
     .select(
-      "id, reason, evidence, amount, status, appeal_window_end, outcome, pdf_url, created_at, " +
+      "id, reason, evidence, amount, status, appeal_window_end, outcome, pdf_url, pdf_path, " +
+        "notified_at, acknowledged_at, created_at, " +
         "workplaces(name), " +
         "appeals(id, message, decision, submitted_at, decided_at)"
     )
@@ -188,18 +276,25 @@ router.get("/mine", requireEmployee, async (req, res) => {
   const violations = (data ?? []).map((v: any) => {
     const wp = Array.isArray(v.workplaces) ? v.workplaces[0] : v.workplaces;
     const appeal = Array.isArray(v.appeals) ? v.appeals[0] : v.appeals;
-    const canAppeal = v.status === "open" && new Date(v.appeal_window_end).getTime() > now;
+    // Derived from the deadline, never from whether the sweep has run — see
+    // lib/violations/stage for why that distinction is the whole bug.
+    const s = { status: v.status, appeal_window_end: v.appeal_window_end, hasAppeal: !!appeal };
     return {
       id: v.id,
       reason: v.reason,
       evidence: v.evidence,
       amount: Number(v.amount),
       status: v.status,
+      stage: stageOf(s, now),
+      stage_label: STAGE_LABEL[stageOf(s, now)],
+      ms_left: msLeft(s, now),
       workplace_name: wp?.name ?? null,
       appeal_window_end: v.appeal_window_end,
-      can_appeal: canAppeal,
+      can_appeal: canAppeal(s, now),
       outcome: v.outcome,
-      pdf_url: v.pdf_url,
+      has_document: Boolean(v.pdf_path || v.pdf_url),
+      notified_at: v.notified_at ?? null,
+      acknowledged_at: v.acknowledged_at ?? null,
       created_at: v.created_at,
       appeal: appeal
         ? {

@@ -19,6 +19,8 @@ interface PenaltyRule {
   amount: number;
   appeal_window_hours: number;
 }
+type Stage = "open" | "appealed" | "closed_no_appeal" | "settled";
+
 interface Violation {
   id: string;
   employee_id: string;
@@ -26,9 +28,15 @@ interface Violation {
   reason: string;
   amount: number;
   status: string;
+  /** Derived from the deadline server-side, not from whether the sweep ran. */
+  stage: Stage;
+  stage_label: string;
   appeal_window_end: string;
   outcome: string | null;
-  pdf_url: string | null;
+  has_document: boolean;
+  notified_at: string | null;
+  notify_error: string | null;
+  acknowledged_at: string | null;
   created_at: string;
   appeal: { decision: string; message: string; submitted_at: string } | null;
 }
@@ -50,10 +58,11 @@ const fmtKes = (n: number) =>
   `KES ${Number(n ?? 0).toLocaleString("en-KE", { maximumFractionDigits: 0 })}`;
 const fmtDate = (s: string) => new Date(s).toLocaleString("en-KE");
 
-const STATUS_STYLE: Record<string, string> = {
+const STAGE_STYLE: Record<Stage, string> = {
   open: "bg-kaunta-amber/15 text-kaunta-amber",
   appealed: "bg-kaunta-ultra/15 text-kaunta-ultra",
-  locked: "bg-kaunta-ink/10 text-kaunta-ink",
+  closed_no_appeal: "bg-kaunta-slate/10 text-kaunta-slate",
+  settled: "bg-kaunta-ink/10 text-kaunta-ink",
 };
 
 export default function OwnerViolationsPage() {
@@ -165,6 +174,17 @@ export default function OwnerViolationsPage() {
       setError((e as Error).message);
     } finally {
       setDeciding(null);
+    }
+  }
+
+  /** Signed for five minutes, on demand — a stored link would expire. */
+  async function openDocument(violationId: string) {
+    if (!token) return;
+    try {
+      const { url } = await api<{ url: string }>(`/api/violations/${violationId}/document`, { token });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setError((e as Error).message);
     }
   }
 
@@ -352,9 +372,9 @@ export default function OwnerViolationsPage() {
               className="rounded-lg border border-kaunta-mist bg-white px-3 py-1.5 text-sm outline-none focus:border-kaunta-ultra"
             >
               <option value="">All statuses</option>
-              <option value="open">Open</option>
+              <option value="open">Window open / elapsed</option>
               <option value="appealed">Appealed</option>
-              <option value="locked">Locked</option>
+              <option value="locked">Closed</option>
             </select>
           </div>
           <Card className="overflow-hidden">
@@ -365,15 +385,16 @@ export default function OwnerViolationsPage() {
                     <th className="px-4 py-3 font-medium">Employee</th>
                     <th className="px-4 py-3 font-medium">Reason</th>
                     <th className="px-4 py-3 font-medium text-right">Amount</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Stage</th>
+                    <th className="px-4 py-3 font-medium">Told?</th>
                     <th className="px-4 py-3 font-medium">Logged</th>
-                    <th className="px-4 py-3 font-medium">PDF</th>
+                    <th className="px-4 py-3 font-medium">Document</th>
                   </tr>
                 </thead>
                 <tbody>
                   {violations.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-6 text-center text-kaunta-slate/50">
+                      <td colSpan={7} className="px-4 py-6 text-center text-kaunta-slate/50">
                         No violations.
                       </td>
                     </tr>
@@ -388,25 +409,42 @@ export default function OwnerViolationsPage() {
                         <td className="px-4 py-3">
                           <span
                             className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                              STATUS_STYLE[v.status] ?? "bg-kaunta-mist text-kaunta-slate"
+                              STAGE_STYLE[v.stage] ?? "bg-kaunta-mist text-kaunta-slate"
                             }`}
                           >
-                            {v.status}
+                            {v.stage_label}
                           </span>
+                        </td>
+                        {/* Whether the employee actually heard. A deduction
+                            nobody received is the one you will be argued with
+                            about, so it belongs in the table, not a log. */}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {v.acknowledged_at ? (
+                            <span className="text-kaunta-sage">Opened it</span>
+                          ) : v.notified_at ? (
+                            <span className="text-kaunta-slate/70">Texted</span>
+                          ) : (
+                            <span className="text-kaunta-red" title={v.notify_error ?? undefined}>
+                              Not delivered
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-kaunta-slate/70 whitespace-nowrap">
                           {fmtDate(v.created_at)}
                         </td>
                         <td className="px-4 py-3">
-                          {v.pdf_url ? (
-                            <a
-                              href={v.pdf_url}
-                              target="_blank"
-                              rel="noreferrer"
+                          {v.has_document ? (
+                            <button
+                              type="button"
+                              onClick={() => openDocument(v.id)}
                               className="text-kaunta-ultra hover:underline"
                             >
-                              Download
-                            </a>
+                              Open
+                            </button>
+                          ) : v.stage === "closed_no_appeal" ? (
+                            <span className="text-kaunta-slate/50">Closing — due shortly</span>
+                          ) : v.stage === "open" ? (
+                            <span className="text-kaunta-slate/50">After the window</span>
                           ) : (
                             <span className="text-kaunta-slate/40">—</span>
                           )}

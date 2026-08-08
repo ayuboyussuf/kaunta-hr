@@ -12,3 +12,4 @@ import "../lib/leave/cover.test";
 import "../lib/appeals/assist/assist.test";
 import "../lib/observability/log.test";
 import "../lib/appeals/assist/claims.test";
+import "../lib/violations/stage.test";

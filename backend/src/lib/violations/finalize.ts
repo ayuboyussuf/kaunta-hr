@@ -63,22 +63,70 @@ export async function finalizeViolation(
     decidedAt: appeal?.decided_at ?? null,
   });
 
-  const { signedUrl } = await uploadPdf(`violations/${violationId}.pdf`, pdf);
+  const { path, signedUrl } = await uploadPdf(`violations/${violationId}.pdf`, pdf);
 
+  // The PATH is what gets stored. `pdf_url` held a signed link with a seven-day
+  // expiry, written into the row permanently — so the document that exists
+  // precisely so a decision can be produced months later stopped opening after
+  // a week, with a dead link as the only symptom. It is still written for the
+  // rows and clients that already read it, but the path is the durable one and
+  // GET /api/violations/:id/document signs from it on demand.
   await db
     .from("violations")
-    .update({ status: finalStatus, outcome: outcomeText, amount: effectiveAmount, pdf_url: signedUrl })
+    .update({
+      status: finalStatus,
+      outcome: outcomeText,
+      amount: effectiveAmount,
+      pdf_path: path,
+      pdf_url: signedUrl,
+    })
     .eq("id", violationId);
 
-  // Deliver to the employee. (Owner delivery handled via dashboard; a WhatsApp
-  // copy to the owner can be added once the owner's number is on the org.)
+  // Deliver to the employee, and record whether it actually went. A notice that
+  // silently failed is how someone first learns of a deduction from their
+  // payslip — so the failure belongs on the row, where the owner will see it,
+  // not in a console nobody reads.
   if (emp?.phone) {
     try {
       await sendDocument(emp.phone, signedUrl, `violation-${violationId.slice(0, 8)}.pdf`, outcomeText);
+      await db
+        .from("violations")
+        .update({ notified_at: new Date().toISOString(), notify_error: null })
+        .eq("id", violationId);
     } catch (err) {
-      console.error(`[finalize] WhatsApp delivery failed for ${violationId}:`, err);
+      const message = (err as Error).message;
+      console.error(`[finalize] outcome delivery failed for ${violationId}:`, message);
+      await db
+        .from("violations")
+        .update({ notify_error: message.slice(0, 300) })
+        .eq("id", violationId);
     }
+  } else {
+    await db
+      .from("violations")
+      .update({ notify_error: "No phone number on file for this employee." })
+      .eq("id", violationId);
   }
 
   return { pdfUrl: signedUrl };
+}
+
+/**
+ * A fresh link to a stored outcome document.
+ *
+ * Falls back to the legacy `pdf_url` for rows finalised before the path was
+ * stored — those links may already have expired, which is exactly the bug, but
+ * returning a dead link is still better than pretending no document exists.
+ */
+export async function signViolationDocument(
+  pdfPath: string | null,
+  legacyUrl: string | null,
+  ttlSec = 300
+): Promise<string | null> {
+  if (pdfPath) {
+    const db = getServiceClient();
+    const { data } = await db.storage.from("documents").createSignedUrl(pdfPath, ttlSec);
+    if (data?.signedUrl) return data.signedUrl;
+  }
+  return legacyUrl;
 }

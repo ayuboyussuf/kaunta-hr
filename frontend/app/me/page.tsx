@@ -43,7 +43,9 @@ interface Announcement {
 interface MyViolation {
   id: string;
   status: string; // open | appealed | locked
+  stage: "open" | "appealed" | "closed_no_appeal" | "settled";
   can_appeal: boolean;
+  acknowledged_at: string | null;
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -131,8 +133,16 @@ export default function EmployeeHome() {
 
   const lastEntry = attendance[0];
   const lastStatus = lastEntry ? ATTENDANCE_STATUS[lastEntry.status] : null;
-  const openPenalties = violations.filter((v) => v.status === "open" || v.status === "appealed").length;
+  /* Counted on the derived stage, not on `status`. A row still sitting at
+   * "open" because no sweep ever ran is settled, not something they can act on
+   * — showing it as actionable is what made this banner say "Review" forever on
+   * penalties whose window shut weeks ago. */
   const appealable = violations.filter((v) => v.can_appeal).length;
+  const awaitingOwner = violations.filter((v) => v.stage === "appealed").length;
+  const unseen = violations.filter(
+    (v) => !v.acknowledged_at && (v.stage === "open" || v.stage === "closed_no_appeal")
+  ).length;
+  const needsAttention = appealable + awaitingOwner + unseen;
 
   return (
     <div className="space-y-6">
@@ -162,25 +172,35 @@ export default function EmployeeHome() {
         </Link>
       </div>
 
-      {/* Penalties the employee hasn't resolved — surfaced so they can't be missed. */}
-      {openPenalties > 0 && (
+      {/* Penalties needing something from them. The headline says WHICH thing,
+          because "Review" told them nothing and got ignored — which is exactly
+          how somebody ends up saying they never knew. */}
+      {needsAttention > 0 && (
         <Card className="bg-kaunta-red text-white border-none">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
+          <CardContent className="p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
               <div>
                 <p className="font-display text-lg mb-0.5">
-                  {openPenalties} open penalt{openPenalties === 1 ? "y" : "ies"}
+                  {appealable > 0
+                    ? `${appealable} penalt${appealable === 1 ? "y you can" : "ies you can"} still appeal`
+                    : awaitingOwner > 0
+                      ? `${awaitingOwner} appeal${awaitingOwner === 1 ? "" : "s"} with your employer`
+                      : `${unseen} penalt${unseen === 1 ? "y" : "ies"} you haven't opened`}
                 </p>
                 <p className="text-sm text-white/85">
                   {appealable > 0
-                    ? `You can still appeal ${appealable === openPenalties ? (openPenalties === 1 ? "it" : "them") : `${appealable} of them`}. The window closes soon.`
-                    : "Review the details on your penalties page."}
+                    ? "Once the window closes the penalty stands, so say your side now."
+                    : awaitingOwner > 0
+                      ? "They have your reason. You'll be texted when they decide."
+                      : "Open them so there is a record that you were told."}
                 </p>
               </div>
             </div>
             <Button asChild variant="secondary" size="lg">
-              <Link href="/me/violations">Review</Link>
+              <Link href="/me/violations">
+                {appealable > 0 ? "Appeal now" : "Open penalties"}
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -261,13 +281,15 @@ export default function EmployeeHome() {
           <CardContent>
             {violations.length === 0 ? (
               <p className="text-sm text-kaunta-slate/60">No penalties. Keep it up.</p>
-            ) : openPenalties > 0 ? (
+            ) : needsAttention > 0 ? (
               <p className="text-sm text-kaunta-ink">
-                <span className="font-display text-2xl text-kaunta-red mr-1">{openPenalties}</span>
-                open penalt{openPenalties === 1 ? "y" : "ies"}
+                <span className="font-display text-2xl text-kaunta-red mr-1">{needsAttention}</span>
+                need{needsAttention === 1 ? "s" : ""} something from you
               </p>
             ) : (
-              <p className="text-sm text-kaunta-slate/60">All penalties resolved.</p>
+              <p className="text-sm text-kaunta-slate/60">
+                {violations.length} on record, nothing outstanding.
+              </p>
             )}
             <Link
               href="/me/violations"
