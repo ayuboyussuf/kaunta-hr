@@ -15,6 +15,7 @@ import { getServiceClient } from "../../lib/supabase";
 import { requireOwner, requireEmployee, resolveOwner, verifyEmployeeSession } from "../../lib/auth";
 import { canAppeal, msLeft, stageOf, STAGE_LABEL, STAGE_LABEL_OWNER } from "../../lib/violations/stage";
 import { signViolationDocument } from "../../lib/violations/finalize";
+import { sendText } from "../../lib/messaging";
 
 const router = Router();
 
@@ -125,7 +126,7 @@ router.get("/", requireOwner, async (req, res) => {
     .select(
       "id, employee_id, workplace_id, rule_id, reason, evidence, amount, status, " +
         "appeal_window_end, outcome, pdf_url, pdf_path, pay_cycle_id, created_at, " +
-        "notified_at, notify_error, acknowledged_at, " +
+        "notified_at, notify_error, acknowledged_at, notice_tracked, " +
         "employees!inner(name, phone, org_id), " +
         "appeals(id, message, decision, submitted_at, decided_at)"
     )
@@ -164,6 +165,9 @@ router.get("/", requireOwner, async (req, res) => {
       notified_at: v.notified_at ?? null,
       notify_error: v.notify_error ?? null,
       acknowledged_at: v.acknowledged_at ?? null,
+      // False for rows raised before delivery was recorded: null notified_at
+      // means unknown there, not failed.
+      notice_tracked: v.notice_tracked !== false,
       pay_cycle_id: v.pay_cycle_id,
       created_at: v.created_at,
       appeal: appeal
@@ -226,6 +230,87 @@ router.get("/:id/document", async (req, res) => {
   );
   if (!url) return res.status(404).json({ error: "no document yet" });
   res.json({ url });
+});
+
+// ── Owner: resend a notice that never arrived ─────────────────────────────────
+//
+// The dashboard raises "penalties nobody received". It used to be a dead end:
+// a red number with nowhere to go and nothing that would ever clear it, which
+// is worse than not raising it at all — an alert you cannot act on trains
+// people to ignore alerts.
+//
+// This is the action. It re-sends to whatever number is on file now, so fixing
+// a mistyped phone and pressing resend actually resolves the thing.
+router.post("/:id/resend-notice", requireOwner, async (req, res) => {
+  const id = z.string().uuid().safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ error: "invalid id" });
+
+  const db = getServiceClient();
+  const { data: v } = await db
+    .from("violations")
+    .select("id, reason, amount, employee_id, employees!inner(name, phone, org_id)")
+    .eq("id", id.data)
+    .maybeSingle();
+
+  const emp = v
+    ? (Array.isArray((v as any).employees) ? (v as any).employees[0] : (v as any).employees)
+    : null;
+  if (!v || !emp || emp.org_id !== req.owner!.orgId) {
+    return res.status(404).json({ error: "not found" });
+  }
+  if (!emp.phone) {
+    return res.status(400).json({
+      error: "No phone number on file for this employee. Add one on their profile, then resend.",
+    });
+  }
+
+  const amount = `KES ${Number(v.amount).toLocaleString("en-KE", { maximumFractionDigits: 0 })}`;
+  try {
+    await sendText(
+      emp.phone as string,
+      `Kaunta HR: ${v.reason} — ${amount}. If you disagree, open your record to appeal.`
+    );
+    await db
+      .from("violations")
+      .update({ notified_at: new Date().toISOString(), notify_error: null, notice_tracked: true })
+      .eq("id", v.id);
+    res.json({ sent: true });
+  } catch (err) {
+    const message = (err as Error).message;
+    await db
+      .from("violations")
+      .update({ notify_error: message.slice(0, 300) })
+      .eq("id", v.id);
+    res.status(502).json({ sent: false, error: message });
+  }
+});
+
+// ── Owner: stop chasing one that cannot be delivered ──────────────────────────
+//
+// Some cannot be fixed — the person has left, the number is dead. Marking it
+// so is a decision the owner records, not a row that quietly disappears: the
+// penalty still stands, and the record still says nobody could be reached.
+router.post("/:id/notice-unreachable", requireOwner, async (req, res) => {
+  const id = z.string().uuid().safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ error: "invalid id" });
+
+  const db = getServiceClient();
+  const { data } = await db
+    .from("violations")
+    .select("id, employees!inner(org_id)")
+    .eq("id", id.data)
+    .maybeSingle();
+  const emp = data
+    ? (Array.isArray((data as any).employees) ? (data as any).employees[0] : (data as any).employees)
+    : null;
+  if (!data || emp?.org_id !== req.owner!.orgId) return res.status(404).json({ error: "not found" });
+
+  await db
+    .from("violations")
+    .update({ notice_tracked: false, notify_error: "Owner marked this employee unreachable." })
+    .eq("id", id.data);
+
+  res.json({ ok: true });
 });
 
 // ── Employee: acknowledge a penalty ───────────────────────────────────────────

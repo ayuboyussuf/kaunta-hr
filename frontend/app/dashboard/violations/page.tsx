@@ -37,6 +37,8 @@ interface Violation {
   notified_at: string | null;
   notify_error: string | null;
   acknowledged_at: string | null;
+  /** False when the row predates delivery recording — unknown, not failed. */
+  notice_tracked: boolean;
   created_at: string;
   appeal: { decision: string; message: string; submitted_at: string } | null;
 }
@@ -86,6 +88,7 @@ export default function OwnerViolationsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [deciding, setDeciding] = useState<string | null>(null);
+  const [busyNotice, setBusyNotice] = useState<string | null>(null);
 
   const loadData = useCallback(
     async (bearer: string, filter: string) => {
@@ -174,6 +177,39 @@ export default function OwnerViolationsPage() {
       setError((e as Error).message);
     } finally {
       setDeciding(null);
+    }
+  }
+
+  /**
+   * Resend a notice that never arrived. This is what the dashboard alert was
+   * missing: it counted undelivered penalties and offered nothing to do about
+   * them, so the number sat there forever and taught the owner to ignore it.
+   */
+  async function resendNotice(violationId: string) {
+    if (!token) return;
+    setBusyNotice(violationId);
+    setError(null);
+    try {
+      await api(`/api/violations/${violationId}/resend-notice`, { method: "POST", token });
+      await refresh();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusyNotice(null);
+    }
+  }
+
+  /** Some cannot be reached at all. Recorded as the owner's decision, not hidden. */
+  async function markUnreachable(violationId: string) {
+    if (!token) return;
+    setBusyNotice(violationId);
+    try {
+      await api(`/api/violations/${violationId}/notice-unreachable`, { method: "POST", token });
+      await refresh();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusyNotice(null);
     }
   }
 
@@ -418,15 +454,42 @@ export default function OwnerViolationsPage() {
                         {/* Whether the employee actually heard. A deduction
                             nobody received is the one you will be argued with
                             about, so it belongs in the table, not a log. */}
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        <td className="px-4 py-3">
                           {v.acknowledged_at ? (
-                            <span className="text-kaunta-sage">Opened it</span>
+                            <span className="whitespace-nowrap text-kaunta-sage">Opened it</span>
                           ) : v.notified_at ? (
-                            <span className="text-kaunta-slate/70">Texted</span>
-                          ) : (
-                            <span className="text-kaunta-red" title={v.notify_error ?? undefined}>
-                              Not delivered
+                            <span className="whitespace-nowrap text-kaunta-slate/70">Texted</span>
+                          ) : !v.notice_tracked ? (
+                            <span
+                              className="whitespace-nowrap text-kaunta-slate/40"
+                              title="Raised before Kaunta recorded delivery — we don't know either way."
+                            >
+                              Not recorded
                             </span>
+                          ) : (
+                            <div className="min-w-[9rem]">
+                              <span className="block text-kaunta-red" title={v.notify_error ?? undefined}>
+                                Not delivered
+                              </span>
+                              <div className="mt-1 flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => resendNotice(v.id)}
+                                  disabled={busyNotice === v.id}
+                                  className="text-xs text-kaunta-ultra hover:underline disabled:opacity-50"
+                                >
+                                  {busyNotice === v.id ? "Sending…" : "Resend"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => markUnreachable(v.id)}
+                                  disabled={busyNotice === v.id}
+                                  className="text-xs text-kaunta-slate/60 hover:underline disabled:opacity-50"
+                                >
+                                  Can&apos;t reach them
+                                </button>
+                              </div>
+                            </div>
                           )}
                         </td>
                         <td className="px-4 py-3 text-kaunta-slate/70 whitespace-nowrap">
