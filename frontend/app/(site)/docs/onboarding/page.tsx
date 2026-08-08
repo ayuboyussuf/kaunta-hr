@@ -44,7 +44,7 @@ export default function OnboardingDocPage() {
           Verification happens over <strong className="text-white/80">SMS</strong>.
           Operational messages afterwards — penalty notices, appeal outcomes,
           payslip links — go over SMS under the sender ID{" "}
-          <Code>KAUNTAHR</Code>.
+          <Code>APROKSIHR</Code>.
         </LI>
         <LI>
           Staff never see anyone else&rsquo;s attendance, penalties or pay. See{" "}

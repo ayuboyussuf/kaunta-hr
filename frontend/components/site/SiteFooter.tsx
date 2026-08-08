@@ -83,7 +83,7 @@ export function SiteFooter() {
             © {new Date().getFullYear()} Aproksi HR. Part of the Aproksi family.
           </p>
           <p className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-white/30">
-            SMS sender ID · KAUNTAHR
+            SMS sender ID · APROKSIHR
           </p>
         </div>
       </Container>

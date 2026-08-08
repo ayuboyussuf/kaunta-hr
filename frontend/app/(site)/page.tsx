@@ -48,7 +48,7 @@ const CAPABILITIES = [
   {
     index: "07",
     title: "Onboarding by phone number",
-    body: "Add staff with a phone number and they verify with an SMS code. Notices and payslip links go out by SMS under the sender ID KAUNTAHR.",
+    body: "Add staff with a phone number and they verify with an SMS code. Notices and payslip links go out by SMS under the sender ID APROKSIHR.",
   },
 ];
 
@@ -177,7 +177,7 @@ export default function HomePage() {
               ["Clock-in", "QR + geofence + selfie"],
               ["Onboarding", "SMS code"],
               ["Payslips", "Signed PDF links"],
-              ["SMS sender ID", "KAUNTAHR"],
+              ["SMS sender ID", "APROKSIHR"],
             ].map(([k, v]) => (
               <div key={k} className="bg-aproksi-void px-5 py-7 sm:px-7">
                 <dt className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/35">

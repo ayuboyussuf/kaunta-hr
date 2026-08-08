@@ -75,7 +75,7 @@ const RELEASES: Release[] = [
     title: "Payslips over signed links",
     changes: [
       { tag: "Added", text: "PDF payslip generation per payroll period, in KES." },
-      { tag: "Added", text: "Signed, expiring links delivered by SMS under the sender ID KAUNTAHR." },
+      { tag: "Added", text: "Signed, expiring links delivered by SMS under the sender ID APROKSIHR." },
       { tag: "Added", text: "Deduction lines that name the date and band behind each penalty." },
       { tag: "Improved", text: "Penalties under open appeal are excluded from a period rather than estimated." },
     ],

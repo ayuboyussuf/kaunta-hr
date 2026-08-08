@@ -69,7 +69,7 @@ export const DOCS_NAV: DocGroup[] = [
       {
         href: "/docs/sms",
         title: "SMS setup",
-        summary: "The KAUNTAHR sender ID, what goes out over SMS, and delivery.",
+        summary: "The APROKSIHR sender ID, what goes out over SMS, and delivery.",
         keywords: ["sms", "sender id", "aproksihr", "africa's talking", "messages", "delivery"],
       },
     ],

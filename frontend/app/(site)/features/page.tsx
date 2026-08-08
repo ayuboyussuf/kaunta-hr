@@ -80,7 +80,7 @@ const CAPABILITIES: Capability[] = [
     lede: "Generate a payslip for the period and every deduction on it points at a rule, a scan, and where relevant a closed appeal. Send it as a signed link over SMS — the link opens the PDF for that employee and stops working after it expires.",
     spec: [
       { term: "Format", value: "PDF, generated server-side, in KES." },
-      { term: "Delivery", value: "A signed link by SMS under the sender ID KAUNTAHR." },
+      { term: "Delivery", value: "A signed link by SMS under the sender ID APROKSIHR." },
       { term: "Access", value: "The link resolves to one employee's document and expires." },
       { term: "History", value: "Staff can open past payslips from their own record." },
     ],
@@ -123,7 +123,7 @@ const CAPABILITIES: Capability[] = [
     spec: [
       { term: "Verification", value: "An SMS code on first sign-in." },
       { term: "Notices", value: "Penalty notices, appeal outcomes and payslip links by SMS." },
-      { term: "Sender ID", value: "Messages arrive from KAUNTAHR, not a shortcode nobody recognises." },
+      { term: "Sender ID", value: "Messages arrive from APROKSIHR, not a shortcode nobody recognises." },
       { term: "Staff device", value: "A camera and a browser. Nothing to install." },
     ],
   },
