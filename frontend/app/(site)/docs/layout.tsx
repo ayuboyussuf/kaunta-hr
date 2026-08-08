@@ -6,10 +6,10 @@ import { Container } from "@/components/site/SiteUI";
 export const metadata: Metadata = {
   title: {
     default: "Documentation",
-    template: "%s | Kaunta HR docs",
+    template: "%s | Aproksi HR docs",
   },
   description:
-    "Kaunta HR documentation — getting started, onboarding staff by SMS, setting penalty rules, running disputes, generating payslips, roles and permissions, and SMS setup.",
+    "Aproksi HR documentation — getting started, onboarding staff by SMS, setting penalty rules, running disputes, generating payslips, roles and permissions, and SMS setup.",
 };
 
 export default function DocsLayout({
@@ -18,7 +18,7 @@ export default function DocsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-kaunta-void">
+    <div className="bg-aproksi-void">
       {/* docs masthead */}
       <div className="border-b border-white/10">
         <Container width="wide" className="py-8 sm:py-10">

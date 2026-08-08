@@ -44,7 +44,7 @@ const BEATS: Beat[] = [
     body: (
       <>
         The code is signed for this station and this station only. Before
-        accepting the scan, Kaunta HR compares the device&rsquo;s position against the
+        accepting the scan, Aproksi HR compares the device&rsquo;s position against the
         radius drawn around the forecourt. Grace is 22&nbsp;metres from the
         pumps, inside a 120&nbsp;metre fence, so the scan stands. A selfie is
         captured with it.
@@ -151,7 +151,7 @@ export default function HowItWorksPage() {
         lede="This is a full pass through the product using a business that runs two fuel stations — one in Ruiru, one in Juja — and the eleven staff between them. Nothing here is a feature list; it is the order things actually happen in."
       />
 
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-12 sm:py-16 lg:py-24">
           {BEATS.map((beat) => (
             <div
@@ -161,7 +161,7 @@ export default function HowItWorksPage() {
               {/* time rail */}
               <>
                 <div className="lg:sticky lg:top-28">
-                  <p className="font-mono text-[0.8125rem] tracking-[0.08em] text-kaunta-ultra-br">
+                  <p className="font-mono text-[0.8125rem] tracking-[0.08em] text-aproksi-ultra-br">
                     {beat.time}
                   </p>
                   <p className="mt-1.5 font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/30">
@@ -196,7 +196,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* What the owner actually did all day */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
@@ -214,7 +214,7 @@ export default function HowItWorksPage() {
                 ["2", "decisions made by a person"],
                 ["0", "notebooks consulted"],
               ].map(([n, l]) => (
-                <div key={l} className="bg-kaunta-void p-7 text-center">
+                <div key={l} className="bg-aproksi-void p-7 text-center">
                   <p className="font-display text-4xl text-white">{n}</p>
                   <p className="mt-2 font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-white/35">
                     {l}
@@ -227,7 +227,7 @@ export default function HowItWorksPage() {
             <div className="mx-auto mt-12 max-w-2xl text-center">
               <Eyebrow tone="dark">A note on signal</Eyebrow>
               <p className="mt-4 text-[0.9rem] leading-relaxed text-white/55">
-                Both stations in this walkthrough had usable data. Kaunta HR is
+                Both stations in this walkthrough had usable data. Aproksi HR is
                 built for low-connectivity sites: a scan taken where the signal is
                 poor is held on the device and syncs when signal returns, keeping
                 the time it was taken. The dashboard marks those separately so a

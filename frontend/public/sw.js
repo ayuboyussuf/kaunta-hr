@@ -1,4 +1,4 @@
-/* Kaunta HR service worker — presence-check push notifications. */
+/* Aproksi HR service worker — presence-check push notifications. */
 self.addEventListener("push", (event) => {
   let data = {};
   try {
@@ -6,12 +6,12 @@ self.addEventListener("push", (event) => {
   } catch (e) {
     data = {};
   }
-  const title = data.title || "Kaunta HR";
+  const title = data.title || "Aproksi HR";
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",
       data: { url: data.url || "/me" },
-      tag: "kaunta-presence",
+      tag: "aproksi-presence",
       renotify: true,
     })
   );

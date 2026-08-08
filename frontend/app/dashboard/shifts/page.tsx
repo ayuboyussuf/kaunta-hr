@@ -35,10 +35,10 @@ interface Employee {
 }
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
+const cardCls = "rounded-[12px] border border-aproksi-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
-const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
+  "w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra";
+const labelCls = "block text-xs font-medium text-aproksi-slate mb-1";
 
 interface Draft {
   id?: string;
@@ -150,12 +150,12 @@ export default function ShiftsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-kaunta-stone">
-      <header className="border-b border-kaunta-mist bg-white">
+    <main className="min-h-screen bg-aproksi-stone">
+      <header className="border-b border-aproksi-mist bg-white">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <span className="font-display text-2xl text-kaunta-ink">Shifts & rosters</span>
-            <Link href="/dashboard" className="text-sm text-kaunta-ultra hover:underline ml-3">
+            <span className="font-display text-2xl text-aproksi-ink">Shifts & rosters</span>
+            <Link href="/dashboard" className="text-sm text-aproksi-ultra hover:underline ml-3">
               ← Dashboard
             </Link>
           </div>
@@ -164,14 +164,14 @@ export default function ShiftsPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-8">
         {error && (
-          <div className="mb-4 rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-4 py-3 text-sm text-kaunta-red">
+          <div className="mb-4 rounded-lg border border-aproksi-red/30 bg-aproksi-red/5 px-4 py-3 text-sm text-aproksi-red">
             {error}
           </div>
         )}
 
         {draft && (
           <div className={`${cardCls} p-6 mb-6 space-y-4`}>
-            <h2 className="font-display text-xl text-kaunta-ink">{draft.id ? "Edit shift" : "New shift"}</h2>
+            <h2 className="font-display text-xl text-aproksi-ink">{draft.id ? "Edit shift" : "New shift"}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Workplace</label>
@@ -231,8 +231,8 @@ export default function ShiftsPage() {
                     onClick={() => toggleDay(di)}
                     className={`h-8 w-11 rounded-md text-xs ${
                       draft.days_of_week.includes(di)
-                        ? "bg-kaunta-ultra text-white"
-                        : "bg-kaunta-stone text-kaunta-slate/70 hover:bg-kaunta-mist"
+                        ? "bg-aproksi-ultra text-white"
+                        : "bg-aproksi-stone text-aproksi-slate/70 hover:bg-aproksi-mist"
                     }`}
                   >
                     {d}
@@ -253,12 +253,12 @@ export default function ShiftsPage() {
 
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
+            <Loader2 className="h-6 w-6 animate-spin text-aproksi-ultra" />
           </div>
         ) : workplaces.length === 0 ? (
           <div className={`${cardCls} p-10 text-center`}>
-            <p className="text-kaunta-slate/70">No workplaces yet.</p>
-            <Link href="/dashboard/workplaces" className="text-sm text-kaunta-ultra hover:underline mt-1 inline-block">
+            <p className="text-aproksi-slate/70">No workplaces yet.</p>
+            <Link href="/dashboard/workplaces" className="text-sm text-aproksi-ultra hover:underline mt-1 inline-block">
               Add a workplace first →
             </Link>
           </div>
@@ -267,27 +267,27 @@ export default function ShiftsPage() {
             {workplaces.map((w) => (
               <div key={w.id} className={`${cardCls} p-5`}>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-display text-xl text-kaunta-ink">{w.name}</h3>
+                  <h3 className="font-display text-xl text-aproksi-ink">{w.name}</h3>
                   <Button size="sm" variant="outline" onClick={() => setDraft(emptyDraft(w.id))}>
                     <Plus className="h-3 w-3 mr-1" /> Add shift
                   </Button>
                 </div>
                 {w.shifts.length === 0 ? (
-                  <p className="text-sm text-kaunta-slate/50">No shifts defined for this workplace.</p>
+                  <p className="text-sm text-aproksi-slate/50">No shifts defined for this workplace.</p>
                 ) : (
                   <div className="space-y-2">
                     {w.shifts.map((s) => (
-                      <div key={s.id} className="flex items-center justify-between rounded-lg border border-kaunta-mist px-4 py-3">
+                      <div key={s.id} className="flex items-center justify-between rounded-lg border border-aproksi-mist px-4 py-3">
                         <div>
-                          <p className="text-sm font-medium text-kaunta-ink inline-flex items-center gap-2">
-                            <Clock className="h-3.5 w-3.5 text-kaunta-ultra" /> {s.name}
-                            <span className="text-xs font-normal text-kaunta-slate/50 capitalize">({s.kind})</span>
+                          <p className="text-sm font-medium text-aproksi-ink inline-flex items-center gap-2">
+                            <Clock className="h-3.5 w-3.5 text-aproksi-ultra" /> {s.name}
+                            <span className="text-xs font-normal text-aproksi-slate/50 capitalize">({s.kind})</span>
                           </p>
-                          <p className="text-xs text-kaunta-slate/60 mt-0.5">
+                          <p className="text-xs text-aproksi-slate/60 mt-0.5">
                             {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)} · {s.days_of_week.map((d) => DAYS[d]).join(" ")} ·{" "}
                             {s.grace_minutes}m grace
                           </p>
-                          <p className="text-xs text-kaunta-sage mt-0.5 inline-flex items-center gap-1">
+                          <p className="text-xs text-aproksi-sage mt-0.5 inline-flex items-center gap-1">
                             <Users className="h-3 w-3" /> {assignedCount(s.id)} assigned
                           </p>
                         </div>
@@ -305,12 +305,12 @@ export default function ShiftsPage() {
                                 grace_minutes: s.grace_minutes,
                               })
                             }
-                            className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
+                            className="text-aproksi-slate/60 hover:text-aproksi-ultra p-1"
                             aria-label="Edit"
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
-                          <button onClick={() => remove(s.id)} className="text-kaunta-red/60 hover:text-kaunta-red p-1" aria-label="Delete">
+                          <button onClick={() => remove(s.id)} className="text-aproksi-red/60 hover:text-aproksi-red p-1" aria-label="Delete">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
@@ -320,9 +320,9 @@ export default function ShiftsPage() {
                 )}
               </div>
             ))}
-            <p className="text-xs text-kaunta-slate/50">
+            <p className="text-xs text-aproksi-slate/50">
               Assign employees to shifts from the{" "}
-              <Link href="/dashboard/employees" className="text-kaunta-ultra hover:underline">
+              <Link href="/dashboard/employees" className="text-aproksi-ultra hover:underline">
                 employees page
               </Link>
               .

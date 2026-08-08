@@ -11,7 +11,7 @@
  * evidence than any map: **the colleagues who travel the same way.** If four
  * other people at that site were also late that morning when they normally are
  * not, something happened on the road. If everyone else arrived on time, that
- * is worth the employer knowing too. This is Kaunta's own data answering a
+ * is worth the employer knowing too. This is Aproksi's own data answering a
  * question about the outside world, and it is the reason this agent needs
  * nothing external at all.
  *
@@ -221,7 +221,7 @@ export async function assessRoadClosed(
       stance: "neutral",
       headline: "They named the road",
       detail:
-        `They said: “${provided.answer}”. Kaunta has not checked this and cannot. You will know that road and that morning better than any system does.`,
+        `They said: “${provided.answer}”. Aproksi has not checked this and cannot. You will know that road and that morning better than any system does.`,
       evidence: { asked: "yes", named: "yes" },
       source: "appeal_info_requests",
     });

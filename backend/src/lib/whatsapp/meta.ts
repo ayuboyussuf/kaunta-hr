@@ -1,7 +1,7 @@
 /**
  * Compatibility shim.
  *
- * Kaunta-HR delivers all messaging over Africa's Talking SMS (see
+ * Aproksi-HR delivers all messaging over Africa's Talking SMS (see
  * ../messaging). This module keeps the original function names so existing call
  * sites continue to work; each maps onto the SMS messaging layer:
  *   • sendText        → SMS text

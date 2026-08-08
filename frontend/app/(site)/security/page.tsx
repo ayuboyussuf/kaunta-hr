@@ -11,7 +11,7 @@ import { SealedRecord } from "@/components/site/Engravings";
 export const metadata: Metadata = {
   title: "Security & data",
   description:
-    "Where Kaunta HR data is held, how access is separated between the owner and staff, how payslip links are signed, and what document integrity means in practice.",
+    "Where Aproksi HR data is held, how access is separated between the owner and staff, how payslip links are signed, and what document integrity means in practice.",
 };
 
 const SECURITY_FAQ = [
@@ -32,7 +32,7 @@ const SECURITY_FAQ = [
     a: "For its lifetime the link grants access to that one document, so a staff member who forwards their own link has shared their own payslip. Links expire, and an owner can reissue at any time, which invalidates the previous one.",
   },
   {
-    q: "Who at Kaunta can see my data?",
+    q: "Who at Aproksi can see my data?",
     a: "Access to production data is limited to what is needed to operate and support the service, and support access is requested rather than standing. We do not read payroll records for any other purpose.",
   },
   {
@@ -51,7 +51,7 @@ export default function SecurityPage() {
       />
 
       {/* ── Where it lives ────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
@@ -103,7 +103,7 @@ export default function SecurityPage() {
       </section>
 
       {/* ── Access ────────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
@@ -133,7 +133,7 @@ export default function SecurityPage() {
             ].map((c) => (
               <div key={c.n}>
                 <div className="h-full rounded-xl border border-white/10 bg-white/[0.02] p-7">
-                  <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] tracking-[0.16em] text-kaunta-ultra-br/70">
+                  <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] tracking-[0.16em] text-aproksi-ultra-br/70">
                     {c.n}
                   </span>
                   <h3 className="font-display mt-4 text-xl text-white">{c.t}</h3>
@@ -148,7 +148,7 @@ export default function SecurityPage() {
       </section>
 
       {/* ── Document integrity ────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
             <>
@@ -197,7 +197,7 @@ export default function SecurityPage() {
       </section>
 
       {/* ── What we collect ───────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-center lg:gap-20">
             <>
@@ -227,13 +227,13 @@ export default function SecurityPage() {
       </section>
 
       {/* ── Reporting ─────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="prose" className="py-12 sm:py-16 lg:py-20">
           <>
             <div className="rounded-xl border border-white/10 bg-white/[0.02] p-7">
               <Eyebrow tone="dark">Reporting a vulnerability</Eyebrow>
               <p className="mt-4 text-[0.9rem] leading-relaxed text-white/65">
-                If you believe you have found a security issue in Kaunta HR, tell
+                If you believe you have found a security issue in Aproksi HR, tell
                 us before you tell anyone else and we will work the fix with you.
                 Send the details to{" "}
                 <span className="font-mono text-white/85">
@@ -248,7 +248,7 @@ export default function SecurityPage() {
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="prose" className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead tone="dark" eyebrow="Questions" title="The ones we get asked" />

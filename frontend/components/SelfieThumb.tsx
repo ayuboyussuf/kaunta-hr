@@ -35,7 +35,7 @@ export default function SelfieThumb({ entryId, label }: { entryId: string; label
     // eslint-disable-next-line @next/next/no-img-element
     return (
       <a href={url} target="_blank" rel="noreferrer" title={`${label} selfie`}>
-        <img src={url} alt={`${label} selfie`} className="h-16 w-16 rounded-lg object-cover border border-kaunta-mist" />
+        <img src={url} alt={`${label} selfie`} className="h-16 w-16 rounded-lg object-cover border border-aproksi-mist" />
       </a>
     );
   }
@@ -44,7 +44,7 @@ export default function SelfieThumb({ entryId, label }: { entryId: string; label
     <button
       type="button"
       onClick={load}
-      className="text-xs text-kaunta-ultra hover:underline disabled:opacity-50"
+      className="text-xs text-aproksi-ultra hover:underline disabled:opacity-50"
       disabled={loading}
     >
       {loading ? "Loading…" : error ? "Retry photo" : `View ${label} photo`}

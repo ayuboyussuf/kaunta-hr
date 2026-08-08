@@ -10,7 +10,7 @@ import Link from "next/link";
 import { api, getEmployeeToken } from "@/lib/api";
 import { ANNOUNCEMENT_TYPES, formatDate, formatTime } from "@/lib/utils";
 
-const SEEN_KEY = "kaunta_hr_announcements_seen_at";
+const SEEN_KEY = "aproksi_hr_announcements_seen_at";
 
 interface Announcement {
   id: string;
@@ -122,15 +122,15 @@ export default function EmployeeMessagesPage() {
   return (
     <div className="flex flex-col min-h-[70vh]">
       <div className="mb-4">
-        <h1 className="font-display text-3xl text-kaunta-ink mb-1">Messages</h1>
-        <p className="text-kaunta-slate/70 text-sm">Announcements, penalties and appeal outcomes.</p>
+        <h1 className="font-display text-3xl text-aproksi-ink mb-1">Messages</h1>
+        <p className="text-aproksi-slate/70 text-sm">Announcements, penalties and appeal outcomes.</p>
       </div>
 
-      {error && <p className="text-sm text-kaunta-red">{error}</p>}
-      {!bubbles && !error && <p className="text-sm text-kaunta-slate/60">Loading…</p>}
+      {error && <p className="text-sm text-aproksi-red">{error}</p>}
+      {!bubbles && !error && <p className="text-sm text-aproksi-slate/60">Loading…</p>}
 
       {bubbles && bubbles.length === 0 && (
-        <div className="flex-1 grid place-items-center text-sm text-kaunta-slate/60">
+        <div className="flex-1 grid place-items-center text-sm text-aproksi-slate/60">
           No messages yet.
         </div>
       )}
@@ -140,17 +140,17 @@ export default function EmployeeMessagesPage() {
           {bubbles.map((b) => {
             const outgoing = b.side === "out";
             const toneCls = outgoing
-              ? "bg-kaunta-ultra text-white rounded-br-sm"
+              ? "bg-aproksi-ultra text-white rounded-br-sm"
               : b.kind === "penalty"
-              ? "bg-kaunta-red/5 border border-kaunta-red/20 text-kaunta-ink rounded-bl-sm"
+              ? "bg-aproksi-red/5 border border-aproksi-red/20 text-aproksi-ink rounded-bl-sm"
               : b.kind === "outcome"
-              ? "bg-kaunta-sage-lt border border-kaunta-sage/20 text-kaunta-ink rounded-bl-sm"
-              : "bg-white border border-kaunta-mist text-kaunta-ink rounded-bl-sm";
+              ? "bg-aproksi-sage-lt border border-aproksi-sage/20 text-aproksi-ink rounded-bl-sm"
+              : "bg-white border border-aproksi-mist text-aproksi-ink rounded-bl-sm";
             return (
               <div key={b.key} className={`flex ${outgoing ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-[0_2px_10px_rgba(15,25,35,0.05)] ${toneCls}`}>
                   {b.tag && (
-                    <p className={`text-[10px] uppercase tracking-wide mb-1 ${outgoing ? "text-white/70" : "text-kaunta-slate/50"}`}>
+                    <p className={`text-[10px] uppercase tracking-wide mb-1 ${outgoing ? "text-white/70" : "text-aproksi-slate/50"}`}>
                       {b.tag}
                     </p>
                   )}
@@ -159,12 +159,12 @@ export default function EmployeeMessagesPage() {
                   {b.link && (
                     <Link
                       href={b.link}
-                      className={`text-xs mt-1 inline-block hover:underline ${outgoing ? "text-white/90" : "text-kaunta-ultra"}`}
+                      className={`text-xs mt-1 inline-block hover:underline ${outgoing ? "text-white/90" : "text-aproksi-ultra"}`}
                     >
                       {b.linkLabel ?? "Open"} →
                     </Link>
                   )}
-                  <p className={`text-[10px] mt-1 ${outgoing ? "text-white/60" : "text-kaunta-slate/40"}`}>
+                  <p className={`text-[10px] mt-1 ${outgoing ? "text-white/60" : "text-aproksi-slate/40"}`}>
                     {formatDate(b.at)} · {formatTime(b.at)}
                   </p>
                 </div>

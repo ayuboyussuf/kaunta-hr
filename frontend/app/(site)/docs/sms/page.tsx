@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: "SMS setup",
   description:
-    "How Kaunta HR sends SMS under the KAUNTAHR sender ID, what messages go out, and how delivery and costs work.",
+    "How Aproksi HR sends SMS under the APROKSIHR sender ID, what messages go out, and how delivery and costs work.",
 };
 
 export default function SmsDocPage() {
@@ -27,11 +27,11 @@ export default function SmsDocPage() {
     <DocPage
       href="/docs/sms"
       title="SMS setup"
-      lede="Operational messages go out over SMS under the sender ID KAUNTAHR, so a staff member sees who a penalty notice or payslip link came from instead of an unfamiliar shortcode."
+      lede="Operational messages go out over SMS under the sender ID APROKSIHR, so a staff member sees who a penalty notice or payslip link came from instead of an unfamiliar shortcode."
     >
       <H2 id="sender">The sender ID</H2>
       <P>
-        Messages arrive from <Code>KAUNTAHR</Code>. It is an alphanumeric sender
+        Messages arrive from <Code>APROKSIHR</Code>. It is an alphanumeric sender
         ID, which means recipients see the name rather than a number, and cannot
         reply to the thread.
       </P>
@@ -63,7 +63,7 @@ export default function SmsDocPage() {
       />
 
       <Callout title="Nothing marketing goes out" tone="note">
-        Kaunta HR only sends messages tied to a specific event on a staff
+        Aproksi HR only sends messages tied to a specific event on a staff
         member&rsquo;s own record, plus announcements you write yourself. There
         are no promotional sends on your sender ID.
       </Callout>
@@ -72,7 +72,7 @@ export default function SmsDocPage() {
       <CodeBlock
         label="Penalty notice"
         lines={[
-          "From: KAUNTAHR",
+          "From: APROKSIHR",
           "",
           "Ruiru Station: a late arrival penalty of KES 250",
           "was applied for 21 Mar (07:52, shift 07:00).",
@@ -82,7 +82,7 @@ export default function SmsDocPage() {
       <CodeBlock
         label="Payslip link"
         lines={[
-          "From: KAUNTAHR",
+          "From: APROKSIHR",
           "",
           "Your payslip for March is ready.",
           "Open: https://…/s/4b91de",

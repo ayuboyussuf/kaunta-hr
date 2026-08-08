@@ -20,7 +20,7 @@ import {
 export const metadata: Metadata = {
   title: "Setting penalty rules",
   description:
-    "Configure grace periods, lateness bands and absence rules in Kaunta HR, and understand exactly how a scan is matched to a deduction.",
+    "Configure grace periods, lateness bands and absence rules in Aproksi HR, and understand exactly how a scan is matched to a deduction.",
 };
 
 export default function PenaltyRulesDocPage() {
@@ -132,7 +132,7 @@ export default function PenaltyRulesDocPage() {
 
       <H2 id="matching">How a scan is matched</H2>
       <P>
-        When a scan is accepted, Kaunta HR resolves it against the roster and the
+        When a scan is accepted, Aproksi HR resolves it against the roster and the
         policy in one pass:
       </P>
       <Steps>

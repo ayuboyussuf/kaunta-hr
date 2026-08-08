@@ -19,13 +19,13 @@ import { SealedRecord } from "@/components/site/Engravings";
 export const metadata: Metadata = {
   title: "Compliance & records",
   description:
-    "How Kaunta HR's locked PDFs and audit trail give a Kenyan employer something concrete to point at when an attendance or deduction dispute goes beyond the office.",
+    "How Aproksi HR's locked PDFs and audit trail give a Kenyan employer something concrete to point at when an attendance or deduction dispute goes beyond the office.",
 };
 
 const RECORD_FAQ = [
   {
-    q: "Does using Kaunta HR make my business compliant?",
-    a: "No product can do that on its own. Kaunta HR keeps the attendance and deduction records in a form that is contemporaneous, attributed and hard to alter after the fact. Whether your policies themselves are lawful, and what your specific obligations are, is a question for your own advisor.",
+    q: "Does using Aproksi HR make my business compliant?",
+    a: "No product can do that on its own. Aproksi HR keeps the attendance and deduction records in a form that is contemporaneous, attributed and hard to alter after the fact. Whether your policies themselves are lawful, and what your specific obligations are, is a question for your own advisor.",
   },
   {
     q: "How long are records kept?",
@@ -51,11 +51,11 @@ export default function CompliancePage() {
       <PageHero
         eyebrow="Compliance & records"
         title="When it stops being an argument in the office."
-        lede="Most attendance disputes are settled by whoever sounds more certain. That works until the matter goes further — to a labour officer, to a lawyer's letter, to a tribunal — at which point what settles it is what you can show. This page is about what Kaunta HR leaves behind."
+        lede="Most attendance disputes are settled by whoever sounds more certain. That works until the matter goes further — to a labour officer, to a lawyer's letter, to a tribunal — at which point what settles it is what you can show. This page is about what Aproksi HR leaves behind."
       />
 
       {/* ── The problem with the book ─────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-20">
             <>
@@ -100,7 +100,7 @@ export default function CompliancePage() {
       </section>
 
       {/* ── What makes a record hold ──────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-14 sm:py-20 lg:py-28">
           <>
             <SectionHead
@@ -108,7 +108,7 @@ export default function CompliancePage() {
               align="center"
               eyebrow="Four properties"
               title="What makes an attendance record worth anything."
-              lede="These are the qualities that separate a record someone can rely on from a book someone wrote. Kaunta HR is built around all four."
+              lede="These are the qualities that separate a record someone can rely on from a book someone wrote. Aproksi HR is built around all four."
             />
           </>
 
@@ -137,7 +137,7 @@ export default function CompliancePage() {
             ].map((c) => (
               <div key={c.n}>
                 <div className="h-full rounded-xl border border-white/10 bg-white/[0.02] p-6">
-                  <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] tracking-[0.16em] text-kaunta-ultra-br/70">
+                  <span className="font-mono text-[0.6875rem] sm:text-[0.625rem] tracking-[0.16em] text-aproksi-ultra-br/70">
                     {c.n}
                   </span>
                   <h3 className="font-display mt-4 text-xl text-white">{c.t}</h3>
@@ -152,7 +152,7 @@ export default function CompliancePage() {
       </section>
 
       {/* ── The trail ─────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-20">
             <div>
@@ -161,7 +161,7 @@ export default function CompliancePage() {
                   tone="dark"
                   eyebrow="The audit trail"
                   title="What a single disputed deduction leaves behind."
-                  lede="Take one KES 200 lateness penalty that a staff member objected to — the document beside this is the real one. Here is everything Kaunta HR can produce about that case, months later, without anyone having to remember anything."
+                  lede="Take one KES 200 lateness penalty that a staff member objected to — the document beside this is the real one. Here is everything Aproksi HR can produce about that case, months later, without anyone having to remember anything."
                 />
               </>
               <div className="mt-8 sm:mt-12">
@@ -217,7 +217,7 @@ export default function CompliancePage() {
       </section>
 
       {/* ── Integrity mechanics ───────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead
@@ -264,15 +264,15 @@ export default function CompliancePage() {
       </section>
 
       {/* ── Disclaimer ────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="prose" className="py-12 sm:py-16 lg:py-20">
           <>
-            <div className="rounded-xl border border-kaunta-amber/35 bg-kaunta-amber/[0.07] p-7">
-              <Eyebrow tone="dark" className="text-kaunta-amber">
+            <div className="rounded-xl border border-aproksi-amber/35 bg-aproksi-amber/[0.07] p-7">
+              <Eyebrow tone="dark" className="text-aproksi-amber">
                 Please read
               </Eyebrow>
               <p className="mt-4 text-[0.9rem] leading-relaxed text-white/70">
-                Kaunta HR is record-keeping software, not legal advice, and using
+                Aproksi HR is record-keeping software, not legal advice, and using
                 it does not by itself make an employment practice lawful. What it
                 does is make sure that when a question is asked about an arrival
                 time or a deduction, there is a contemporaneous, attributed,
@@ -287,7 +287,7 @@ export default function CompliancePage() {
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────── */}
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="prose" className="py-14 sm:py-20 lg:py-24">
           <>
             <SectionHead

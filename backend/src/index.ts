@@ -31,7 +31,7 @@ app.use(
 
 app.use(express.json({ limit: "1mb" }));
 
-app.get("/health", (_req, res) => res.json({ ok: true, service: "kaunta-hr-backend" }));
+app.get("/health", (_req, res) => res.json({ ok: true, service: "aproksi-hr-backend" }));
 
 // Auto-mount every src/routes/**/*.route.ts module ({ basePath, router }).
 const mounted = loadRoutes(app);
@@ -57,6 +57,6 @@ app.use(
   }
 );
 
-app.listen(PORT, () => console.log(`[kaunta-hr-backend] listening on ${PORT}`));
+app.listen(PORT, () => console.log(`[aproksi-hr-backend] listening on ${PORT}`));
 
 export default app;

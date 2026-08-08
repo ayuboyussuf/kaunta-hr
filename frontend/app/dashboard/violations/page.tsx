@@ -61,10 +61,10 @@ const fmtKes = (n: number) =>
 const fmtDate = (s: string) => new Date(s).toLocaleString("en-KE");
 
 const STAGE_STYLE: Record<Stage, string> = {
-  open: "bg-kaunta-amber/15 text-kaunta-amber",
-  appealed: "bg-kaunta-ultra/15 text-kaunta-ultra",
-  closed_no_appeal: "bg-kaunta-slate/10 text-kaunta-slate",
-  settled: "bg-kaunta-ink/10 text-kaunta-ink",
+  open: "bg-aproksi-amber/15 text-aproksi-amber",
+  appealed: "bg-aproksi-ultra/15 text-aproksi-ultra",
+  closed_no_appeal: "bg-aproksi-slate/10 text-aproksi-slate",
+  settled: "bg-aproksi-ink/10 text-aproksi-ink",
 };
 
 export default function OwnerViolationsPage() {
@@ -228,37 +228,37 @@ export default function OwnerViolationsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-kaunta-stone grid place-items-center">
-        <p className="text-kaunta-slate/60">Loading…</p>
+      <main className="min-h-screen bg-aproksi-stone grid place-items-center">
+        <p className="text-aproksi-slate/60">Loading…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-kaunta-stone">
-      <header className="border-b border-kaunta-mist bg-white">
+    <main className="min-h-screen bg-aproksi-stone">
+      <header className="border-b border-aproksi-mist bg-white">
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <span className="font-display text-2xl text-kaunta-ink">Penalties &amp; Appeals</span>
+          <span className="font-display text-2xl text-aproksi-ink">Penalties &amp; Appeals</span>
         </div>
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
         {error && (
-          <div className="rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-4 py-3 text-sm text-kaunta-red">
+          <div className="rounded-lg border border-aproksi-red/30 bg-aproksi-red/5 px-4 py-3 text-sm text-aproksi-red">
             {error}
           </div>
         )}
 
         {/* Log a violation */}
         <Card className="p-6">
-          <h2 className="font-display text-xl text-kaunta-ink mb-4">Log a violation</h2>
+          <h2 className="font-display text-xl text-aproksi-ink mb-4">Log a violation</h2>
           <form onSubmit={logViolation} className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-xs font-medium text-kaunta-slate mb-1">Employee</label>
+              <label className="block text-xs font-medium text-aproksi-slate mb-1">Employee</label>
               <select
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
-                className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
+                className="w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra"
               >
                 <option value="">Select employee…</option>
                 {employees.map((emp) => (
@@ -270,13 +270,13 @@ export default function OwnerViolationsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-kaunta-slate mb-1">
+              <label className="block text-xs font-medium text-aproksi-slate mb-1">
                 Penalty rule (optional)
               </label>
               <select
                 value={ruleId}
                 onChange={(e) => setRuleId(e.target.value)}
-                className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
+                className="w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra"
               >
                 <option value="">Free reason + amount…</option>
                 {rules.map((r) => (
@@ -290,16 +290,16 @@ export default function OwnerViolationsPage() {
             {!usingRule && (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-kaunta-slate mb-1">Reason</label>
+                  <label className="block text-xs font-medium text-aproksi-slate mb-1">Reason</label>
                   <input
                     value={freeReason}
                     onChange={(e) => setFreeReason(e.target.value)}
                     placeholder="e.g. Late arrival"
-                    className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
+                    className="w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-kaunta-slate mb-1">
+                  <label className="block text-xs font-medium text-aproksi-slate mb-1">
                     Amount (KES)
                   </label>
                   <input
@@ -308,21 +308,21 @@ export default function OwnerViolationsPage() {
                     step="1"
                     value={freeAmount}
                     onChange={(e) => setFreeAmount(e.target.value)}
-                    className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra tabular-nums"
+                    className="w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra tabular-nums"
                   />
                 </div>
               </>
             )}
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-kaunta-slate mb-1">
+              <label className="block text-xs font-medium text-aproksi-slate mb-1">
                 Evidence / note (optional)
               </label>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
-                className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
+                className="w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra"
               />
             </div>
 
@@ -343,12 +343,12 @@ export default function OwnerViolationsPage() {
 
         {/* Pending appeals */}
         <section>
-          <h2 className="font-display text-xl text-kaunta-ink mb-3">
+          <h2 className="font-display text-xl text-aproksi-ink mb-3">
             Pending appeals{" "}
-            <span className="text-sm text-kaunta-slate/60 tabular-nums">({appeals.length})</span>
+            <span className="text-sm text-aproksi-slate/60 tabular-nums">({appeals.length})</span>
           </h2>
           {appeals.length === 0 ? (
-            <Card className="p-6 text-sm text-kaunta-slate/60">No appeals awaiting a decision.</Card>
+            <Card className="p-6 text-sm text-aproksi-slate/60">No appeals awaiting a decision.</Card>
           ) : (
             <div className="space-y-3">
               {appeals.map((a) => (
@@ -356,22 +356,22 @@ export default function OwnerViolationsPage() {
                   {/* Their own words first. If the brief below read the claim
                       wrongly, this is the thing that corrects it. */}
                   <div className="min-w-0">
-                    <p className="font-medium text-kaunta-ink">
+                    <p className="font-medium text-aproksi-ink">
                       {a.violation?.employee_name ?? "Employee"} ·{" "}
-                      <span className="text-kaunta-slate">{a.violation?.reason}</span>
+                      <span className="text-aproksi-slate">{a.violation?.reason}</span>
                     </p>
-                    <p className="text-sm text-kaunta-red tabular-nums mt-0.5">
+                    <p className="text-sm text-aproksi-red tabular-nums mt-0.5">
                       {fmtKes(a.violation?.amount ?? 0)}
                     </p>
-                    <p className="text-sm text-kaunta-slate/80 mt-2 italic">“{a.message}”</p>
-                    <p className="text-xs text-kaunta-slate/50 mt-1">
+                    <p className="text-sm text-aproksi-slate/80 mt-2 italic">“{a.message}”</p>
+                    <p className="text-xs text-aproksi-slate/50 mt-1">
                       Appealed {fmtDate(a.submitted_at)}
                     </p>
                   </div>
 
                   <AppealBrief assist={a.assist} infoRequests={a.info_requests ?? []} />
 
-                  <div className="mt-4 flex flex-col gap-2 border-t border-kaunta-mist pt-4 sm:flex-row">
+                  <div className="mt-4 flex flex-col gap-2 border-t border-aproksi-mist pt-4 sm:flex-row">
                     <Button
                       variant="secondary"
                       disabled={deciding === a.id}
@@ -398,14 +398,14 @@ export default function OwnerViolationsPage() {
         {/* All violations */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display text-xl text-kaunta-ink">Violations</h2>
+            <h2 className="font-display text-xl text-aproksi-ink">Violations</h2>
             <select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 refresh(e.target.value);
               }}
-              className="rounded-lg border border-kaunta-mist bg-white px-3 py-1.5 text-sm outline-none focus:border-kaunta-ultra"
+              className="rounded-lg border border-aproksi-mist bg-white px-3 py-1.5 text-sm outline-none focus:border-aproksi-ultra"
             >
               <option value="">All statuses</option>
               <option value="open">Window open / elapsed</option>
@@ -417,7 +417,7 @@ export default function OwnerViolationsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-kaunta-mist text-left text-xs text-kaunta-slate/60">
+                  <tr className="border-b border-aproksi-mist text-left text-xs text-aproksi-slate/60">
                     <th className="px-4 py-3 font-medium">Employee</th>
                     <th className="px-4 py-3 font-medium">Reason</th>
                     <th className="px-4 py-3 font-medium text-right">Amount</th>
@@ -430,22 +430,22 @@ export default function OwnerViolationsPage() {
                 <tbody>
                   {violations.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-6 text-center text-kaunta-slate/50">
+                      <td colSpan={7} className="px-4 py-6 text-center text-aproksi-slate/50">
                         No violations.
                       </td>
                     </tr>
                   ) : (
                     violations.map((v) => (
-                      <tr key={v.id} className="border-b border-kaunta-mist/60 last:border-0">
-                        <td className="px-4 py-3 text-kaunta-ink">{v.employee_name}</td>
-                        <td className="px-4 py-3 text-kaunta-slate">{v.reason}</td>
-                        <td className="px-4 py-3 text-right tabular-nums text-kaunta-ink">
+                      <tr key={v.id} className="border-b border-aproksi-mist/60 last:border-0">
+                        <td className="px-4 py-3 text-aproksi-ink">{v.employee_name}</td>
+                        <td className="px-4 py-3 text-aproksi-slate">{v.reason}</td>
+                        <td className="px-4 py-3 text-right tabular-nums text-aproksi-ink">
                           {fmtKes(v.amount)}
                         </td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                              STAGE_STYLE[v.stage] ?? "bg-kaunta-mist text-kaunta-slate"
+                              STAGE_STYLE[v.stage] ?? "bg-aproksi-mist text-aproksi-slate"
                             }`}
                           >
                             {v.stage_label}
@@ -456,19 +456,19 @@ export default function OwnerViolationsPage() {
                             about, so it belongs in the table, not a log. */}
                         <td className="px-4 py-3">
                           {v.acknowledged_at ? (
-                            <span className="whitespace-nowrap text-kaunta-sage">Opened it</span>
+                            <span className="whitespace-nowrap text-aproksi-sage">Opened it</span>
                           ) : v.notified_at ? (
-                            <span className="whitespace-nowrap text-kaunta-slate/70">Texted</span>
+                            <span className="whitespace-nowrap text-aproksi-slate/70">Texted</span>
                           ) : !v.notice_tracked ? (
                             <span
-                              className="whitespace-nowrap text-kaunta-slate/40"
-                              title="Raised before Kaunta recorded delivery — we don't know either way."
+                              className="whitespace-nowrap text-aproksi-slate/40"
+                              title="Raised before Aproksi recorded delivery — we don't know either way."
                             >
                               Not recorded
                             </span>
                           ) : (
                             <div className="min-w-[9rem]">
-                              <span className="block text-kaunta-red" title={v.notify_error ?? undefined}>
+                              <span className="block text-aproksi-red" title={v.notify_error ?? undefined}>
                                 Not delivered
                               </span>
                               <div className="mt-1 flex flex-wrap gap-2">
@@ -476,7 +476,7 @@ export default function OwnerViolationsPage() {
                                   type="button"
                                   onClick={() => resendNotice(v.id)}
                                   disabled={busyNotice === v.id}
-                                  className="text-xs text-kaunta-ultra hover:underline disabled:opacity-50"
+                                  className="text-xs text-aproksi-ultra hover:underline disabled:opacity-50"
                                 >
                                   {busyNotice === v.id ? "Sending…" : "Resend"}
                                 </button>
@@ -484,7 +484,7 @@ export default function OwnerViolationsPage() {
                                   type="button"
                                   onClick={() => markUnreachable(v.id)}
                                   disabled={busyNotice === v.id}
-                                  className="text-xs text-kaunta-slate/60 hover:underline disabled:opacity-50"
+                                  className="text-xs text-aproksi-slate/60 hover:underline disabled:opacity-50"
                                 >
                                   Can&apos;t reach them
                                 </button>
@@ -492,7 +492,7 @@ export default function OwnerViolationsPage() {
                             </div>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-kaunta-slate/70 whitespace-nowrap">
+                        <td className="px-4 py-3 text-aproksi-slate/70 whitespace-nowrap">
                           {fmtDate(v.created_at)}
                         </td>
                         <td className="px-4 py-3">
@@ -500,16 +500,16 @@ export default function OwnerViolationsPage() {
                             <button
                               type="button"
                               onClick={() => openDocument(v.id)}
-                              className="text-kaunta-ultra hover:underline"
+                              className="text-aproksi-ultra hover:underline"
                             >
                               Open
                             </button>
                           ) : v.stage === "closed_no_appeal" ? (
-                            <span className="text-kaunta-slate/50">Closing — due shortly</span>
+                            <span className="text-aproksi-slate/50">Closing — due shortly</span>
                           ) : v.stage === "open" ? (
-                            <span className="text-kaunta-slate/50">After the window</span>
+                            <span className="text-aproksi-slate/50">After the window</span>
                           ) : (
-                            <span className="text-kaunta-slate/40">—</span>
+                            <span className="text-aproksi-slate/40">—</span>
                           )}
                         </td>
                       </tr>

@@ -1,10 +1,10 @@
-# Kaunta HR
+# Aproksi HR
 
 Attendance, rosters, penalties & payroll for teams — the HR sibling of
-[Kaunta](https://kaunta.co.ke). QR + GPS clock-in, SMS onboarding, appeals,
+[Aproksi](https://aproksi.co.ke). QR + GPS clock-in, SMS onboarding, appeals,
 and payslips. **Every integration is real — there is no mock mode.**
 
-## Architecture (two-tier, mirrors kaunta-web)
+## Architecture (two-tier, mirrors aproksi-web)
 
 ```
 frontend/   Next.js 16 (App Router) → Vercel   — owner + employee dashboards, auth UI
@@ -24,7 +24,7 @@ backend/    Express + TS            → Render    — SMS, OTP, PDFs, geofence, 
 
 ## Design system
 
-Ported verbatim from the Kaunta web app (`frontend/app/globals.css`): ink/copper/sage
+Ported verbatim from the Aproksi web app (`frontend/app/globals.css`): ink/copper/sage
 palette, Instrument Serif (display) / DM Sans (body) / JetBrains Mono (numbers).
 
 ## Setup

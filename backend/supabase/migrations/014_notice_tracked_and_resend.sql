@@ -5,7 +5,7 @@
 -- Migration 013 added violations.notified_at, and every row that already
 -- existed got NULL — which the dashboard then read as "the text never went
 -- out". It hadn't failed. We simply had not been recording it yet. So a live
--- business opened Kaunta to nine red penalties supposedly never delivered,
+-- business opened Aproksi to nine red penalties supposedly never delivered,
 -- with no way to clear them, because there is no truth to discover about a
 -- send that predates the recording of sends.
 --

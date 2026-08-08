@@ -1,5 +1,5 @@
 /**
- * Thin client for the Kaunta-HR Express backend.
+ * Thin client for the Aproksi-HR Express backend.
  * - Owner calls pass the Supabase access token.
  * - Employee calls pass the backend-issued employee session JWT.
  */
@@ -60,8 +60,8 @@ export async function api<T = unknown>(path: string, opts: ApiOptions = {}): Pro
 }
 
 // ── Employee session storage (client-side) ───────────────────────────────────
-const EMP_TOKEN_KEY = "kaunta_hr_emp_token";
-const DEVICE_FP_KEY = "kaunta_hr_device_fp";
+const EMP_TOKEN_KEY = "aproksi_hr_emp_token";
+const DEVICE_FP_KEY = "aproksi_hr_device_fp";
 
 export function getEmployeeToken(): string | null {
   if (typeof window === "undefined") return null;

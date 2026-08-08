@@ -104,7 +104,7 @@ router.post("/", requireEmployee, async (req, res) => {
       if (org?.phone) {
         await sendText(
           org.phone,
-          `Kaunta HR: ${emp.name} submitted a penalty appeal. Review it at ${env.appUrl}/dashboard/violations`
+          `Aproksi HR: ${emp.name} submitted a penalty appeal. Review it at ${env.appUrl}/dashboard/violations`
         );
       }
     }

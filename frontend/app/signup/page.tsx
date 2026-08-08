@@ -27,42 +27,42 @@ export default function OwnerSignupPage() {
   }
 
   return (
-    <main className="min-h-screen grid place-items-center bg-kaunta-stone px-4">
+    <main className="min-h-screen grid place-items-center bg-aproksi-stone px-4">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-4xl text-kaunta-ink mb-1">Kaunta HR</h1>
-        <p className="text-kaunta-slate/70 text-sm mb-8">Create your owner account</p>
+        <h1 className="font-display text-4xl text-aproksi-ink mb-1">Aproksi HR</h1>
+        <p className="text-aproksi-slate/70 text-sm mb-8">Create your owner account</p>
 
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-kaunta-slate mb-1">Email</label>
+            <label className="block text-xs font-medium text-aproksi-slate mb-1">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
+              className="w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-kaunta-slate mb-1">Password</label>
+            <label className="block text-xs font-medium text-aproksi-slate mb-1">Password</label>
             <input
               type="password"
               required
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra"
+              className="w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra"
             />
           </div>
-          {error && <p className="text-sm text-kaunta-red">{error}</p>}
+          {error && <p className="text-sm text-aproksi-red">{error}</p>}
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Creating…" : "Create account"}
           </Button>
         </form>
 
-        <p className="text-sm text-kaunta-slate/70 mt-6">
+        <p className="text-sm text-aproksi-slate/70 mt-6">
           Already have an account?{" "}
-          <Link href="/login" className="text-kaunta-ultra hover:underline">
+          <Link href="/login" className="text-aproksi-ultra hover:underline">
             Sign in
           </Link>
         </p>

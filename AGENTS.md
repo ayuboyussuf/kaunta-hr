@@ -1,4 +1,4 @@
-# Kaunta-HR — Build Contract for Module Agents
+# Aproksi-HR — Build Contract for Module Agents
 
 Read this fully before writing code. It keeps parallel modules conflict-free and
 consistent. **This product ships to a real paying customer — there is NO mock
@@ -52,10 +52,10 @@ mode. Every integration must be real.**
 - **Validation:** use `zod` on request bodies. Return `{ error: string }` with a proper status.
 
 ## Frontend conventions
-- Next 16 App Router, Tailwind v4, the Kaunta design system (already in `globals.css`).
-  Palette classes: `kaunta-ink|slate|copper|copper-lt|sage|sage-lt|stone|mist|amber|red`.
+- Next 16 App Router, Tailwind v4, the Aproksi design system (already in `globals.css`).
+  Palette classes: `aproksi-ink|slate|copper|copper-lt|sage|sage-lt|stone|mist|amber|red`.
   Fonts: `font-display` (Instrument Serif) for headings, default DM Sans body,
-  `.tabular-nums` for figures. Card style: `rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]`.
+  `.tabular-nums` for figures. Card style: `rounded-[12px] border border-aproksi-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]`.
 - Reuse `components/ui/button.tsx` and `card.tsx`. Add module-local components inside
   your own folder if needed.
 - **Owner pages** live under `app/dashboard/<yourseg>/`. Read the Supabase session with
@@ -64,7 +64,7 @@ mode. Every integration must be real.**
   (`supabase.auth.getSession()` → `access_token`).
 - **Employee pages** live under `app/me/<yourseg>/`. Use `getEmployeeToken()` from `@/lib/api`
   as the bearer token for backend calls; redirect to `/me/login` if absent.
-- Keep the body background `bg-kaunta-stone`.
+- Keep the body background `bg-aproksi-stone`.
 
 ## Data model
 See `backend/supabase/migrations/001_kaunta_hr_schema.sql` for all tables, columns,

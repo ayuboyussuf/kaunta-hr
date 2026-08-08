@@ -1,7 +1,7 @@
 /**
  * Documents attached to an appeal — in practice, photographs of clinic notes.
  *
- * These are the most sensitive objects Kaunta holds. A selfie proves who
+ * These are the most sensitive objects Aproksi holds. A selfie proves who
  * scanned; a medical note can reveal a diagnosis, a pregnancy, a condition
  * somebody has told no one at work. So the rules are stricter than for selfies:
  *

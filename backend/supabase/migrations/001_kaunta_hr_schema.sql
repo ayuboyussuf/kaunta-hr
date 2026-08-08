@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- Kaunta-HR — Initial Schema
+-- Aproksi-HR — Initial Schema
 -- Run in the Supabase SQL Editor or via `supabase db push`.
 --
 -- Auth model:
@@ -29,7 +29,7 @@ ALTER TABLE orgs ENABLE ROW LEVEL SECURITY;
 
 -- ── SECURITY DEFINER helper — the org id of the current Supabase-auth owner ───
 -- Reads `orgs` with owner privileges so RLS does NOT re-trigger (avoids the
--- infinite-recursion bug documented in kaunta-web migration 007).
+-- infinite-recursion bug documented in aproksi-web migration 007).
 CREATE OR REPLACE FUNCTION get_auth_user_org_id()
 RETURNS uuid
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public

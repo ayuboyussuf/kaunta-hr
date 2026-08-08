@@ -1,5 +1,5 @@
 /**
- * The two claims Kaunta cannot verify.
+ * The two claims Aproksi cannot verify.
  *
  * The risk with these is not that they under-deliver — it is that they
  * over-claim. A brief that reads like a check was performed, when no check is

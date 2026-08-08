@@ -6,7 +6,7 @@ import { PageHero, CTASection, NextLinks } from "@/components/site/Blocks";
 export const metadata: Metadata = {
   title: "Changelog",
   description:
-    "What has shipped in Kaunta HR — attendance, penalty rules, disputes, payslips and the multi-site dashboard, release by release.",
+    "What has shipped in Aproksi HR — attendance, penalty rules, disputes, payslips and the multi-site dashboard, release by release.",
 };
 
 type Tag = "Added" | "Improved" | "Fixed";
@@ -21,9 +21,9 @@ type Release = {
 };
 
 const TAG_STYLE: Record<Tag, string> = {
-  Added: "border-kaunta-ultra-br/45 text-kaunta-ultra-br",
+  Added: "border-aproksi-ultra-br/45 text-aproksi-ultra-br",
   Improved: "border-white/25 text-white/60",
-  Fixed: "border-kaunta-amber/45 text-kaunta-amber",
+  Fixed: "border-aproksi-amber/45 text-aproksi-amber",
 };
 
 const RELEASES: Release[] = [
@@ -75,7 +75,7 @@ const RELEASES: Release[] = [
     title: "Payslips over signed links",
     changes: [
       { tag: "Added", text: "PDF payslip generation per payroll period, in KES." },
-      { tag: "Added", text: "Signed, expiring links delivered by SMS under the sender ID KAUNTAHR." },
+      { tag: "Added", text: "Signed, expiring links delivered by SMS under the sender ID APROKSIHR." },
       { tag: "Added", text: "Deduction lines that name the date and band behind each penalty." },
       { tag: "Improved", text: "Penalties under open appeal are excluded from a period rather than estimated." },
     ],
@@ -123,10 +123,10 @@ export default function ChangelogPage() {
       <PageHero
         eyebrow="Changelog"
         title="What has shipped, and when."
-        lede="Kaunta HR is built against real sites with real staff on them. This is the record of what changed, in the order it changed."
+        lede="Aproksi HR is built against real sites with real staff on them. This is the record of what changed, in the order it changed."
       />
 
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-12 sm:py-16 lg:py-24">
           {RELEASES.map((r, i) => (
             <div
@@ -142,7 +142,7 @@ export default function ChangelogPage() {
                     {r.date}
                   </p>
                   {i === 0 && (
-                    <span className="mt-4 inline-block rounded-full border border-kaunta-ultra-br/45 px-2.5 py-1 font-mono text-[0.625rem] sm:text-[0.5625rem] uppercase tracking-[0.16em] text-kaunta-ultra-br">
+                    <span className="mt-4 inline-block rounded-full border border-aproksi-ultra-br/45 px-2.5 py-1 font-mono text-[0.625rem] sm:text-[0.5625rem] uppercase tracking-[0.16em] text-aproksi-ultra-br">
                       Latest
                     </span>
                   )}
@@ -191,7 +191,7 @@ export default function ChangelogPage() {
         </Container>
       </section>
 
-      <section className="border-b border-white/10 bg-kaunta-void">
+      <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="prose" className="py-12 sm:py-16 lg:py-20">
           <>
             <SectionHead

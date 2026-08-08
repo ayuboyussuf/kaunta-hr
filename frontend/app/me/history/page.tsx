@@ -32,12 +32,12 @@ export default function AttendanceHistoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl text-kaunta-ink mb-1">Attendance history</h1>
-        <p className="text-kaunta-slate/70 text-sm">Your month at a glance — tap through the months.</p>
+        <h1 className="font-display text-3xl text-aproksi-ink mb-1">Attendance history</h1>
+        <p className="text-aproksi-slate/70 text-sm">Your month at a glance — tap through the months.</p>
       </div>
 
-      {error && <p className="text-sm text-kaunta-red">{error}</p>}
-      {!entries && !error && <p className="text-sm text-kaunta-slate/60">Loading…</p>}
+      {error && <p className="text-sm text-aproksi-red">{error}</p>}
+      {!entries && !error && <p className="text-sm text-aproksi-slate/60">Loading…</p>}
 
       {entries && (
         <Card>

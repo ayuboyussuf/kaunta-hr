@@ -1,7 +1,7 @@
 /**
  * "I was unwell."
  *
- * The honest position on this claim, stated up front: **Kaunta cannot verify
+ * The honest position on this claim, stated up front: **Aproksi cannot verify
  * it, and neither can any model.** A photograph of a clinic letter can be read;
  * it cannot be authenticated. Nothing in a JPEG proves a doctor wrote it, that
  * the patient is this employee, or that the date on it is the date it was
@@ -15,7 +15,7 @@
  *      came in at all.
  *   2. Asks, once, for a note, with "I don't have one" as a first-class answer.
  *      Being unwell without paperwork is the normal case in most of the
- *      workplaces Kaunta runs in, and a system that treats no-note as a lie
+ *      workplaces Aproksi runs in, and a system that treats no-note as a lie
  *      would penalise poverty rather than absence.
  *   3. Reads what is provided — the DATE and whether it names a facility — and
  *      reports what it read, labelled as read-not-verified. This is the one
@@ -72,7 +72,7 @@ export async function assessSick(
   findings.push({
     kind: "verification_limit",
     stance: "unverifiable",
-    headline: "Kaunta cannot confirm whether someone was unwell",
+    headline: "Aproksi cannot confirm whether someone was unwell",
     detail:
       "There is no record anywhere in this system that could establish it, and a photograph of a note can be read but not authenticated. " +
       "Anything below is what was provided, not what was proven.",
@@ -108,7 +108,7 @@ export async function assessSick(
       stance: "supports",
       headline: "A document was provided for that day",
       detail:
-        "Open it and judge it yourself. Kaunta has stored it against this appeal and has not assessed whether it is genuine — it cannot.",
+        "Open it and judge it yourself. Aproksi has stored it against this appeal and has not assessed whether it is genuine — it cannot.",
       evidence: { document: "provided" },
       source: "appeal_info_requests",
     });

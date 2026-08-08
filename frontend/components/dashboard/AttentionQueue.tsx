@@ -26,30 +26,30 @@ export function AttentionQueue({ items }: { items: AttentionItem[] }) {
 
   return (
     <section aria-label="Waiting on you" className="space-y-2">
-      <h2 className="px-1 text-xs font-medium uppercase tracking-wider text-kaunta-slate/60">
+      <h2 className="px-1 text-xs font-medium uppercase tracking-wider text-aproksi-slate/60">
         Waiting on you
       </h2>
-      <ul className="overflow-hidden rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.06)]">
+      <ul className="overflow-hidden rounded-[12px] border border-aproksi-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.06)]">
         {live.map((item) => (
-          <li key={item.href + item.label} className="border-b border-kaunta-mist/70 last:border-0">
+          <li key={item.href + item.label} className="border-b border-aproksi-mist/70 last:border-0">
             <Link
               href={item.href}
-              className="group flex min-h-[64px] items-center gap-4 px-5 py-3 transition-colors hover:bg-kaunta-stone/70 focus-visible:bg-kaunta-stone/70 focus-visible:outline-none"
+              className="group flex min-h-[64px] items-center gap-4 px-5 py-3 transition-colors hover:bg-aproksi-stone/70 focus-visible:bg-aproksi-stone/70 focus-visible:outline-none"
             >
               <span
                 className={`grid h-9 min-w-9 shrink-0 place-items-center rounded-full px-2 font-display text-lg tabular-nums ${
                   item.tone === "urgent"
-                    ? "bg-kaunta-red/10 text-kaunta-red"
-                    : "bg-kaunta-ultra/10 text-kaunta-ultra"
+                    ? "bg-aproksi-red/10 text-aproksi-red"
+                    : "bg-aproksi-ultra/10 text-aproksi-ultra"
                 }`}
               >
                 {item.count}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-kaunta-ink">{item.label}</span>
-                <span className="block text-xs text-kaunta-slate/70">{item.detail}</span>
+                <span className="block text-sm font-medium text-aproksi-ink">{item.label}</span>
+                <span className="block text-xs text-aproksi-slate/70">{item.detail}</span>
               </span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-kaunta-slate/30 transition-transform group-hover:translate-x-0.5 group-hover:text-kaunta-ultra" />
+              <ArrowRight className="h-4 w-4 shrink-0 text-aproksi-slate/30 transition-transform group-hover:translate-x-0.5 group-hover:text-aproksi-ultra" />
             </Link>
           </li>
         ))}

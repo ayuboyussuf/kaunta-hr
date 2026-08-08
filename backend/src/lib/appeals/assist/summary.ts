@@ -32,7 +32,7 @@ export const FORBIDDEN = [
 ];
 
 const CLAIM_PHRASE: Record<Claim, string> = {
-  system_not_working: "that Kaunta would not let them clock in",
+  system_not_working: "that Aproksi would not let them clock in",
   sick: "that they were unwell",
   road_closed: "that the road was blocked",
   unclear: "something the record could not be matched to",

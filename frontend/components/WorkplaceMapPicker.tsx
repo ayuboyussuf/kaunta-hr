@@ -257,19 +257,19 @@ export default function WorkplaceMapPicker({
       {/* Search + my location */}
       <div className="flex flex-col gap-2 sm:flex-row">
         <form onSubmit={search} className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-kaunta-slate/40" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-aproksi-slate/40" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search the area — e.g. Kaplong town, Ngong Road"
-            className="min-h-[44px] w-full rounded-lg border border-kaunta-mist bg-white pl-9 pr-3 text-sm outline-none focus:border-kaunta-ultra"
+            className="min-h-[44px] w-full rounded-lg border border-aproksi-mist bg-white pl-9 pr-3 text-sm outline-none focus:border-aproksi-ultra"
           />
         </form>
         <button
           type="button"
           onClick={useMyLocation}
           disabled={locating}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-kaunta-mist bg-white px-4 text-sm text-kaunta-slate hover:border-kaunta-ultra/40"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-aproksi-mist bg-white px-4 text-sm text-aproksi-slate hover:border-aproksi-ultra/40"
         >
           {locating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -280,16 +280,16 @@ export default function WorkplaceMapPicker({
         </button>
       </div>
 
-      {searching && <p className="text-xs text-kaunta-slate/60">Searching…</p>}
+      {searching && <p className="text-xs text-aproksi-slate/60">Searching…</p>}
 
       {results && results.length > 0 && (
-        <ul className="overflow-hidden rounded-lg border border-kaunta-mist bg-white">
+        <ul className="overflow-hidden rounded-lg border border-aproksi-mist bg-white">
           {results.map((p, i) => (
             <li key={`${p.lat}-${p.lng}-${i}`}>
               <button
                 type="button"
                 onClick={() => goTo(p)}
-                className="w-full px-3 py-3 text-left text-sm text-kaunta-ink hover:bg-kaunta-stone"
+                className="w-full px-3 py-3 text-left text-sm text-aproksi-ink hover:bg-aproksi-stone"
               >
                 {p.label}
               </button>
@@ -298,14 +298,14 @@ export default function WorkplaceMapPicker({
         </ul>
       )}
 
-      {note && <p className="text-xs text-kaunta-slate/70">{note}</p>}
+      {note && <p className="text-xs text-aproksi-slate/70">{note}</p>}
 
       {/* The map */}
       <div
         ref={holder}
-        className="h-[300px] w-full overflow-hidden rounded-xl border border-kaunta-mist sm:h-[380px]"
+        className="h-[300px] w-full overflow-hidden rounded-xl border border-aproksi-mist sm:h-[380px]"
       />
-      <p className="text-xs text-kaunta-slate/60">
+      <p className="text-xs text-aproksi-slate/60">
         Drag the pin — or tap the map — onto the spot where the QR code will be
         put up. The circle is how far from it a scan still counts.
       </p>
@@ -313,12 +313,12 @@ export default function WorkplaceMapPicker({
       {/* Radius */}
       <div>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <label htmlFor="radius" className="text-xs font-medium text-kaunta-slate">
+          <label htmlFor="radius" className="text-xs font-medium text-aproksi-slate">
             How far from the pin still counts
           </label>
-          <span className="text-sm tabular-nums text-kaunta-ink">
+          <span className="text-sm tabular-nums text-aproksi-ink">
             {radiusM} m{" "}
-            <span className="text-kaunta-slate/60">· {radiusFeel(radiusM)}</span>
+            <span className="text-aproksi-slate/60">· {radiusFeel(radiusM)}</span>
           </span>
         </div>
         <input
@@ -329,12 +329,12 @@ export default function WorkplaceMapPicker({
           step={10}
           value={radiusM}
           onChange={(e) => onRadiusChange(Number(e.target.value))}
-          className="mt-2 h-11 w-full accent-kaunta-ultra"
+          className="mt-2 h-11 w-full accent-aproksi-ultra"
         />
         {warning && (
           <p
             className={`mt-1 text-xs ${
-              warning.tone === "warn" ? "text-kaunta-amber" : "text-kaunta-slate/70"
+              warning.tone === "warn" ? "text-aproksi-amber" : "text-aproksi-slate/70"
             }`}
           >
             {warning.text}
@@ -343,7 +343,7 @@ export default function WorkplaceMapPicker({
       </div>
 
       {/* Coordinates as an output, not a question */}
-      <p className="font-mono text-[0.6875rem] text-kaunta-slate/50">
+      <p className="font-mono text-[0.6875rem] text-aproksi-slate/50">
         {lat != null && lng != null
           ? `${lat}, ${lng}`
           : "No spot chosen yet — scans here won't be checked against a location."}

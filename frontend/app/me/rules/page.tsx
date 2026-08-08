@@ -50,18 +50,18 @@ export default function MyRulesPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-kaunta-stone grid place-items-center">
-        <p className="text-kaunta-slate/60">Loading…</p>
+      <main className="min-h-screen bg-aproksi-stone grid place-items-center">
+        <p className="text-aproksi-slate/60">Loading…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-kaunta-stone">
-      <header className="border-b border-kaunta-mist bg-white">
+    <main className="min-h-screen bg-aproksi-stone">
+      <header className="border-b border-aproksi-mist bg-white">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="font-display text-2xl text-kaunta-ink">Workplace rules</span>
-          <button onClick={() => router.push("/me")} className="text-sm text-kaunta-ultra hover:underline">
+          <span className="font-display text-2xl text-aproksi-ink">Workplace rules</span>
+          <button onClick={() => router.push("/me")} className="text-sm text-aproksi-ultra hover:underline">
             Back
           </button>
         </div>
@@ -69,19 +69,19 @@ export default function MyRulesPage() {
 
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-4">
         {error && (
-          <div className="rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-4 py-3 text-sm text-kaunta-red">
+          <div className="rounded-lg border border-aproksi-red/30 bg-aproksi-red/5 px-4 py-3 text-sm text-aproksi-red">
             {error}
           </div>
         )}
 
         {data?.workplace?.name && (
-          <p className="text-sm text-kaunta-slate/70">
-            These are the penalties that apply at <span className="text-kaunta-ink">{data.workplace.name}</span>.
+          <p className="text-sm text-aproksi-slate/70">
+            These are the penalties that apply at <span className="text-aproksi-ink">{data.workplace.name}</span>.
           </p>
         )}
 
         {!data || data.rules.length === 0 ? (
-          <Card className="p-8 text-center text-sm text-kaunta-slate/60">
+          <Card className="p-8 text-center text-sm text-aproksi-slate/60">
             No penalty rules have been set for your workplace.
           </Card>
         ) : (
@@ -89,12 +89,12 @@ export default function MyRulesPage() {
             <Card key={r.id} className="p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="font-medium text-kaunta-ink">{r.reason}</p>
-                  <p className="text-xs text-kaunta-slate/60 mt-0.5">
+                  <p className="font-medium text-aproksi-ink">{r.reason}</p>
+                  <p className="text-xs text-aproksi-slate/60 mt-0.5">
                     You can appeal within {r.appeal_window_hours}h of the penalty.
                   </p>
                 </div>
-                <span className="shrink-0 text-lg text-kaunta-red tabular-nums">{fmtKes(r.amount)}</span>
+                <span className="shrink-0 text-lg text-aproksi-red tabular-nums">{fmtKes(r.amount)}</span>
               </div>
             </Card>
           ))

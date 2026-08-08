@@ -113,7 +113,7 @@ export async function runPresenceChecks() {
             "sms",
             {
               to: org.phone as string,
-              body: `Kaunta HR: ${emp.name} missed a random presence check at ${site}. The clock-in is flagged for your review.`,
+              body: `Aproksi HR: ${emp.name} missed a random presence check at ${site}. The clock-in is flagged for your review.`,
             },
             `sms:presence-missed:${c.id}`
           );
@@ -293,7 +293,7 @@ export async function runPresenceChecks() {
       // open or installed; the SMS reaches the one in a pocket.
       const payload = {
         title: "Confirm you're at work",
-        body: `Open Kaunta HR and scan within ${windowMin} minutes to confirm your presence.`,
+        body: `Open Aproksi HR and scan within ${windowMin} minutes to confirm your presence.`,
         url: "/me/clock-in",
       };
       const delivered = await pushToEmployee(emp.id, payload).catch(() => 0);
@@ -309,7 +309,7 @@ export async function runPresenceChecks() {
             "sms",
             {
               to: emp.phone,
-              body: `Kaunta HR: please open the app and scan within ${windowMin} minutes to confirm you're at work.`,
+              body: `Aproksi HR: please open the app and scan within ${windowMin} minutes to confirm you're at work.`,
             },
             `sms:presence:${check.id}`
           );

@@ -369,7 +369,7 @@ router.post("/", requireOwner, async (req, res) => {
   try {
     await sendText(
       phone,
-      `Hi ${parsed.data.name}, you've been added to ${orgName} on Kaunta HR.\n\n` +
+      `Hi ${parsed.data.name}, you've been added to ${orgName} on Aproksi HR.\n\n` +
         `To clock in and view your pay, open ${loginUrl} and sign in with this phone number (${phone}).`
     );
     inviteSent = true;
@@ -403,7 +403,7 @@ router.post("/:id/resend-invite", requireOwner, async (req, res) => {
   try {
     await sendText(
       emp.phone,
-      `Hi ${emp.name}, here's your Kaunta HR invite for ${orgName} again.\n\n` +
+      `Hi ${emp.name}, here's your Aproksi HR invite for ${orgName} again.\n\n` +
         `Open ${loginUrl} and sign in with this phone number (${emp.phone}) to clock in and view your pay.`
     );
     console.log(`[employees] resend-invite ✓ accepted by SMS provider for ${emp.phone}`);

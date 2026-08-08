@@ -6,22 +6,22 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-kaunta-ultra/50 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-aproksi-ultra/50 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         default:
-          "bg-kaunta-ultra text-white shadow-sm hover:bg-kaunta-ultra/90",
+          "bg-aproksi-ultra text-white shadow-sm hover:bg-aproksi-ultra/90",
         destructive:
-          "bg-kaunta-red text-white shadow-sm hover:bg-kaunta-red/90",
+          "bg-aproksi-red text-white shadow-sm hover:bg-aproksi-red/90",
         outline:
-          "border border-kaunta-mist bg-kaunta-white shadow-sm hover:bg-kaunta-stone hover:text-kaunta-ink",
+          "border border-aproksi-mist bg-aproksi-white shadow-sm hover:bg-aproksi-stone hover:text-aproksi-ink",
         secondary:
-          "bg-kaunta-stone text-kaunta-ink shadow-sm hover:bg-kaunta-mist",
+          "bg-aproksi-stone text-aproksi-ink shadow-sm hover:bg-aproksi-mist",
         ghost:
-          "hover:bg-kaunta-stone hover:text-kaunta-ink",
+          "hover:bg-aproksi-stone hover:text-aproksi-ink",
         link:
-          "text-kaunta-ultra underline-offset-4 hover:underline",
+          "text-aproksi-ultra underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2",

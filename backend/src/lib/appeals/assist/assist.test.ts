@@ -132,8 +132,8 @@ test("says plainly when nobody could clock in", async () => {
   const brief = await runAssist(db as never, appeal("The app kept failing, it would not scan"), ORG);
   const attempts = brief!.findings.find((f) => f.kind === "attempts");
   assert.equal(attempts!.stance, "supports");
-  assert.equal(attempts!.evidence.witnessed_by_kaunta, 2);
-  assert.match(attempts!.headline, /Kaunta itself rejected/);
+  assert.equal(attempts!.evidence.witnessed_by_aproksi, 2);
+  assert.match(attempts!.headline, /Aproksi itself rejected/);
 
   const site = brief!.findings.find((f) => f.kind === "site_down");
   assert.equal(site!.stance, "supports");
@@ -148,7 +148,7 @@ test("a device report is presented as the employee's account, not as proof", asy
   const brief = await runAssist(db as never, appeal("no network, the app could not load"), ORG);
   const attempts = brief!.findings.find((f) => f.kind === "attempts");
   assert.match(attempts!.detail, /from the device|employee's account/i);
-  assert.equal(attempts!.evidence.witnessed_by_kaunta, 0);
+  assert.equal(attempts!.evidence.witnessed_by_aproksi, 0);
 });
 
 test("a site with nobody else to compare against says so instead of concluding", async () => {

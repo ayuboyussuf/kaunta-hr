@@ -55,11 +55,11 @@ const label = (min: number) =>
   `${String(Math.floor(min / 60) % 24).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 
 const DOT: Record<string, string> = {
-  normal: "bg-kaunta-sage",
-  late: "bg-kaunta-amber",
-  flagged: "bg-kaunta-red",
-  on_leave: "bg-kaunta-ultra",
-  adjusted: "bg-kaunta-slate",
+  normal: "bg-aproksi-sage",
+  late: "bg-aproksi-amber",
+  flagged: "bg-aproksi-red",
+  on_leave: "bg-aproksi-ultra",
+  adjusted: "bg-aproksi-slate",
 };
 
 export function ArrivalsRail({ arrivals, shiftStart, graceMinutes }: Props) {
@@ -77,33 +77,33 @@ export function ArrivalsRail({ arrivals, shiftStart, graceMinutes }: Props) {
   const ticks = [start - 60, start, start + 60, start + 120, start + 180, start + 240];
 
   return (
-    <section className="rounded-[12px] border border-kaunta-mist bg-white p-5 shadow-[0_2px_16px_rgba(15,25,35,0.06)]">
+    <section className="rounded-[12px] border border-aproksi-mist bg-white p-5 shadow-[0_2px_16px_rgba(15,25,35,0.06)]">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-display text-lg text-kaunta-ink">Arrivals</h2>
-        <p className="text-xs text-kaunta-slate/60">
+        <h2 className="font-display text-lg text-aproksi-ink">Arrivals</h2>
+        <p className="text-xs text-aproksi-slate/60">
           Shift starts {shiftStart.slice(0, 5)} · {graceMinutes} min grace
         </p>
       </div>
 
       <div className="relative mt-6 h-16">
         {/* the rail */}
-        <div className="absolute inset-x-0 top-7 h-px bg-kaunta-mist" />
+        <div className="absolute inset-x-0 top-7 h-px bg-aproksi-mist" />
 
         {/* everything before the deadline is on time — tint it so the eye reads
             "inside the line" without having to compare two numbers */}
         <div
-          className="absolute top-[1.375rem] h-3 rounded-l-full bg-kaunta-sage/10"
+          className="absolute top-[1.375rem] h-3 rounded-l-full bg-aproksi-sage/10"
           style={{ left: 0, width: `${pct(deadline)}%` }}
         />
 
         {/* the deadline itself */}
         <div
-          className="absolute top-3 bottom-6 w-px bg-kaunta-amber"
+          className="absolute top-3 bottom-6 w-px bg-aproksi-amber"
           style={{ left: `${pct(deadline)}%` }}
           aria-hidden
         />
         <span
-          className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-full bg-kaunta-amber/10 px-1.5 py-0.5 text-[0.625rem] font-medium text-kaunta-amber"
+          className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-full bg-aproksi-amber/10 px-1.5 py-0.5 text-[0.625rem] font-medium text-aproksi-amber"
           style={{ left: `${pct(deadline)}%` }}
         >
           late after {label(deadline)}
@@ -128,7 +128,7 @@ export function ArrivalsRail({ arrivals, shiftStart, graceMinutes }: Props) {
         {ticks.map((t) => (
           <span
             key={t}
-            className="absolute bottom-0 -translate-x-1/2 text-[0.625rem] tabular-nums text-kaunta-slate/40"
+            className="absolute bottom-0 -translate-x-1/2 text-[0.625rem] tabular-nums text-aproksi-slate/40"
             style={{ left: `${pct(t)}%` }}
           >
             {label(t)}
@@ -138,12 +138,12 @@ export function ArrivalsRail({ arrivals, shiftStart, graceMinutes }: Props) {
 
       {/* Touch has no hover, so the names are listed rather than hidden in a
           tooltip nobody on a phone can reach. */}
-      <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-kaunta-mist pt-3">
+      <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-aproksi-mist pt-3">
         {arrivals.map((a) => (
-          <li key={a.employeeId} className="flex items-center gap-1.5 text-xs text-kaunta-slate">
+          <li key={a.employeeId} className="flex items-center gap-1.5 text-xs text-aproksi-slate">
             <span className={`h-1.5 w-1.5 rounded-full ${DOT[a.status] ?? DOT.normal}`} />
             {a.name.split(" ")[0]}
-            <span className="tabular-nums text-kaunta-slate/50">
+            <span className="tabular-nums text-aproksi-slate/50">
               {label(minutesInNairobi(a.at))}
             </span>
           </li>

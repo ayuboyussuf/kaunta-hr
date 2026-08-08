@@ -1,4 +1,4 @@
-/* Engraved marks for the Kaunta-HR site.
+/* Engraved marks for the Aproksi-HR site.
  *
  * The hero forecourt is a supplied raster engraving (public/art), so what
  * remains here is the sealed record and the section rule. Tone is built

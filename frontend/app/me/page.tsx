@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { ATTENDANCE_STATUS, formatDate, formatTime } from "@/lib/utils";
 
-const SEEN_KEY = "kaunta_hr_announcements_seen_at";
+const SEEN_KEY = "aproksi_hr_announcements_seen_at";
 
 interface Profile {
   id: string;
@@ -49,10 +49,10 @@ interface MyViolation {
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  normal: "bg-kaunta-sage/10 text-kaunta-sage border-kaunta-sage/20",
-  late: "bg-kaunta-amber/10 text-kaunta-amber border-kaunta-amber/20",
-  flagged: "bg-kaunta-red/10 text-kaunta-red border-kaunta-red/20",
-  adjusted: "bg-kaunta-slate/10 text-kaunta-slate border-kaunta-slate/20",
+  normal: "bg-aproksi-sage/10 text-aproksi-sage border-aproksi-sage/20",
+  late: "bg-aproksi-amber/10 text-aproksi-amber border-aproksi-amber/20",
+  flagged: "bg-aproksi-red/10 text-aproksi-red border-aproksi-red/20",
+  adjusted: "bg-aproksi-slate/10 text-aproksi-slate border-aproksi-slate/20",
 };
 
 function greeting(): string {
@@ -124,11 +124,11 @@ export default function EmployeeHome() {
   }, []);
 
   if (loading) {
-    return <p className="text-sm text-kaunta-slate/60">Loading…</p>;
+    return <p className="text-sm text-aproksi-slate/60">Loading…</p>;
   }
 
   if (error) {
-    return <p className="text-sm text-kaunta-red">{error}</p>;
+    return <p className="text-sm text-aproksi-red">{error}</p>;
   }
 
   const lastEntry = attendance[0];
@@ -148,11 +148,11 @@ export default function EmployeeHome() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl text-kaunta-ink mb-1">
+          <h1 className="font-display text-3xl text-aproksi-ink mb-1">
             {greeting()}
             {profile?.name ? `, ${profile.name.split(" ")[0]}` : ""}
           </h1>
-          <p className="text-kaunta-slate/70 text-sm">
+          <p className="text-aproksi-slate/70 text-sm">
             {profile?.workplace?.name ?? "No workplace assigned"}
             {profile?.shift ? ` · ${profile.shift.name} shift` : ""}
           </p>
@@ -161,11 +161,11 @@ export default function EmployeeHome() {
         <Link
           href="/me/announcements"
           aria-label={`Announcements${unread > 0 ? `, ${unread} unread` : ""}`}
-          className="relative shrink-0 grid h-11 w-11 place-items-center rounded-full border border-kaunta-mist bg-white text-kaunta-slate hover:text-kaunta-ultra hover:border-kaunta-ultra/40 transition-colors"
+          className="relative shrink-0 grid h-11 w-11 place-items-center rounded-full border border-aproksi-mist bg-white text-aproksi-slate hover:text-aproksi-ultra hover:border-aproksi-ultra/40 transition-colors"
         >
           <Megaphone className="h-5 w-5" />
           {unread > 0 && (
-            <span className="absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-kaunta-ultra px-1 text-[11px] font-semibold text-white">
+            <span className="absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-aproksi-ultra px-1 text-[11px] font-semibold text-white">
               {unread > 9 ? "9+" : unread}
             </span>
           )}
@@ -188,7 +188,7 @@ export default function EmployeeHome() {
                       ? `${awaitingOwner} appeal${awaitingOwner === 1 ? "" : "s"} with your employer`
                       : `${unseen} penalt${unseen === 1 ? "y" : "ies"} you haven't opened`}
                 </p>
-                <p className="text-sm text-kaunta-white/85">
+                <p className="text-sm text-aproksi-white/85">
                   {appealable > 0
                     ? "Once the window closes the penalty stands, so say your side now."
                     : awaitingOwner > 0
@@ -211,7 +211,7 @@ export default function EmployeeHome() {
           <CardContent className="p-5 flex items-center justify-between gap-4">
             <div>
               <p className="font-display text-lg mb-0.5">Presence check</p>
-              <p className="text-sm text-kaunta-white/85">Scan the workplace QR now to confirm you&rsquo;re at work.</p>
+              <p className="text-sm text-aproksi-white/85">Scan the workplace QR now to confirm you&rsquo;re at work.</p>
             </div>
             <Button asChild variant="secondary" size="lg">
               <Link href="/me/clock-in" className="flex items-center gap-2">
@@ -248,10 +248,10 @@ export default function EmployeeHome() {
             {lastEntry && lastStatus ? (
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-kaunta-ink">
+                  <p className="text-sm text-aproksi-ink">
                     {formatDate(lastEntry.scanned_at)} · {formatTime(lastEntry.scanned_at)}
                   </p>
-                  <p className="text-xs text-kaunta-slate/60 mt-0.5">
+                  <p className="text-xs text-aproksi-slate/60 mt-0.5">
                     {lastEntry.workplace?.name ?? ""}
                   </p>
                 </div>
@@ -262,11 +262,11 @@ export default function EmployeeHome() {
                 </span>
               </div>
             ) : (
-              <p className="text-sm text-kaunta-slate/60">No attendance recorded yet.</p>
+              <p className="text-sm text-aproksi-slate/60">No attendance recorded yet.</p>
             )}
             <Link
               href="/me/history"
-              className="mt-4 flex items-center gap-1 text-sm text-kaunta-ultra hover:underline"
+              className="mt-4 flex items-center gap-1 text-sm text-aproksi-ultra hover:underline"
             >
               View history <ChevronRight className="h-3.5 w-3.5" />
             </Link>
@@ -280,20 +280,20 @@ export default function EmployeeHome() {
           </CardHeader>
           <CardContent>
             {violations.length === 0 ? (
-              <p className="text-sm text-kaunta-slate/60">No penalties. Keep it up.</p>
+              <p className="text-sm text-aproksi-slate/60">No penalties. Keep it up.</p>
             ) : needsAttention > 0 ? (
-              <p className="text-sm text-kaunta-ink">
-                <span className="font-display text-2xl text-kaunta-red mr-1">{needsAttention}</span>
+              <p className="text-sm text-aproksi-ink">
+                <span className="font-display text-2xl text-aproksi-red mr-1">{needsAttention}</span>
                 need{needsAttention === 1 ? "s" : ""} something from you
               </p>
             ) : (
-              <p className="text-sm text-kaunta-slate/60">
+              <p className="text-sm text-aproksi-slate/60">
                 {violations.length} on record, nothing outstanding.
               </p>
             )}
             <Link
               href="/me/violations"
-              className="mt-4 flex items-center gap-1 text-sm text-kaunta-ultra hover:underline"
+              className="mt-4 flex items-center gap-1 text-sm text-aproksi-ultra hover:underline"
             >
               View penalties <ChevronRight className="h-3.5 w-3.5" />
             </Link>
@@ -306,12 +306,12 @@ export default function EmployeeHome() {
             <CardDescription>Know the penalties before they apply</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-kaunta-slate/60">
+            <p className="text-sm text-aproksi-slate/60">
               See the penalties that apply at your workplace and their appeal windows.
             </p>
             <Link
               href="/me/rules"
-              className="mt-4 flex items-center gap-1 text-sm text-kaunta-ultra hover:underline"
+              className="mt-4 flex items-center gap-1 text-sm text-aproksi-ultra hover:underline"
             >
               View rules <ChevronRight className="h-3.5 w-3.5" />
             </Link>

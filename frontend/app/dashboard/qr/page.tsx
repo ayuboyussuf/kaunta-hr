@@ -82,11 +82,11 @@ export default function QrCodesPage() {
   const scanUrl = token ? `${origin}/scan?w=${token}` : "";
 
   return (
-    <main className="min-h-screen bg-kaunta-stone">
-      <header className="border-b border-kaunta-mist bg-white print:hidden">
+    <main className="min-h-screen bg-aproksi-stone">
+      <header className="border-b border-aproksi-mist bg-white print:hidden">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">
-          <span className="font-display text-2xl text-kaunta-ink">QR codes</span>
-          <Link href="/dashboard" className="text-sm text-kaunta-ultra hover:underline">
+          <span className="font-display text-2xl text-aproksi-ink">QR codes</span>
+          <Link href="/dashboard" className="text-sm text-aproksi-ultra hover:underline">
             ← Dashboard
           </Link>
         </div>
@@ -94,7 +94,7 @@ export default function QrCodesPage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         {error && (
-          <div className="rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-4 py-3 text-sm text-kaunta-red print:hidden">
+          <div className="rounded-lg border border-aproksi-red/30 bg-aproksi-red/5 px-4 py-3 text-sm text-aproksi-red print:hidden">
             {error}
           </div>
         )}
@@ -106,8 +106,8 @@ export default function QrCodesPage() {
               onClick={() => loadToken(wp)}
               className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm ${
                 selected?.id === wp.id
-                  ? "bg-kaunta-ink text-white"
-                  : "bg-white text-kaunta-slate/70 border border-kaunta-mist hover:bg-kaunta-mist/40"
+                  ? "bg-aproksi-ink text-white"
+                  : "bg-white text-aproksi-slate/70 border border-aproksi-mist hover:bg-aproksi-mist/40"
               }`}
             >
               {wp.name}
@@ -118,11 +118,11 @@ export default function QrCodesPage() {
         {selected && token ? (
           <Card>
             <CardContent className="p-8 flex flex-col items-center text-center space-y-4">
-              <p className="font-display text-2xl text-kaunta-ink">{selected.name}</p>
-              <div className="rounded-2xl bg-white p-4 border border-kaunta-mist">
+              <p className="font-display text-2xl text-aproksi-ink">{selected.name}</p>
+              <div className="rounded-2xl bg-white p-4 border border-aproksi-mist">
                 <QRCodeCanvas value={scanUrl} size={260} level="M" includeMargin />
               </div>
-              <p className="text-sm text-kaunta-slate/60 max-w-sm">
+              <p className="text-sm text-aproksi-slate/60 max-w-sm">
                 Print this and post it at {selected.name}. Employees scan it to clock in. Valid ~3 months.
               </p>
               <div className="flex gap-3 print:hidden">
@@ -134,7 +134,7 @@ export default function QrCodesPage() {
             </CardContent>
           </Card>
         ) : (
-          <p className="text-sm text-kaunta-slate/60">
+          <p className="text-sm text-aproksi-slate/60">
             {workplaces.length === 0 ? "Add a workplace first." : "Loading…"}
           </p>
         )}

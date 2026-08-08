@@ -29,10 +29,10 @@ interface OrgSettings {
   absence_policy: "flat" | "prorate";
 }
 
-const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
+const cardCls = "rounded-[12px] border border-aproksi-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
-const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
+  "w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra";
+const labelCls = "block text-xs font-medium text-aproksi-slate mb-1";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -203,32 +203,32 @@ export default function SettingsPage() {
     : false;
 
   return (
-    <main className="bg-kaunta-stone">
+    <main className="bg-aproksi-stone">
       <div className="max-w-3xl mx-auto px-6 py-8">
-        <h1 className="font-display text-3xl text-kaunta-ink mb-1">Settings</h1>
-        <p className="text-sm text-kaunta-slate/60 mb-6">Your business profile and account.</p>
+        <h1 className="font-display text-3xl text-aproksi-ink mb-1">Settings</h1>
+        <p className="text-sm text-aproksi-slate/60 mb-6">Your business profile and account.</p>
 
         {error && (
-          <div className="mb-4 rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-4 py-3 text-sm text-kaunta-red">
+          <div className="mb-4 rounded-lg border border-aproksi-red/30 bg-aproksi-red/5 px-4 py-3 text-sm text-aproksi-red">
             {error}
           </div>
         )}
         {notice && (
-          <div className="mb-4 rounded-lg border border-kaunta-sage/30 bg-kaunta-sage-lt px-4 py-3 text-sm text-kaunta-sage inline-flex items-center gap-2">
+          <div className="mb-4 rounded-lg border border-aproksi-sage/30 bg-aproksi-sage-lt px-4 py-3 text-sm text-aproksi-sage inline-flex items-center gap-2">
             <Check className="h-4 w-4" /> {notice}
           </div>
         )}
 
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
+            <Loader2 className="h-6 w-6 animate-spin text-aproksi-ultra" />
           </div>
         ) : (
           <div className="space-y-6">
             {/* Business profile */}
             <section className={`${cardCls} p-6 space-y-4`}>
-              <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-kaunta-ultra" /> Business
+              <h2 className="font-display text-xl text-aproksi-ink inline-flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-aproksi-ultra" /> Business
               </h2>
               <div>
                 <label className={labelCls}>Business name</label>
@@ -242,18 +242,18 @@ export default function SettingsPage() {
                   placeholder="07XX XXX XXX or +2547…"
                   onChange={(e) => setPhone(e.target.value)}
                 />
-                <p className="text-xs text-kaunta-slate/50 mt-1">
+                <p className="text-xs text-aproksi-slate/50 mt-1">
                   We&apos;ll text this number when an employee submits an appeal. Leave blank to turn off SMS alerts.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className={labelCls}>Workplaces</p>
-                  <p className="text-kaunta-ink capitalize">{org?.workplace_mode ?? "—"}</p>
+                  <p className="text-aproksi-ink capitalize">{org?.workplace_mode ?? "—"}</p>
                 </div>
                 <div>
                   <p className={labelCls}>Rules</p>
-                  <p className="text-kaunta-ink">
+                  <p className="text-aproksi-ink">
                     {org?.rules_mode === "per_workplace" ? "Per workplace" : "Shared"}
                   </p>
                 </div>
@@ -263,17 +263,17 @@ export default function SettingsPage() {
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Save changes
                 </Button>
-                {dirty && <span className="text-xs text-kaunta-slate/50">Unsaved changes</span>}
+                {dirty && <span className="text-xs text-aproksi-slate/50">Unsaved changes</span>}
               </div>
             </section>
 
             {/* Payroll cadence */}
             <section className={`${cardCls} p-6 space-y-4`}>
-              <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-kaunta-ultra" /> Payroll
+              <h2 className="font-display text-xl text-aproksi-ink inline-flex items-center gap-2">
+                <Wallet className="h-5 w-5 text-aproksi-ultra" /> Payroll
               </h2>
-              <p className="text-sm text-kaunta-slate/60">
-                How often do you pay staff? When a period ends, Kaunta auto-calculates everyone&apos;s pay and
+              <p className="text-sm text-aproksi-slate/60">
+                How often do you pay staff? When a period ends, Aproksi auto-calculates everyone&apos;s pay and
                 deductions into a draft and messages you to review — nothing is final until you approve it with
                 your PIN.
               </p>
@@ -299,7 +299,7 @@ export default function SettingsPage() {
                       value={payDay ?? ""}
                       onChange={(e) => setPayDay(e.target.value === "" ? null : Math.max(1, Math.min(28, Number(e.target.value))))}
                     />
-                    <p className="text-xs text-kaunta-slate/50 mt-1">Leave blank to run on the last day of the month.</p>
+                    <p className="text-xs text-aproksi-slate/50 mt-1">Leave blank to run on the last day of the month.</p>
                   </div>
                 )}
                 {(cadence === "weekly" || cadence === "biweekly") && (
@@ -329,7 +329,7 @@ export default function SettingsPage() {
                 )}
               </div>
               {payPreview && (
-                <p className="text-xs text-kaunta-sage bg-kaunta-sage/10 rounded-lg px-3 py-2">{payPreview}</p>
+                <p className="text-xs text-aproksi-sage bg-aproksi-sage/10 rounded-lg px-3 py-2">{payPreview}</p>
               )}
 
               <div>
@@ -338,7 +338,7 @@ export default function SettingsPage() {
                   <option value="flat">Pay full salary (review absences before approving)</option>
                   <option value="prorate">Pro-rate by attendance (auto-deduct absent days)</option>
                 </select>
-                <p className="text-xs text-kaunta-slate/50 mt-1">
+                <p className="text-xs text-aproksi-slate/50 mt-1">
                   Either way the breakdown shows the absent days and the exact daily-equivalent amount. Daily/hourly
                   staff are always paid only for days/hours present.
                 </p>
@@ -348,12 +348,12 @@ export default function SettingsPage() {
                   {savingPayroll ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Save payroll settings
                 </Button>
-                {payrollDirty && <span className="text-xs text-kaunta-slate/50">Unsaved changes</span>}
+                {payrollDirty && <span className="text-xs text-aproksi-slate/50">Unsaved changes</span>}
               </div>
 
-              <div className="border-t border-kaunta-mist pt-4">
+              <div className="border-t border-aproksi-mist pt-4">
                 <label className={labelCls}>Approval PIN</label>
-                <p className="text-xs text-kaunta-slate/60 mb-2">
+                <p className="text-xs text-aproksi-slate/60 mb-2">
                   A 4–6 digit PIN you enter to approve and lock a payroll run. Set it once; enter it at approval.
                 </p>
                 <div className="flex gap-2 max-w-xs">
@@ -374,10 +374,10 @@ export default function SettingsPage() {
 
             {/* Presence checks */}
             <section className={`${cardCls} p-6 space-y-4`}>
-              <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-kaunta-ultra" /> Presence checks
+              <h2 className="font-display text-xl text-aproksi-ink inline-flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-aproksi-ultra" /> Presence checks
               </h2>
-              <p className="text-sm text-kaunta-slate/60">
+              <p className="text-sm text-aproksi-slate/60">
                 Randomly prompt clocked-in staff to re-scan during a shift, so someone can&apos;t clock in and
                 leave. A missed check is flagged for your review (not an automatic penalty).
               </p>
@@ -392,7 +392,7 @@ export default function SettingsPage() {
                     value={checksPerShift}
                     onChange={(e) => setChecksPerShift(Math.max(0, Math.min(10, Number(e.target.value))))}
                   />
-                  <p className="text-xs text-kaunta-slate/50 mt-1">0 turns presence checks off.</p>
+                  <p className="text-xs text-aproksi-slate/50 mt-1">0 turns presence checks off.</p>
                 </div>
                 <div>
                   <label className={labelCls}>Response window (minutes)</label>
@@ -404,38 +404,38 @@ export default function SettingsPage() {
                     value={windowMin}
                     onChange={(e) => setWindowMin(Math.max(1, Math.min(120, Number(e.target.value))))}
                   />
-                  <p className="text-xs text-kaunta-slate/50 mt-1">
+                  <p className="text-xs text-aproksi-slate/50 mt-1">
                     How long staff have to scan after a prompt. Longer is friendlier; shorter is harder to fake.
                   </p>
                 </div>
               </div>
-              <label className="flex items-center gap-2 text-sm text-kaunta-ink">
+              <label className="flex items-center gap-2 text-sm text-aproksi-ink">
                 <input
                   type="checkbox"
                   checked={smsFallback}
                   onChange={(e) => setSmsFallback(e.target.checked)}
-                  className="h-4 w-4 accent-kaunta-ultra"
+                  className="h-4 w-4 accent-aproksi-ultra"
                 />
                 Also send an SMS to staff without push notifications
-                <span className="text-xs text-kaunta-slate/50">(costs money per check)</span>
+                <span className="text-xs text-aproksi-slate/50">(costs money per check)</span>
               </label>
               <div className="flex items-center gap-2 pt-1">
                 <Button onClick={savePresence} disabled={savingPresence || !presenceDirty}>
                   {savingPresence ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Save presence settings
                 </Button>
-                {presenceDirty && <span className="text-xs text-kaunta-slate/50">Unsaved changes</span>}
+                {presenceDirty && <span className="text-xs text-aproksi-slate/50">Unsaved changes</span>}
               </div>
             </section>
 
             {/* Attendance configuration */}
             <section className={`${cardCls} p-6`}>
-              <h2 className="font-display text-xl text-kaunta-ink inline-flex items-center gap-2 mb-2">
-                <SlidersHorizontal className="h-5 w-5 text-kaunta-ultra" /> Attendance rules &amp; workplaces
+              <h2 className="font-display text-xl text-aproksi-ink inline-flex items-center gap-2 mb-2">
+                <SlidersHorizontal className="h-5 w-5 text-aproksi-ultra" /> Attendance rules &amp; workplaces
               </h2>
-              <p className="text-sm text-kaunta-slate/60 mb-4">
+              <p className="text-sm text-aproksi-slate/60 mb-4">
                 Add or edit these any time — no need to re-run setup. To add a new workplace, open
-                <span className="text-kaunta-ink"> Workplaces</span> and tap “Add workplace.”
+                <span className="text-aproksi-ink"> Workplaces</span> and tap “Add workplace.”
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Link href="/dashboard/workplaces">
@@ -454,9 +454,9 @@ export default function SettingsPage() {
                   </Button>
                 </Link>
               </div>
-              <p className="text-xs text-kaunta-slate/50 mt-3">
+              <p className="text-xs text-aproksi-slate/50 mt-3">
                 Prefer the guided flow?{" "}
-                <Link href="/dashboard/onboarding" className="text-kaunta-ultra hover:underline">
+                <Link href="/dashboard/onboarding" className="text-aproksi-ultra hover:underline">
                   Re-run the setup wizard
                 </Link>
                 .
@@ -465,10 +465,10 @@ export default function SettingsPage() {
 
             {/* Account */}
             <section className={`${cardCls} p-6`}>
-              <h2 className="font-display text-xl text-kaunta-ink mb-2">Account</h2>
+              <h2 className="font-display text-xl text-aproksi-ink mb-2">Account</h2>
               <div className="text-sm">
                 <p className={labelCls}>Signed in as</p>
-                <p className="text-kaunta-ink">{email || "—"}</p>
+                <p className="text-aproksi-ink">{email || "—"}</p>
               </div>
             </section>
           </div>

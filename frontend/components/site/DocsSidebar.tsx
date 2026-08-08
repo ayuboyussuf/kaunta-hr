@@ -47,7 +47,7 @@ export function DocsSidebar({ className }: { className?: string }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search docs"
-          className="h-12 w-full rounded-lg sm:h-10 border border-white/12 bg-white/[0.03] pl-9 pr-3 text-[0.8125rem] text-white placeholder:text-white/30 focus:border-kaunta-ultra-br/60 focus:outline-none"
+          className="h-12 w-full rounded-lg sm:h-10 border border-white/12 bg-white/[0.03] pl-9 pr-3 text-[0.8125rem] text-white placeholder:text-white/30 focus:border-aproksi-ultra-br/60 focus:outline-none"
         />
       </label>
 
@@ -67,7 +67,7 @@ export function DocsSidebar({ className }: { className?: string }) {
                       className={cn(
                         "flex min-h-[44px] items-center rounded-md pl-3 text-[0.95rem] transition-colors duration-150 sm:min-h-0 sm:py-1.5 sm:text-[0.875rem]",
                         active
-                          ? "border-l border-kaunta-ultra-br bg-white/[0.04] text-white"
+                          ? "border-l border-aproksi-ultra-br bg-white/[0.04] text-white"
                           : "border-l border-white/10 text-white/50 hover:border-white/30 hover:text-white/85"
                       )}
                     >

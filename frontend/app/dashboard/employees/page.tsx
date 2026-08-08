@@ -45,15 +45,15 @@ interface Employee {
   shift: { id: string; name: string } | null;
 }
 
-const cardCls = "rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
+const cardCls = "rounded-[12px] border border-aproksi-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.08)]";
 const inputCls =
-  "w-full rounded-lg border border-kaunta-mist bg-white px-3 py-2 text-sm outline-none focus:border-kaunta-ultra";
-const labelCls = "block text-xs font-medium text-kaunta-slate mb-1";
+  "w-full rounded-lg border border-aproksi-mist bg-white px-3 py-2 text-sm outline-none focus:border-aproksi-ultra";
+const labelCls = "block text-xs font-medium text-aproksi-slate mb-1";
 
 const STATUS: Record<Employee["status"], { label: string; cls: string }> = {
-  invited: { label: "Invited", cls: "bg-kaunta-amber/15 text-kaunta-amber" },
-  active: { label: "Active", cls: "bg-kaunta-sage-lt text-kaunta-sage" },
-  suspended: { label: "Suspended", cls: "bg-kaunta-red/10 text-kaunta-red" },
+  invited: { label: "Invited", cls: "bg-aproksi-amber/15 text-aproksi-amber" },
+  active: { label: "Active", cls: "bg-aproksi-sage-lt text-aproksi-sage" },
+  suspended: { label: "Suspended", cls: "bg-aproksi-red/10 text-aproksi-red" },
 };
 
 interface Draft {
@@ -112,11 +112,11 @@ const ymdTz = (iso: string) => DateTime.fromISO(iso).setZone(TZ).toISODate()!;
 /** Last-seen badge from days-since-clock-in. */
 function seenBadge(o: Overview | undefined): { label: string; cls: string } {
   const d = o?.days_since_seen ?? null;
-  if (d === null) return { label: "Never", cls: "bg-kaunta-mist text-kaunta-slate/70" };
-  if (d === 0) return { label: "Today", cls: "bg-kaunta-sage/15 text-kaunta-sage" };
-  if (d === 1) return { label: "Yesterday", cls: "bg-kaunta-mist text-kaunta-slate" };
-  if (d === 2) return { label: "2d ago", cls: "bg-kaunta-amber/15 text-kaunta-amber" };
-  return { label: `Absent ${d}d`, cls: "bg-kaunta-red/10 text-kaunta-red" };
+  if (d === null) return { label: "Never", cls: "bg-aproksi-mist text-aproksi-slate/70" };
+  if (d === 0) return { label: "Today", cls: "bg-aproksi-sage/15 text-aproksi-sage" };
+  if (d === 1) return { label: "Yesterday", cls: "bg-aproksi-mist text-aproksi-slate" };
+  if (d === 2) return { label: "2d ago", cls: "bg-aproksi-amber/15 text-aproksi-amber" };
+  return { label: `Absent ${d}d`, cls: "bg-aproksi-red/10 text-aproksi-red" };
 }
 
 export default function EmployeesPage() {
@@ -287,12 +287,12 @@ export default function EmployeesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-kaunta-stone">
-      <header className="border-b border-kaunta-mist bg-white">
+    <main className="min-h-screen bg-aproksi-stone">
+      <header className="border-b border-aproksi-mist bg-white">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <span className="font-display text-2xl text-kaunta-ink">Team</span>
-            <Link href="/dashboard" className="text-sm text-kaunta-ultra hover:underline ml-3">
+            <span className="font-display text-2xl text-aproksi-ink">Team</span>
+            <Link href="/dashboard" className="text-sm text-aproksi-ultra hover:underline ml-3">
               ← Dashboard
             </Link>
           </div>
@@ -304,19 +304,19 @@ export default function EmployeesPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-8">
         {error && (
-          <div className="mb-4 rounded-lg border border-kaunta-red/30 bg-kaunta-red/5 px-4 py-3 text-sm text-kaunta-red">
+          <div className="mb-4 rounded-lg border border-aproksi-red/30 bg-aproksi-red/5 px-4 py-3 text-sm text-aproksi-red">
             {error}
           </div>
         )}
         {notice && (
-          <div className="mb-4 rounded-lg border border-kaunta-sage/30 bg-kaunta-sage-lt px-4 py-3 text-sm text-kaunta-sage inline-flex items-center gap-2">
+          <div className="mb-4 rounded-lg border border-aproksi-sage/30 bg-aproksi-sage-lt px-4 py-3 text-sm text-aproksi-sage inline-flex items-center gap-2">
             <MessageCircle className="h-4 w-4" /> {notice}
           </div>
         )}
 
         {draft && (
           <div className={`${cardCls} p-6 mb-6 space-y-4`}>
-            <h2 className="font-display text-xl text-kaunta-ink">{draft.id ? "Edit employee" : "Add employee"}</h2>
+            <h2 className="font-display text-xl text-aproksi-ink">{draft.id ? "Edit employee" : "Add employee"}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Full name</label>
@@ -397,7 +397,7 @@ export default function EmployeesPage() {
                     value={draft.pay_rate ?? ""}
                     onChange={(e) => setDraft({ ...draft, pay_rate: e.target.value === "" ? null : Number(e.target.value) })}
                   />
-                  <p className="text-xs text-kaunta-slate/50 mt-1">Pay is computed from attendance × this rate.</p>
+                  <p className="text-xs text-aproksi-slate/50 mt-1">Pay is computed from attendance × this rate.</p>
                 </div>
               )}
               <div>
@@ -408,7 +408,7 @@ export default function EmployeesPage() {
                   value={draft.start_date ?? ""}
                   onChange={(e) => setDraft({ ...draft, start_date: e.target.value || null })}
                 />
-                <p className="text-xs text-kaunta-slate/50 mt-1">Their first day. Payroll won&apos;t expect clock-ins before this.</p>
+                <p className="text-xs text-aproksi-slate/50 mt-1">Their first day. Payroll won&apos;t expect clock-ins before this.</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -424,25 +424,25 @@ export default function EmployeesPage() {
 
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-kaunta-ultra" />
+            <Loader2 className="h-6 w-6 animate-spin text-aproksi-ultra" />
           </div>
         ) : employees.length === 0 && !draft ? (
           <div className={`${cardCls} p-10 text-center`}>
-            <Users className="h-8 w-8 text-kaunta-slate/30 mx-auto mb-3" />
-            <p className="text-kaunta-slate/70">No employees yet.</p>
-            <p className="text-sm text-kaunta-slate/50 mt-1">Add your first team member — they&apos;ll get an SMS invite.</p>
+            <Users className="h-8 w-8 text-aproksi-slate/30 mx-auto mb-3" />
+            <p className="text-aproksi-slate/70">No employees yet.</p>
+            <p className="text-sm text-aproksi-slate/50 mt-1">Add your first team member — they&apos;ll get an SMS invite.</p>
           </div>
         ) : (
           <div className={`${cardCls} overflow-hidden`}>
-            <p className="px-4 pt-3 text-xs text-kaunta-slate/60">
-              <span className="font-medium text-kaunta-amber">Invited</span> = added but hasn&apos;t signed in yet ·{" "}
-              <span className="font-medium text-kaunta-sage">Active</span> = has signed in. Use the{" "}
+            <p className="px-4 pt-3 text-xs text-aproksi-slate/60">
+              <span className="font-medium text-aproksi-amber">Invited</span> = added but hasn&apos;t signed in yet ·{" "}
+              <span className="font-medium text-aproksi-sage">Active</span> = has signed in. Use the{" "}
               <MessageCircle className="inline h-3 w-3" /> button to resend an invite.
             </p>
             <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[720px]">
               <thead>
-                <tr className="border-b border-kaunta-mist text-left text-xs text-kaunta-slate/60">
+                <tr className="border-b border-aproksi-mist text-left text-xs text-aproksi-slate/60">
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="px-4 py-3 font-medium">Phone</th>
                   <th className="px-4 py-3 font-medium">Workplace</th>
@@ -460,16 +460,16 @@ export default function EmployeesPage() {
                   const isOpen = expandedId === e.id;
                   return (
                     <Fragment key={e.id}>
-                      <tr className="border-b border-kaunta-mist/60 last:border-0">
-                        <td className="px-4 py-3 font-medium text-kaunta-ink">{e.name}</td>
-                        <td className="px-4 py-3 text-kaunta-slate/70">
+                      <tr className="border-b border-aproksi-mist/60 last:border-0">
+                        <td className="px-4 py-3 font-medium text-aproksi-ink">{e.name}</td>
+                        <td className="px-4 py-3 text-aproksi-slate/70">
                           <span className="inline-flex items-center gap-1">
-                            <Phone className="h-3 w-3 text-kaunta-slate/40" /> {e.phone}
+                            <Phone className="h-3 w-3 text-aproksi-slate/40" /> {e.phone}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-kaunta-slate/70">{e.workplace?.name ?? "—"}</td>
-                        <td className="px-4 py-3 text-kaunta-slate/70">{e.shift?.name ?? "—"}</td>
-                        <td className="px-4 py-3 tabular-nums text-kaunta-slate/70">
+                        <td className="px-4 py-3 text-aproksi-slate/70">{e.workplace?.name ?? "—"}</td>
+                        <td className="px-4 py-3 text-aproksi-slate/70">{e.shift?.name ?? "—"}</td>
+                        <td className="px-4 py-3 tabular-nums text-aproksi-slate/70">
                           {e.pay_type === "daily"
                             ? `${formatKES(e.pay_rate ?? 0)}/day`
                             : e.pay_type === "hourly"
@@ -481,7 +481,7 @@ export default function EmployeesPage() {
                             {badge.label}
                           </span>
                           {ov && ov.checks_missed_7d > 0 && (
-                            <span className="ml-1 text-xs text-kaunta-red">· {ov.checks_missed_7d} missed</span>
+                            <span className="ml-1 text-xs text-aproksi-red">· {ov.checks_missed_7d} missed</span>
                           )}
                         </td>
                         <td className="px-4 py-3">
@@ -493,7 +493,7 @@ export default function EmployeesPage() {
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => toggleHistory(e.id)}
-                              className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
+                              className="text-aproksi-slate/60 hover:text-aproksi-ultra p-1"
                               aria-label="Attendance history"
                               title="Attendance history"
                             >
@@ -513,7 +513,7 @@ export default function EmployeesPage() {
                                   start_date: e.start_date,
                                 })
                               }
-                              className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
+                              className="text-aproksi-slate/60 hover:text-aproksi-ultra p-1"
                               aria-label="Edit"
                             >
                               <Pencil className="h-4 w-4" />
@@ -521,7 +521,7 @@ export default function EmployeesPage() {
                             {e.status === "invited" && (
                               <button
                                 onClick={() => resendInvite(e.id)}
-                                className="text-kaunta-slate/60 hover:text-kaunta-ultra p-1"
+                                className="text-aproksi-slate/60 hover:text-aproksi-ultra p-1"
                                 aria-label="Resend invite"
                                 title="Resend invite by SMS"
                               >
@@ -529,11 +529,11 @@ export default function EmployeesPage() {
                               </button>
                             )}
                             {e.status === "suspended" ? (
-                              <button onClick={() => setStatus(e.id, "activate")} className="text-kaunta-sage/70 hover:text-kaunta-sage p-1" aria-label="Reactivate">
+                              <button onClick={() => setStatus(e.id, "activate")} className="text-aproksi-sage/70 hover:text-aproksi-sage p-1" aria-label="Reactivate">
                                 <RotateCcw className="h-4 w-4" />
                               </button>
                             ) : (
-                              <button onClick={() => setStatus(e.id, "suspend")} className="text-kaunta-red/60 hover:text-kaunta-red p-1" aria-label="Suspend">
+                              <button onClick={() => setStatus(e.id, "suspend")} className="text-aproksi-red/60 hover:text-aproksi-red p-1" aria-label="Suspend">
                                 <Ban className="h-4 w-4" />
                               </button>
                             )}
@@ -541,10 +541,10 @@ export default function EmployeesPage() {
                         </td>
                       </tr>
                       {isOpen && (
-                        <tr className="bg-kaunta-stone/40">
+                        <tr className="bg-aproksi-stone/40">
                           <td colSpan={8} className="px-4 py-4">
                             {historyLoading ? (
-                              <div className="flex items-center gap-2 text-sm text-kaunta-slate/60">
+                              <div className="flex items-center gap-2 text-sm text-aproksi-slate/60">
                                 <Loader2 className="h-4 w-4 animate-spin" /> Loading history…
                               </div>
                             ) : (
@@ -558,23 +558,23 @@ export default function EmployeesPage() {
                                   onMonthChange={(mk) => setViewMonth(mk)}
                                 />
                                 {selDay && (
-                                  <div className="rounded-lg border border-kaunta-mist bg-white p-3">
+                                  <div className="rounded-lg border border-aproksi-mist bg-white p-3">
                                     <div className="flex items-center justify-between mb-2">
-                                      <p className="text-xs font-medium text-kaunta-slate">{selDay}</p>
-                                      <button onClick={() => setSelDay(null)} className="text-xs text-kaunta-slate/50 hover:text-kaunta-ink">Close</button>
+                                      <p className="text-xs font-medium text-aproksi-slate">{selDay}</p>
+                                      <button onClick={() => setSelDay(null)} className="text-xs text-aproksi-slate/50 hover:text-aproksi-ink">Close</button>
                                     </div>
                                     {(() => {
                                       const dayEntries = (history?.entries ?? []).filter((en) => ymdTz(en.scanned_at) === selDay);
                                       return dayEntries.length === 0 ? (
-                                        <p className="text-sm text-kaunta-slate/50">No scans this day.</p>
+                                        <p className="text-sm text-aproksi-slate/50">No scans this day.</p>
                                       ) : (
                                         <ul className="space-y-2">
                                           {dayEntries.map((en) => (
                                             <li key={en.id} className="flex items-center justify-between gap-3">
                                               <div className="text-sm">
-                                                <span className="text-kaunta-ink">{new Date(en.scanned_at).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</span>
-                                                <span className="text-kaunta-slate/50"> · {en.direction}</span>
-                                                <span className={`ml-2 text-xs ${en.status === "flagged" ? "text-kaunta-red" : en.status === "late" ? "text-kaunta-amber" : "text-kaunta-sage"}`}>{en.status}</span>
+                                                <span className="text-aproksi-ink">{new Date(en.scanned_at).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}</span>
+                                                <span className="text-aproksi-slate/50"> · {en.direction}</span>
+                                                <span className={`ml-2 text-xs ${en.status === "flagged" ? "text-aproksi-red" : en.status === "late" ? "text-aproksi-amber" : "text-aproksi-sage"}`}>{en.status}</span>
                                               </div>
                                               {en.selfie_path && <SelfieThumb entryId={en.id} label="scan" />}
                                             </li>

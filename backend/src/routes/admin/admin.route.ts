@@ -182,7 +182,7 @@ router.patch("/logs/:id", async (req, res) => {
 /**
  * Whether messages are actually arriving.
  *
- * Every notice in Kaunta goes out over one SMS provider and every send is
+ * Every notice in Aproksi goes out over one SMS provider and every send is
  * best-effort — so a wrong API key, an empty balance or an unapproved sender ID
  * produces a system that looks completely healthy and silently tells nobody
  * anything. The first symptom is an employee saying they never heard about a
@@ -226,7 +226,7 @@ router.get("/messaging/health", async (req, res) => {
   const to = typeof req.query.to === "string" ? req.query.to : "";
   if (to) {
     try {
-      await sendText(to, "Kaunta HR: test message. Messaging is working — no action needed.");
+      await sendText(to, "Aproksi HR: test message. Messaging is working — no action needed.");
       testSend = { ok: true, detail: "accepted by the provider" };
     } catch (err) {
       testSend = { ok: false, detail: (err as Error).message.slice(0, 300) };

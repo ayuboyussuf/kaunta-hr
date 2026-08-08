@@ -22,10 +22,10 @@ interface LeaveRequest {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  pending: "bg-kaunta-amber/15 text-kaunta-amber",
-  approved: "bg-kaunta-sage/15 text-kaunta-sage",
-  declined: "bg-kaunta-red/15 text-kaunta-red",
-  cancelled: "bg-kaunta-slate/10 text-kaunta-slate/70",
+  pending: "bg-aproksi-amber/15 text-aproksi-amber",
+  approved: "bg-aproksi-sage/15 text-aproksi-sage",
+  declined: "bg-aproksi-red/15 text-aproksi-red",
+  cancelled: "bg-aproksi-slate/10 text-aproksi-slate/70",
 };
 
 const ymd = (d: Date) =>
@@ -167,8 +167,8 @@ export default function MyLeavePage() {
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl text-kaunta-ink">Leave</h1>
-          <p className="mt-1 text-sm text-kaunta-slate/70">
+          <h1 className="font-display text-2xl text-aproksi-ink">Leave</h1>
+          <p className="mt-1 text-sm text-aproksi-slate/70">
             Ask for days off before you take them. Approved days are not marked
             absent.
           </p>
@@ -185,18 +185,18 @@ export default function MyLeavePage() {
             <button
               type="button"
               aria-label="Previous month"
-              className="flex h-11 w-11 items-center justify-center rounded-lg text-kaunta-slate hover:bg-kaunta-stone"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-aproksi-slate hover:bg-aproksi-stone"
               onClick={() =>
                 setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))
               }
             >
               ‹
             </button>
-            <p className="text-sm font-medium text-kaunta-ink">{grid.label}</p>
+            <p className="text-sm font-medium text-aproksi-ink">{grid.label}</p>
             <button
               type="button"
               aria-label="Next month"
-              className="flex h-11 w-11 items-center justify-center rounded-lg text-kaunta-slate hover:bg-kaunta-stone"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-aproksi-slate hover:bg-aproksi-stone"
               onClick={() =>
                 setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))
               }
@@ -209,7 +209,7 @@ export default function MyLeavePage() {
             {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
               <span
                 key={i}
-                className="py-1 text-[0.6875rem] uppercase tracking-wider text-kaunta-slate/50"
+                className="py-1 text-[0.6875rem] uppercase tracking-wider text-aproksi-slate/50"
               >
                 {d}
               </span>
@@ -230,10 +230,10 @@ export default function MyLeavePage() {
                   className={[
                     "flex h-11 items-center justify-center rounded-lg text-sm transition-colors",
                     disabled
-                      ? "cursor-not-allowed text-kaunta-slate/25"
+                      ? "cursor-not-allowed text-aproksi-slate/25"
                       : selected
-                        ? "bg-kaunta-ultra text-white"
-                        : "text-kaunta-ink hover:bg-kaunta-stone",
+                        ? "bg-aproksi-ultra text-white"
+                        : "text-aproksi-ink hover:bg-aproksi-stone",
                   ].join(" ")}
                 >
                   {i + 1}
@@ -242,7 +242,7 @@ export default function MyLeavePage() {
             })}
           </div>
 
-          <p className="mt-3 text-xs text-kaunta-slate/60">
+          <p className="mt-3 text-xs text-aproksi-slate/60">
             {from
               ? to && to !== from
                 ? `${fmtDay(from)} – ${fmtDay(to)} · ${dayCount(from, to)} day${dayCount(from, to) > 1 ? "s" : ""}`
@@ -255,7 +255,7 @@ export default function MyLeavePage() {
               and asking for the whole day costs them the rest of it. */}
           {from && (!to || to === from) && (
             <div className="mt-3">
-              <span className="text-xs text-kaunta-slate/60">How much of the day?</span>
+              <span className="text-xs text-aproksi-slate/60">How much of the day?</span>
               <div className="mt-1.5 flex flex-wrap gap-2">
                 {[
                   { key: null, label: "Whole day" },
@@ -269,8 +269,8 @@ export default function MyLeavePage() {
                     className={[
                       "inline-flex min-h-[40px] items-center rounded-full px-4 text-sm transition-colors",
                       halfDay === opt.key
-                        ? "bg-kaunta-ultra text-white"
-                        : "border border-kaunta-mist bg-white text-kaunta-slate hover:border-kaunta-ultra/40",
+                        ? "bg-aproksi-ultra text-white"
+                        : "border border-aproksi-mist bg-white text-aproksi-slate hover:border-aproksi-ultra/40",
                     ].join(" ")}
                   >
                     {opt.label}
@@ -281,18 +281,18 @@ export default function MyLeavePage() {
           )}
 
           <label className="mt-4 block">
-            <span className="text-sm text-kaunta-ink">Reason</span>
+            <span className="text-sm text-aproksi-ink">Reason</span>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
               maxLength={500}
               placeholder="Why you need the days off"
-              className="mt-1.5 w-full rounded-lg border border-kaunta-mist bg-white p-3 text-sm text-kaunta-ink placeholder:text-kaunta-slate/40 focus:border-kaunta-ultra focus:outline-none"
+              className="mt-1.5 w-full rounded-lg border border-aproksi-mist bg-white p-3 text-sm text-aproksi-ink placeholder:text-aproksi-slate/40 focus:border-aproksi-ultra focus:outline-none"
             />
           </label>
 
-          {error && <p className="mt-3 text-sm text-kaunta-red">{error}</p>}
+          {error && <p className="mt-3 text-sm text-aproksi-red">{error}</p>}
 
           <div className="mt-4 flex gap-2">
             <Button onClick={submit} disabled={saving} className="flex-1">
@@ -312,10 +312,10 @@ export default function MyLeavePage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-kaunta-slate/60">Loading…</p>
+        <p className="text-sm text-aproksi-slate/60">Loading…</p>
       ) : requests.length === 0 ? (
         <Card className="p-6 text-center">
-          <p className="text-sm text-kaunta-slate/70">
+          <p className="text-sm text-aproksi-slate/70">
             You have not asked for any leave yet.
           </p>
         </Card>
@@ -325,17 +325,17 @@ export default function MyLeavePage() {
             <Card key={r.id} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-kaunta-ink">
+                  <p className="text-sm font-medium text-aproksi-ink">
                     {r.start_date === r.end_date
                       ? fmtDay(r.start_date)
                       : `${fmtDay(r.start_date)} – ${fmtDay(r.end_date)}`}
                     {r.half_day && (
-                      <span className="ml-1.5 font-normal text-kaunta-slate/60">
+                      <span className="ml-1.5 font-normal text-aproksi-slate/60">
                         · {r.half_day} only
                       </span>
                     )}
                   </p>
-                  <p className="mt-1 text-sm text-kaunta-slate/70">{r.reason}</p>
+                  <p className="mt-1 text-sm text-aproksi-slate/70">{r.reason}</p>
                 </div>
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium capitalize ${STATUS_STYLE[r.status]}`}
@@ -345,27 +345,27 @@ export default function MyLeavePage() {
               </div>
 
               {r.status === "approved" && (
-                <p className="mt-3 border-t border-kaunta-mist pt-3 text-sm text-kaunta-slate/70">
+                <p className="mt-3 border-t border-aproksi-mist pt-3 text-sm text-aproksi-slate/70">
                   Approved as{" "}
-                  <strong className="text-kaunta-ink">
+                  <strong className="text-aproksi-ink">
                     {r.paid ? "paid" : "unpaid"}
                   </strong>
                   . You will not be marked absent on these days.
                 </p>
               )}
               {r.status === "declined" && (
-                <p className="mt-3 border-t border-kaunta-mist pt-3 text-sm text-kaunta-slate/70">
+                <p className="mt-3 border-t border-aproksi-mist pt-3 text-sm text-aproksi-slate/70">
                   Not approved.
                   {r.decision_note ? ` ${r.decision_note}` : ""} Normal
                   attendance rules apply.
                 </p>
               )}
               {r.status === "pending" && (
-                <div className="mt-3 border-t border-kaunta-mist pt-3">
+                <div className="mt-3 border-t border-aproksi-mist pt-3">
                   <button
                     type="button"
                     onClick={() => cancel(r.id)}
-                    className="text-sm text-kaunta-red hover:underline"
+                    className="text-sm text-aproksi-red hover:underline"
                   >
                     Withdraw this request
                   </button>
