@@ -210,14 +210,29 @@ export async function runPresenceChecks() {
       }
 
       // Already-fired today + any still-pending check.
+      // Scheduled checks only. A check the owner asked for is a separate
+      // event and must not spend the day's random one, or an employer would be
+      // choosing between the check they want and the check that keeps
+      // everybody honest.
       const { data: firedToday } = await db
         .from("presence_checks")
-        .select("id, status, respond_by")
+        .select("id, status, respond_by, source")
         .eq("employee_id", emp.id)
+        .eq("source", "schedule")
         .gte("created_at", dayStart);
       const firedCount = (firedToday ?? []).length;
-      const hasPending = (firedToday ?? []).some((c) => c.status === "pending" && c.respond_by >= nowIso);
-      if (hasPending) {
+
+      // Any open check blocks a new one, whoever asked for it — two open at
+      // once would flag the same clock-in twice for a single unanswered ping.
+      const { data: openCheck } = await db
+        .from("presence_checks")
+        .select("id")
+        .eq("employee_id", emp.id)
+        .eq("status", "pending")
+        .gte("respond_by", nowIso)
+        .limit(1)
+        .maybeSingle();
+      if (openCheck) {
         skipped.already_pending++;
         continue;
       }

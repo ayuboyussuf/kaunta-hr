@@ -5,6 +5,7 @@ import SelfieThumb from "@/components/SelfieThumb";
 import { InsightsPanel } from "@/components/InsightsPanel";
 import { AttentionQueue, type AttentionItem } from "@/components/dashboard/AttentionQueue";
 import { ArrivalsRail } from "@/components/dashboard/ArrivalsRail";
+import { CheckNowButton } from "@/components/dashboard/CheckNowButton";
 
 /**
  * Owner live dashboard + hub (spec §9). Shows, per workplace, who's clocked in /
@@ -396,6 +397,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                             {a && a.flags.length > 0 && (
                               <p className="text-kaunta-red">Flags: {a.flags.join(", ")}</p>
                             )}
+                            {/* The other half of presence checks: the schedule
+                                draws the random ones, this is the owner asking
+                                about one person, now. */}
+                            <div className="pt-2">
+                              <CheckNowButton
+                                employeeId={e.id}
+                                name={e.name}
+                                clockedIn={stillIn}
+                              />
+                            </div>
                             {viols.length > 0 && (
                               <div className="pt-1">
                                 {viols.map((v) => (
