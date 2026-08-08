@@ -9,7 +9,7 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { checkTimes, dueNow } from "./schedule";
+import { checkTimes, dueNow, shuffleForTick, MAX_FIRES_PER_TICK } from "./schedule";
 
 const DAY = "2026-08-05";
 const start = new Date("2026-08-05T05:00:00.000Z"); // 08:00 Nairobi
@@ -115,4 +115,53 @@ test("the day's quota is never exceeded", () => {
   const times = checkTimes({ ...base, count: 2 });
   assert.equal(dueNow(times, end, times.length), null);
   assert.equal(dueNow(times, end, 99), null);
+});
+
+/* ── The catch-up burst ───────────────────────────────────────────────── */
+
+test("a backlog does not go out as one batch", () => {
+  // The service slept, or checks were switched on mid-shift. Every overdue
+  // check is due at once — measured at 19 of 20 before the cap existed.
+  const wake = hoursIn(7);
+  const due = Array.from({ length: 20 }, (_, i) =>
+    checkTimes({ ...base, employeeId: `emp-${i}`, count: 1 })
+  ).filter((times) => dueNow(times, wake, 0)).length;
+
+  assert.ok(due > 10, "the burst is real, not hypothetical");
+  assert.ok(
+    MAX_FIRES_PER_TICK < due,
+    "so the cap has to be lower than the burst or it does nothing"
+  );
+  assert.ok(MAX_FIRES_PER_TICK >= 1, "but never zero, or nothing ever fires");
+});
+
+test("in steady state the cap never binds", () => {
+  // Each employee is seeded independently, so twenty people on one shift
+  // spread across the day on their own.
+  const times = Array.from({ length: 20 }, (_, i) =>
+    checkTimes({ ...base, employeeId: `emp-${i}`, count: 1 })[0]
+  );
+  const perTick = new Map<number, number>();
+  for (const t of times) {
+    const tick = Math.floor((t.getTime() - start.getTime()) / (5 * 60_000));
+    perTick.set(tick, (perTick.get(tick) ?? 0) + 1);
+  }
+  assert.ok(
+    Math.max(...perTick.values()) <= MAX_FIRES_PER_TICK,
+    "a normal day should never hit the cap"
+  );
+});
+
+test("the drain order changes between ticks", () => {
+  const people = Array.from({ length: 12 }, (_, i) => `emp-${i}`);
+  const first = shuffleForTick(people, "salt:2026-08-05T09:00");
+  const second = shuffleForTick(people, "salt:2026-08-05T09:05");
+
+  assert.notDeepEqual(first, second, "otherwise the same few absorb every burst");
+  assert.deepEqual([...first].sort(), [...people].sort(), "and nobody is dropped");
+  assert.deepEqual(
+    shuffleForTick(people, "salt:2026-08-05T09:00"),
+    first,
+    "stable within a tick, so two instances agree"
+  );
 });

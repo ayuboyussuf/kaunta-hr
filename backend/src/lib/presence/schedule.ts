@@ -115,6 +115,43 @@ export function dueNow(times: Date[], now: Date, firedCount: number): Date | nul
   return next.getTime() <= now.getTime() ? next : null;
 }
 
+/**
+ * How many checks may fire in a single tick, across everybody.
+ *
+ * In steady state this never binds: each employee's times are seeded
+ * independently, so twenty people on one shift spread naturally across the day
+ * and the worst five-minute tick holds two of them.
+ *
+ * It binds after a GAP — the service slept, a deploy restarted it, checks were
+ * switched on mid-shift, or a crew clocked in hours after their slot. Then
+ * every overdue check is due at once: nineteen of twenty on a single tick, in
+ * one measurement of this.
+ *
+ * The cost is the least of it. Nineteen phones buzzing in the same minute tells
+ * everyone in the building that a batch just went out — they can corroborate
+ * each other, and a check the whole shift knows about is not a check. Draining
+ * a backlog slowly keeps them looking like what they are meant to be: one
+ * person, at an unremarkable moment.
+ */
+export const MAX_FIRES_PER_TICK = 3;
+
+/**
+ * Order candidates unpredictably but deterministically for this tick.
+ *
+ * Without it a capped backlog drains in whatever order the database returned,
+ * which is stable — so the same few people would absorb every catch-up burst
+ * and the ones at the end of the list would rarely be checked at all.
+ */
+export function shuffleForTick<T>(items: T[], tickSeed: string): T[] {
+  const rand = seeded(tickSeed);
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 /** Why nothing fired for this employee — so "is it working?" has an answer. */
 export type SkipReason =
   | "no_shift"

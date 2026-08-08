@@ -176,7 +176,7 @@ export default function EmployeeHome() {
           because "Review" told them nothing and got ignored — which is exactly
           how somebody ends up saying they never knew. */}
       {needsAttention > 0 && (
-        <Card className="bg-kaunta-red text-white border-none">
+        <Card tone="alert">
           <CardContent className="p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
@@ -188,7 +188,7 @@ export default function EmployeeHome() {
                       ? `${awaitingOwner} appeal${awaitingOwner === 1 ? "" : "s"} with your employer`
                       : `${unseen} penalt${unseen === 1 ? "y" : "ies"} you haven't opened`}
                 </p>
-                <p className="text-sm text-white/85">
+                <p className="text-sm text-kaunta-white/85">
                   {appealable > 0
                     ? "Once the window closes the penalty stands, so say your side now."
                     : awaitingOwner > 0
@@ -207,11 +207,11 @@ export default function EmployeeHome() {
       )}
 
       {presenceDue && (
-        <Card className="bg-kaunta-red text-white border-none">
+        <Card tone="alert">
           <CardContent className="p-5 flex items-center justify-between gap-4">
             <div>
               <p className="font-display text-lg mb-0.5">Presence check</p>
-              <p className="text-sm text-white/85">Scan the workplace QR now to confirm you&rsquo;re at work.</p>
+              <p className="text-sm text-kaunta-white/85">Scan the workplace QR now to confirm you&rsquo;re at work.</p>
             </div>
             <Button asChild variant="secondary" size="lg">
               <Link href="/me/clock-in" className="flex items-center gap-2">
@@ -223,7 +223,7 @@ export default function EmployeeHome() {
         </Card>
       )}
 
-      <Card className="bg-kaunta-ultra text-white border-none">
+      <Card tone="info">
         <CardContent className="p-6 flex items-center justify-between">
           <div>
             <p className="font-display text-xl mb-1">Ready to clock in?</p>
