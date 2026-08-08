@@ -150,14 +150,20 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     status: string;
     flags: string[];
     scans: number;
+    checks: number;
   }
   const attByEmp = new Map<string, Att>();
   for (const e of wpEntries) {
     const a =
       attByEmp.get(e.employee_id) ??
-      { inAt: null, outAt: null, inSelfieId: null, outSelfieId: null, status: "normal", flags: [], scans: 0 };
+      { inAt: null, outAt: null, inSelfieId: null, outSelfieId: null, status: "normal", flags: [], scans: 0, checks: 0 };
     a.scans += 1;
-    if (e.direction === "out") {
+    // A presence-check scan is neither an arrival nor a departure. Counting it
+    // as one would show somebody as having clocked in when they answered a
+    // check, or left when they proved they were there.
+    if (e.direction === "check") {
+      a.checks += 1;
+    } else if (e.direction === "out") {
       a.outAt = e.scanned_at; // ascending → last wins
       if (e.selfie_path) a.outSelfieId = e.id;
     } else if (!a.inAt) {
@@ -390,6 +396,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                                 {a.inSelfieId && <SelfieThumb entryId={a.inSelfieId} label="clock-in" />}
                                 {a.outSelfieId && <SelfieThumb entryId={a.outSelfieId} label="clock-out" />}
                               </div>
+                            )}
+                            {a && a.checks > 0 && (
+                              <p className="text-kaunta-sage">
+                                Answered {a.checks} presence check{a.checks === 1 ? "" : "s"} today.
+                              </p>
                             )}
                             {a && a.status !== "normal" && (
                               <p>Status: <span className="capitalize text-kaunta-ink">{a.status}</span></p>

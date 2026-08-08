@@ -27,6 +27,7 @@ import { confirmPendingCheck } from "../../lib/presence";
 import { approvedLeaveOn } from "../../lib/leave/cover";
 import { CLIENT_OUTCOMES, recordClientAttempt, recordServerAttempt } from "../../lib/attendance/attempts";
 import { nairobiDate, nairobiDayStartISO, nairobiMinutes } from "../../lib/time";
+import { qrIsUsableBy, directionFor, locationVerdict } from "../../lib/attendance/scanRules";
 
 const router = Router();
 
@@ -98,13 +99,39 @@ router.post("/scan", requireEmployee, async (req, res) => {
   // Employee + assigned shift.
   const { data: employee } = await db
     .from("employees")
-    .select("id, shift:shifts(id, start_time, grace_minutes, days_of_week)")
+    .select("id, workplace_id, shift:shifts(id, start_time, grace_minutes, days_of_week)")
     .eq("id", req.employee!.employeeId)
     .eq("org_id", req.employee!.orgId)
     .maybeSingle();
   if (!employee) {
     await recordServerAttempt(db, "employee_not_found", { ...who, workplaceId: workplace.id });
     return res.status(404).json({ error: "employee not found" });
+  }
+
+  // The QR must be for the site this person is assigned to.
+  //
+  // Until now the only test was "same org", so any of the owner's codes worked
+  // anywhere: someone posted to Nairobi could clock in on the Kaplong code
+  // without going near Kaplong. A photograph of one printed QR unlocked every
+  // site the business has, which is the whole geofence undone by a group chat.
+  //
+  // Someone with no assigned workplace is a genuine floater — a relief driver,
+  // an owner covering a shift — and any site of theirs is legitimate for them.
+  if (!qrIsUsableBy(
+        (employee.workplace_id as string | null) ?? null,
+        workplace.id as string,
+        workplace.org_id as string,
+        req.employee!.orgId
+      )) {
+    await recordServerAttempt(
+      db,
+      "wrong_workplace",
+      { ...who, workplaceId: workplace.id },
+      "Scanned another site's QR; employee is assigned elsewhere."
+    );
+    return res.status(403).json({
+      error: `That code belongs to ${workplace.name}, which is not where you are assigned. Scan the code at your own workplace.`,
+    });
   }
 
   // Supabase types a to-one embed as an array; normalise to a single row.
@@ -127,17 +154,41 @@ router.post("/scan", requireEmployee, async (req, res) => {
 
   const now = new Date();
 
-  // Clock in vs out: the first scan of the Nairobi day is a clock-IN; the next
-  // toggles to OUT, and so on. This lets the owner see in→out per employee.
+  // What this scan IS decides everything below it.
+  //
+  // An open presence check makes this scan an answer to that check, not a
+  // movement through the door. Every scan used to toggle in→out→in, so
+  // answering "confirm you are at work" clocked the employee OUT: they were
+  // then not clocked in, no further check could reach them, their hours ended
+  // early, and the roster said they had left while they stood at the till. The
+  // one scan whose entire purpose is to prove presence was recording absence.
+  const { data: openCheck } = await db
+    .from("presence_checks")
+    .select("id")
+    .eq("employee_id", req.employee!.employeeId)
+    .eq("status", "pending")
+    .gte("respond_by", now.toISOString())
+    .order("due_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  // Clock in vs out: the first CLOCK scan of the Nairobi day is an IN; the next
+  // toggles to OUT. Check scans are skipped when reading the last state, so
+  // answering a check never shifts where the toggle stands.
   const { data: lastToday } = await db
     .from("attendance_entries")
     .select("direction")
     .eq("employee_id", req.employee!.employeeId)
+    .in("direction", ["in", "out"])
     .gte("scanned_at", nairobiDayStartISO(now))
     .order("scanned_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  const direction: "in" | "out" = lastToday?.direction === "in" ? "out" : "in";
+
+  const direction = directionFor(
+    Boolean(openCheck),
+    (lastToday?.direction as "in" | "out" | undefined) ?? null
+  );
 
   // Geofence only when both the workplace and this scan have coordinates. If
   // either is missing, the QR scan alone stands — no geofence flags, no block.
@@ -234,9 +285,14 @@ router.post("/scan", requireEmployee, async (req, res) => {
   // outside, or with GPS off, does NOT confirm); a workplace without coordinates
   // can't be geofenced, so the QR + selfie stands.
   const workplaceHasCoords = workplace.lat != null && workplace.lng != null;
-  const locationOk = !workplaceHasCoords || (hasCoords && geo.insideGeofence);
+  let checkResult: { confirmed: boolean; locationVerified: boolean | null } = {
+    confirmed: false,
+    locationVerified: null,
+  };
   try {
-    await confirmPendingCheck(db, req.employee!.employeeId, entry.id, locationOk);
+    checkResult = await confirmPendingCheck(db, req.employee!.employeeId, entry.id, {
+      verdict: locationVerdict(workplaceHasCoords, hasCoords, geo.insideGeofence),
+    });
   } catch (err) {
     console.error(`[scan] presence confirm failed for entry ${entry.id}:`, (err as Error).message);
   }
@@ -269,6 +325,12 @@ router.post("/scan", requireEmployee, async (req, res) => {
     status,
     direction,
     flags,
+    // So the app can say what this scan was. Reporting "Clocked out" for a
+    // presence check is how somebody concludes the app has just ended their
+    // shift by mistake.
+    presence_check: checkResult.confirmed
+      ? { confirmed: true, location_verified: checkResult.locationVerified }
+      : null,
     on_leave: leave ? { id: leave.id, start_date: leave.start_date, end_date: leave.end_date } : null,
     penalty: applied
       ? { id: applied.violationId, reason: applied.reason, amount: applied.amount }
