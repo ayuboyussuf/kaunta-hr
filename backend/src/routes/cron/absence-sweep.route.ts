@@ -28,10 +28,11 @@ function nairobiYmd(now: Date): string {
   }).format(now);
 }
 
-router.post("/", async (req, res) => {
-  if (req.headers["x-cron-secret"] !== env.cronSecret()) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
+/**
+ * The job itself. Called directly by the in-process scheduler and, via the
+ * route below, by any external scheduler. No HTTP in the direct path.
+ */
+export async function runAbsenceSweep(dateOverride?: string) {
 
   const db = getServiceClient();
   const now = new Date();
@@ -40,9 +41,7 @@ router.post("/", async (req, res) => {
   // date being swept is today; an explicit ?date= lets a missed run be
   // replayed without waiting another 24 hours.
   const target =
-    typeof req.query.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
-      ? req.query.date
-      : nairobiYmd(now);
+    dateOverride && /^\d{4}-\d{2}-\d{2}$/.test(dateOverride) ? dateOverride : nairobiYmd(now);
 
   const dayStart = new Date(`${target}T00:00:00+03:00`).toISOString();
   const dayEnd = new Date(`${target}T23:59:59+03:00`).toISOString();
@@ -53,7 +52,7 @@ router.post("/", async (req, res) => {
     .select("id, org_id, workplace_id, shift_id")
     .eq("status", "active")
     .not("shift_id", "is", null);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) throw new Error(String(error.message));
 
   let checked = 0;
   let raised = 0;
@@ -83,7 +82,18 @@ router.post("/", async (req, res) => {
     }
   }
 
-  res.json({ date: target, checked, raised });
+  return { date: target, checked, raised };
+}
+
+router.post("/", async (req, res) => {
+  if (req.headers["x-cron-secret"] !== env.cronSecret()) {
+    return res.status(401).json({ error: "unauthorized" });
+  }
+  try {
+    res.json(await runAbsenceSweep(typeof req.query.date === "string" ? req.query.date : undefined));
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
 export default { basePath: "/api/cron/absence-sweep", router };

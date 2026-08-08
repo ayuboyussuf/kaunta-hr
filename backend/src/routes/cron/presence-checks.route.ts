@@ -46,10 +46,11 @@ interface ShiftRow {
   end_time: string;
 }
 
-router.post("/", async (req, res) => {
-  if (req.headers["x-cron-secret"] !== env.cronSecret()) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
+/**
+ * The job itself. Called directly by the in-process scheduler and, via the
+ * route below, by any external scheduler. No HTTP in the direct path.
+ */
+export async function runPresenceChecks() {
   const db = getServiceClient();
   const now = new Date();
   const nowIso = now.toISOString();
@@ -286,7 +287,7 @@ router.post("/", async (req, res) => {
     }
   }
 
-  res.json({
+  return {
     missed,
     fired,
     delivered_by_push: deliveredByPush,
@@ -302,7 +303,18 @@ router.post("/", async (req, res) => {
         : fired === 0
           ? "Nothing was due this tick. `skipped` says why for each employee."
           : undefined,
-  });
+  };
+}
+
+router.post("/", async (req, res) => {
+  if (req.headers["x-cron-secret"] !== env.cronSecret()) {
+    return res.status(401).json({ error: "unauthorized" });
+  }
+  try {
+    res.json(await runPresenceChecks());
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
 export default { basePath: "/api/cron/presence-checks", router };
