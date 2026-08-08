@@ -191,7 +191,14 @@ async function notify(
     .select("phone, name")
     .eq("id", employeeId)
     .maybeSingle();
-  if (!emp?.phone) return;
+
+  if (!emp?.phone) {
+    await db
+      .from("violations")
+      .update({ notify_error: "No phone number on file for this employee." })
+      .eq("id", applied.violationId);
+    return;
+  }
 
   const amount = `KES ${Number(applied.amount).toLocaleString("en-KE", {
     maximumFractionDigits: 0,
@@ -201,9 +208,21 @@ async function notify(
       emp.phone as string,
       `Kaunta HR: ${applied.reason} — ${amount}. ${detail} If you disagree, open your record to appeal.`
     );
+    await db
+      .from("violations")
+      .update({ notified_at: new Date().toISOString(), notify_error: null })
+      .eq("id", applied.violationId);
   } catch (err) {
-    // A failed SMS must never undo the record.
-    console.error("[rules] notice failed:", (err as Error).message);
+    // A failed SMS must never undo the record — but it must not vanish either.
+    // Whether the employee was actually told decides whether a deduction is
+    // defensible, so the failure is written to the row the owner will read
+    // rather than to a console nobody does.
+    const message = (err as Error).message;
+    console.error("[rules] notice failed:", message);
+    await db
+      .from("violations")
+      .update({ notify_error: message.slice(0, 300) })
+      .eq("id", applied.violationId);
   }
 }
 

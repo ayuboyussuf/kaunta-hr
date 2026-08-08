@@ -25,23 +25,37 @@ declare global {
   }
 }
 
-/** Require a valid Supabase owner session; attaches req.owner with the org id. */
-export async function requireOwner(req: Request, res: Response, next: NextFunction) {
-  const token = extractToken(req.headers.authorization);
-  if (!token) return res.status(401).json({ error: "unauthorized" });
-
+/**
+ * Resolve a Supabase access token to its owner, or null.
+ *
+ * Split out of requireOwner so a route that accepts EITHER principal can ask
+ * "is this an owner?" without a middleware that has already sent a 401.
+ */
+export async function resolveOwner(token: string): Promise<OwnerCtx | null> {
+  if (!token) return null;
   const db = getServiceClient();
   const { data, error } = await db.auth.getUser(token);
-  if (error || !data.user) return res.status(401).json({ error: "unauthorized" });
+  if (error || !data.user) return null;
 
   const { data: org } = await db
     .from("orgs")
     .select("id")
     .eq("owner_user_id", data.user.id)
     .maybeSingle();
-  if (!org) return res.status(403).json({ error: "no org for user" });
+  if (!org) return null;
 
-  req.owner = { userId: data.user.id, orgId: org.id };
+  return { userId: data.user.id, orgId: org.id };
+}
+
+/** Require a valid Supabase owner session; attaches req.owner with the org id. */
+export async function requireOwner(req: Request, res: Response, next: NextFunction) {
+  const token = extractToken(req.headers.authorization);
+  if (!token) return res.status(401).json({ error: "unauthorized" });
+
+  const owner = await resolveOwner(token);
+  if (!owner) return res.status(401).json({ error: "unauthorized" });
+
+  req.owner = owner;
   next();
 }
 
