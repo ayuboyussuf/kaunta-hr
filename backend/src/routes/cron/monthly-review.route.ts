@@ -40,16 +40,17 @@ function lastMonth(now: Date) {
   };
 }
 
-router.post("/", async (req, res) => {
-  if (req.headers["x-cron-secret"] !== env.cronSecret()) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
+/**
+ * The job itself. Called directly by the in-process scheduler and, via the
+ * route below, by any external scheduler. No HTTP in the direct path.
+ */
+export async function runMonthlyReview() {
 
   const db = getServiceClient();
   const month = lastMonth(new Date());
 
   const { data: orgs, error } = await db.from("orgs").select("id");
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) throw new Error(String(error.message));
 
   let suggested = 0;
   let flagged = 0;
@@ -94,7 +95,18 @@ router.post("/", async (req, res) => {
     }
   }
 
-  res.json({ month: month.label, bonus_suggestions: suggested, patterns_flagged: flagged });
+  return { month: month.label, bonus_suggestions: suggested, patterns_flagged: flagged };
+}
+
+router.post("/", async (req, res) => {
+  if (req.headers["x-cron-secret"] !== env.cronSecret()) {
+    return res.status(401).json({ error: "unauthorized" });
+  }
+  try {
+    res.json(await runMonthlyReview());
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
 export default { basePath: "/api/cron/monthly-review", router };

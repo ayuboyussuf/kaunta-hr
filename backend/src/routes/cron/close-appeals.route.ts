@@ -11,10 +11,11 @@ import { finalizeViolation } from "../../lib/violations/finalize";
 
 const router = Router();
 
-router.post("/", async (req, res) => {
-  if (req.headers["x-cron-secret"] !== env.cronSecret()) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
+/**
+ * The job itself. Called directly by the in-process scheduler and, via the
+ * route below, by any external scheduler. No HTTP in the direct path.
+ */
+export async function runCloseAppeals() {
 
   const db = getServiceClient();
   const { data: due } = await db
@@ -34,7 +35,18 @@ router.post("/", async (req, res) => {
     }
   }
 
-  res.json({ processed: results.length, results });
+  return { processed: results.length, results };
+}
+
+router.post("/", async (req, res) => {
+  if (req.headers["x-cron-secret"] !== env.cronSecret()) {
+    return res.status(401).json({ error: "unauthorized" });
+  }
+  try {
+    res.json(await runCloseAppeals());
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
 export default { basePath: "/api/cron/close-appeals", router };

@@ -80,10 +80,11 @@ function triggerFor(
   return null;
 }
 
-router.post("/", async (req, res) => {
-  if (req.headers["x-cron-secret"] !== env.cronSecret()) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
+/**
+ * The job itself. Called directly by the in-process scheduler and, via the
+ * route below, by any external scheduler. No HTTP in the direct path.
+ */
+export async function runPayrollSweep() {
   const db = getServiceClient();
 
   // Today's Nairobi date parts (weekday 0=Sun..6=Sat) for cadence scheduling.
@@ -164,7 +165,18 @@ router.post("/", async (req, res) => {
     }
   }
 
-  res.json({ processed: ran.length, ran });
+  return { processed: ran.length, ran };
+}
+
+router.post("/", async (req, res) => {
+  if (req.headers["x-cron-secret"] !== env.cronSecret()) {
+    return res.status(401).json({ error: "unauthorized" });
+  }
+  try {
+    res.json(await runPayrollSweep());
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
 export default { basePath: "/api/cron/payroll", router };
