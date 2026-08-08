@@ -107,13 +107,17 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         .select("id", { count: "exact", head: true })
         .eq("org_id", org.id)
         .eq("status", "pending"),
-      // Penalties whose notice never reached the employee. Invisible until now,
-      // and the likeliest single source of "nobody told me" at payday.
+      // Penalties whose notice never reached the employee. `notice_tracked`
+      // matters: rows raised before delivery was recorded have a null
+      // notified_at because nothing was watching, not because anything failed,
+      // and counting those turned a live dashboard into nine red accusations
+      // about sends that were never observed.
       supabase
         .from("violations")
         .select("id, employees!inner(org_id)", { count: "exact", head: true })
         .eq("employees.org_id", org.id)
         .is("notified_at", null)
+        .eq("notice_tracked", true)
         .gte("created_at", daysAgoISO(30)),
       // Shift starts, for the arrivals rail.
       supabase.from("shifts").select("workplace_id, start_time, grace_minutes").order("start_time"),
@@ -180,13 +184,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   // Sort: still-in first, then out, then absent — each alphabetical.
   const roster = [...wpEmployees].sort((a, b) => a.name.localeCompare(b.name));
 
+  /* Four, always. A stat row whose length changes with the data produces a
+   * ragged grid and a divider running under an empty cell — which is exactly
+   * what "on leave" appearing as a fifth headline did. */
   const stats = [
     { label: "In", value: clockedInIds.size, tone: "text-kaunta-sage" },
     { label: "Late", value: [...attByEmp.values()].filter((a) => a.status === "late").length, tone: "text-kaunta-amber" },
     { label: "Absent", value: absent.length, tone: "text-kaunta-slate" },
-    ...(onLeave.length > 0
-      ? [{ label: "On leave", value: onLeave.length, tone: "text-kaunta-ultra" }]
-      : []),
     { label: "Flagged", value: [...attByEmp.values()].filter((a) => a.status === "flagged").length, tone: "text-kaunta-red" },
   ];
 
@@ -210,8 +214,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     {
       count: undelivered ?? 0,
       label: "Penalties nobody received",
-      detail: "The text never went out. Check the phone number on file.",
-      href: "/dashboard/violations",
+      detail: "Fix the number and resend, or mark them unreachable.",
+      href: "/dashboard/violations?status=undelivered",
       tone: "urgent",
     },
   ];
@@ -268,24 +272,41 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <>
             <AttentionQueue items={attention} />
             {/* Live stats */}
-            {/* One strip, not four boxes. At 375px this is a 2x2 that fits
-                above the fold instead of a screen and a half of zeros. */}
-            <section
-              aria-label="Today at this site"
-              className="grid grid-cols-2 divide-kaunta-mist overflow-hidden rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.06)] sm:grid-cols-4 sm:divide-x lg:grid-cols-5"
-            >
-              {stats.map((s) => (
-                <div key={s.label} className="border-b border-kaunta-mist px-5 py-4 sm:border-b-0 lg:last:border-r-0">
-                  <p className={`font-display text-3xl tabular-nums ${s.value === 0 ? "text-kaunta-slate/25" : s.tone}`}>
-                    {s.value}
-                  </p>
-                  <p className="mt-0.5 text-xs uppercase tracking-wide text-kaunta-slate/55">{s.label}</p>
-                </div>
-              ))}
-              <div className="border-b border-kaunta-mist px-5 py-4 sm:border-b-0 sm:col-span-2 lg:col-span-1">
-                <p className="font-display text-3xl tabular-nums text-kaunta-ink">{roster.length}</p>
-                <p className="mt-0.5 text-xs uppercase tracking-wide text-kaunta-slate/55">On the books</p>
+            {/* Always exactly four cells, so the grid is a clean 2x2 at 375px
+                and a single row on desktop. The fifth and sixth stats used to
+                be crammed in here, which left a ragged half-empty row and a
+                divider running under nothing. Leave and headcount are context,
+                not headline numbers, so they sit on the caption line below. */}
+            <section aria-label="Today at this site" className="space-y-2">
+              <div className="grid grid-cols-2 overflow-hidden rounded-[12px] border border-kaunta-mist bg-white shadow-[0_2px_16px_rgba(15,25,35,0.06)] sm:grid-cols-4">
+                {stats.map((s, i) => (
+                  <div
+                    key={s.label}
+                    className={[
+                      "px-5 py-4",
+                      // Interior hairlines only — never one along an outer edge.
+                      i % 2 === 0 ? "border-r border-kaunta-mist" : "",
+                      i < 2 ? "border-b border-kaunta-mist" : "",
+                      "sm:border-b-0 sm:border-r sm:last:border-r-0",
+                    ].join(" ")}
+                  >
+                    <p
+                      className={`font-display text-3xl tabular-nums ${
+                        s.value === 0 ? "text-kaunta-slate/25" : s.tone
+                      }`}
+                    >
+                      {s.value}
+                    </p>
+                    <p className="mt-0.5 text-xs uppercase tracking-wide text-kaunta-slate/55">
+                      {s.label}
+                    </p>
+                  </div>
+                ))}
               </div>
+              <p className="px-1 text-xs text-kaunta-slate/60">
+                {roster.length} on the books at {selected.name}
+                {onLeave.length > 0 && ` · ${onLeave.length} on approved leave`}
+              </p>
             </section>
 
             <ArrivalsRail arrivals={arrivals} shiftStart={railStart} graceMinutes={railGrace} />
