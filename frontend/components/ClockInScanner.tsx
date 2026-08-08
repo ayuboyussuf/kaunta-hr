@@ -18,7 +18,8 @@ type Phase = "scanning" | "selfie" | "locating" | "sending" | "done" | "error";
 
 interface ScanResult {
   status: "normal" | "late" | "flagged" | "on_leave";
-  direction: "in" | "out";
+  direction: "in" | "out" | "check";
+  presence_check: { confirmed: boolean; location_verified: boolean | null } | null;
   distance_m: number | null;
   flags: string[];
   workplace: { name: string };
@@ -36,6 +37,13 @@ const STATUS_COPY: Record<string, { title: string; tone: string; note: string }>
     note: "Today is leave your employer approved. You are not marked late and there is no penalty.",
   },
   out: { title: "Clocked out", tone: "text-kaunta-sage", note: "Your clock-out has been recorded." },
+  /* Answering a check is not leaving. Reporting "Clocked out" here is how
+     somebody concludes the app has just ended their shift by mistake. */
+  check: {
+    title: "Presence confirmed",
+    tone: "text-kaunta-sage",
+    note: "You answered the check. You are still clocked in — this did not end your shift.",
+  },
 };
 
 const SCANNER_ID = "kaunta-qr-reader";
@@ -179,7 +187,12 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
   }, [presetToken]);
 
   if (phase === "done" && result) {
-    const copy = result.direction === "out" ? STATUS_COPY.out : STATUS_COPY[result.status] ?? STATUS_COPY.normal;
+    const copy =
+      result.direction === "check"
+        ? STATUS_COPY.check
+        : result.direction === "out"
+          ? STATUS_COPY.out
+          : STATUS_COPY[result.status] ?? STATUS_COPY.normal;
     return (
       <Card>
         <CardContent className="p-6 text-center space-y-2">
@@ -191,6 +204,18 @@ export default function ClockInScanner({ presetToken }: { presetToken?: string }
           </p>
           {result.flags?.length > 0 && (
             <p className="text-xs text-kaunta-red">Flags: {result.flags.join(", ")}</p>
+          )}
+
+          {/* The answer counted even when the location could not back it up —
+              an honest person indoors with a weak signal must never be left
+              with no way to comply. Said out loud so it is not a surprise if
+              the employer asks about it. */}
+          {result.presence_check?.confirmed && result.presence_check.location_verified === false && (
+            <p className="text-xs text-kaunta-amber">
+              Your location did not confirm you were inside the workplace area, so
+              your employer will see that alongside the check. The check itself is
+              answered.
+            </p>
           )}
 
           {/* The rule applied itself the moment the scan landed. Say so here as

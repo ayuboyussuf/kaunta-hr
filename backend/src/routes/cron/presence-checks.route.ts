@@ -183,6 +183,10 @@ export async function runPresenceChecks() {
         .from("attendance_entries")
         .select("id, direction, scanned_at")
         .eq("employee_id", emp.id)
+        // Clock scans only. A 'check' entry is the most recent row right after
+        // somebody answers, and reading it as "their last state" would mean no
+        // further check could ever reach them for the rest of the shift.
+        .in("direction", ["in", "out"])
         .gte("scanned_at", dayStart)
         .order("scanned_at", { ascending: false })
         .limit(1)

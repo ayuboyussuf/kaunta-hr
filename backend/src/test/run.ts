@@ -14,3 +14,4 @@ import "../lib/observability/log.test";
 import "../lib/appeals/assist/claims.test";
 import "../lib/violations/stage.test";
 import "../lib/presence/schedule.test";
+import "../lib/attendance/scanRules.test";

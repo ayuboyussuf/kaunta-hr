@@ -105,6 +105,9 @@ router.post("/check/:employeeId", requireOwner, async (req, res) => {
     .from("attendance_entries")
     .select("id, direction")
     .eq("employee_id", emp.id)
+    // Clock scans only — see the note in the cron. `session_entry_id` must also
+    // point at the clock-IN this check belongs to, not at a previous answer.
+    .in("direction", ["in", "out"])
     .gte("scanned_at", dayStart)
     .order("scanned_at", { ascending: false })
     .limit(1)
