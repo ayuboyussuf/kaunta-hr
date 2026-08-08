@@ -23,7 +23,7 @@ import { getServiceClient } from "../../lib/supabase";
 import { pushToEmployee } from "../../lib/push";
 import { enqueue } from "../../lib/queue";
 import { approvedLeaveOn } from "../../lib/leave/cover";
-import { checkTimes, dueNow } from "../../lib/presence/schedule";
+import { checkTimes, dueNow, shuffleForTick, MAX_FIRES_PER_TICK } from "../../lib/presence/schedule";
 
 const router = Router();
 const TZ = "Africa/Nairobi";
@@ -149,6 +149,8 @@ export async function runPresenceChecks() {
     already_pending: 0,
     quota_met: 0,
     none_due_yet: 0,
+    // Due, but held back so a backlog does not go out as one visible batch.
+    deferred_to_next_tick: 0,
   };
 
   for (const org of orgs ?? []) {
@@ -164,7 +166,12 @@ export async function runPresenceChecks() {
 
     employeesConsidered += (employees ?? []).length;
 
-    for (const emp of employees ?? []) {
+    // Shuffled per tick so a capped backlog does not always drain in the same
+    // order — otherwise the same few people absorb every catch-up burst and
+    // whoever sorts last is rarely checked at all.
+    const queue = shuffleForTick(employees ?? [], `${env.cronSecret()}:${nowIso.slice(0, 16)}`);
+
+    for (const emp of queue) {
       const shift = (Array.isArray((emp as any).shift) ? (emp as any).shift[0] : (emp as any).shift) as ShiftRow | null;
       if (!shift) {
         skipped.no_shift++;
@@ -236,6 +243,14 @@ export async function runPresenceChecks() {
         continue;
       }
 
+      // Due, but the tick is full. It stays due and goes out on a later tick —
+      // a backlog drains a few at a time rather than lighting up every phone
+      // in the building at once. See MAX_FIRES_PER_TICK.
+      if (fired >= MAX_FIRES_PER_TICK) {
+        skipped.deferred_to_next_tick++;
+        continue;
+      }
+
       // Fire one.
       const respondBy = new Date(now.getTime() + windowMin * 60 * 1000).toISOString();
       const { data: check, error: insErr } = await db
@@ -302,7 +317,9 @@ export async function runPresenceChecks() {
         ? "No org has presence_checks_per_shift above 0 — random checks are switched off everywhere."
         : fired === 0
           ? "Nothing was due this tick. `skipped` says why for each employee."
-          : undefined,
+          : skipped.deferred_to_next_tick > 0
+            ? `Capped at ${MAX_FIRES_PER_TICK} this tick; ${skipped.deferred_to_next_tick} still due and will go out shortly.`
+            : undefined,
   };
 }
 
