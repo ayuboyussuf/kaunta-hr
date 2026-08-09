@@ -16,37 +16,42 @@ import { SealedRecord } from "@/components/site/Engravings";
 
 const CAPABILITIES = [
   {
-    index: "01",
     title: "QR clock-in, fenced to the site",
     body: "Each site gets its own signed QR code. A scan only counts if the phone is inside the radius you drew, and it carries a selfie and a GPS fix with it.",
   },
   {
-    index: "02",
     title: "Penalty rules you write yourself",
     body: "Set the grace period, what lateness costs, what absence costs. The rules run against every scan, so nobody has to remember who was late on the 14th.",
   },
   {
-    index: "03",
-    title: "Appeals that end in a locked file",
-    body: "Staff dispute a penalty from their phone. You uphold or waive it, and the outcome is written to a tamper-evident PDF that neither side can quietly edit later.",
+    title: "Presence checks mid-shift",
+    body: "Optional, and off until you switch them on. At unannounced points in the shift a staff member is asked to re-scan the code — because two scans prove somebody arrived, not that they stayed.",
   },
   {
-    index: "04",
+    title: "Leave that settles the day",
+    body: "Staff file ahead with a reason, you approve as paid or unpaid, whole day or half. A day you signed off is never afterwards an absence, a lateness or a check.",
+  },
+  {
+    title: "Appeals that end in a locked file",
+    body: "Staff dispute a penalty from their phone. Aproksi checks the claim against the records first and shows you what it found. You uphold or waive, and the outcome is written to a tamper-evident PDF.",
+  },
+  {
     title: "Payslips over secure links",
     body: "Generate the payslip, send a signed link by SMS. The link opens the PDF for that employee only, and expires.",
   },
   {
-    index: "05",
     title: "A dashboard about exceptions",
-    body: "Not a wall of clock-in logs. The screen opens on what broke today: who missed, who was outside the fence, which appeals are waiting on you.",
+    body: "Not a wall of clock-in logs. The screen opens on what is waiting for you today, then the shape of the morning, and says nothing about the days that went normally.",
   },
   {
-    index: "06",
+    title: "Patterns you would otherwise miss",
+    body: "Repeated lateness on one shift, misses concentrated at one site, somebody quietly improving, a clean month worth a bonus. Counted from the records, with the numbers shown.",
+  },
+  {
     title: "Owner and staff, separated",
     body: "Two roles and no more: you, and the people who work for you. Staff only ever see their own record.",
   },
   {
-    index: "07",
     title: "Onboarding by phone number",
     body: "Add staff with a phone number and they verify with an SMS code. Notices and payslip links go out by SMS under the sender ID APROKSIHR.",
   },
@@ -70,6 +75,51 @@ const FAQ_ITEMS = [
         entirely and just keep the record. See{" "}
         <Link href="/docs/penalty-rules" className="text-white underline underline-offset-4">
           setting penalty rules
+        </Link>
+        .
+      </>
+    ),
+  },
+  {
+    q: "Are staff tracked during the shift?",
+    a: (
+      <>
+        No. Location is read at the moment of a scan and at no other time — there
+        is nothing running in the background reporting where anybody is. Presence
+        checks, if you switch them on, are a prompt to walk to the code and scan
+        it; the phone still only reports its position at that moment. They are
+        off by default. See{" "}
+        <Link href="/docs/presence-checks" className="text-white underline underline-offset-4">
+          presence checks
+        </Link>
+        .
+      </>
+    ),
+  },
+  {
+    q: "Does the system decide appeals?",
+    a: (
+      <>
+        No, and it is built so that it cannot. When an appeal is raised, Aproksi
+        HR works out what is being claimed and counts what the records hold about
+        it — how many people failed to scan at that site that morning, whether
+        colleagues arrived late together. It reports those counts and stops. It
+        never states whether a claim is true, never recommends an outcome, and
+        every figure it shows can be opened and read. The decision, and the
+        attribution for it, stay with you.
+      </>
+    ),
+  },
+  {
+    q: "What happens to a day I approved as leave?",
+    a: (
+      <>
+        It is settled everywhere at once. An approved day is never counted as an
+        absence, never marked late if the person turns up anyway, and never
+        chased for a presence check — and payroll treats it as you approved it,
+        paid or unpaid, whole or half. See{" "}
+        <Link href="/docs/leave" className="text-white underline underline-offset-4">
+          leave and time off
         </Link>
         .
       </>
@@ -298,6 +348,47 @@ export default function HomePage() {
         </Container>
       </section>
 
+      {/* ── The middle of the shift ──────────────────────────────── */}
+      <section className="border-b border-white/10 bg-aproksi-void">
+        <Container width="wide" className="py-14 sm:py-20 lg:py-28">
+          <SectionHead
+            eyebrow="Presence checks"
+            tone="dark"
+            title="A clock-in and a clock-out say nothing about the eight hours between them."
+            lede="Somebody who scans in, goes home, and comes back at five looks exactly like somebody who worked. So Aproksi HR can ask, at moments nobody can predict, for a staff member to walk to the code and scan it again."
+          />
+          <div className="mt-10 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
+            {[
+              [
+                "Unpredictable",
+                "The times are drawn fresh for each person each day, spread across their shift and never bunched together. There is no eleven o’clock to be back by.",
+              ],
+              [
+                "Answerable",
+                "A scan of their own site’s code confirms it, every time. Whether the location agreed is recorded beside the answer — a weak GPS fix is a note, not a failure.",
+              ],
+              [
+                "Off by default",
+                "Nothing fires until you choose a number of checks per shift. Plenty of businesses never turn it on, and the rest of the product does not care either way.",
+              ],
+            ].map(([k, v]) => (
+              <div key={k} className="h-full bg-aproksi-void p-6">
+                <p className="font-mono text-[0.6875rem] sm:text-[0.625rem] uppercase tracking-[0.16em] text-aproksi-ultra-br/80">
+                  {k}
+                </p>
+                <p className="mt-3 text-[0.875rem] leading-relaxed text-white/55">
+                  {v}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 max-w-2xl text-[0.9rem] leading-relaxed text-white/45">
+            Anyone on approved leave is skipped, and answering a check never
+            clocks somebody out.
+          </p>
+        </Container>
+      </section>
+
       {/* ── The record ───────────────────────────────────────────── */}
       <section className="border-b border-white/10 bg-aproksi-void">
         <Container width="wide" className="py-14 sm:py-20 lg:py-28">
@@ -323,7 +414,7 @@ export default function HomePage() {
                 eyebrow="Appeals"
                 tone="dark"
                 title="A penalty a staff member can argue with, and a file that closes."
-                lede="Staff dispute from the phone the penalty landed on, with a reason attached. You uphold or waive. Either way the case closes into a locked PDF recording what was claimed, what was decided, by whom and when — and its hash is kept against the case."
+                lede="Staff dispute from the phone the penalty landed on, with a reason attached. Before you read it, Aproksi has worked out what is being claimed and gone to count what the records can say about it — failed scans at that site that morning, whether colleagues were late together. It never says who is right. You uphold or waive, and the case closes into a locked PDF recording what was claimed, what was decided, by whom and when, with its hash kept against the case."
               />
               <div className="mt-8">
                 <SiteButton href="/compliance" variant="outline">
@@ -344,13 +435,13 @@ export default function HomePage() {
           <SectionHead
             eyebrow="Everything in the box"
             tone="dark"
-            title="Seven things it does, and nothing it doesn't."
+            title="Ten things it does, and nothing it doesn't."
           />
           <div className="mt-8 grid sm:mt-12 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {CAPABILITIES.map((c) => (
+            {CAPABILITIES.map((c, i) => (
               <FeatureCard
-                key={c.index}
-                index={c.index}
+                key={c.title}
+                index={String(i + 1).padStart(2, "0")}
                 title={c.title}
                 body={c.body}
                 tone="dark"

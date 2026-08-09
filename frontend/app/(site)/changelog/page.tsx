@@ -6,7 +6,7 @@ import { PageHero, CTASection, NextLinks } from "@/components/site/Blocks";
 export const metadata: Metadata = {
   title: "Changelog",
   description:
-    "What has shipped in Aproksi HR — attendance, penalty rules, disputes, payslips and the multi-site dashboard, release by release.",
+    "What has shipped in Aproksi HR — attendance, penalty rules, presence checks, leave, disputes, payslips and the multi-site dashboard, release by release.",
 };
 
 type Tag = "Added" | "Improved" | "Fixed";
@@ -27,6 +27,87 @@ const TAG_STYLE: Record<Tag, string> = {
 };
 
 const RELEASES: Release[] = [
+  {
+    version: "1.7",
+    date: "August 2026",
+    title: "Presence checks, leave, and a brief before every appeal",
+    summary:
+      "Three gaps closed at once: the middle of the shift, the days an owner had already signed off, and the twenty minutes of digging that an appeal used to be worth and never got.",
+    changes: [
+      {
+        tag: "Added",
+        text: "Mid-shift presence checks, off by default. The times are drawn per person per day, spread across the shift, never in its opening or closing stretch and never less than 45 minutes apart.",
+      },
+      {
+        tag: "Added",
+        text: "Ask one named person to confirm right now, from the roster — without spending the day's random draw, and recorded as a check you asked for rather than one that was drawn.",
+      },
+      {
+        tag: "Added",
+        text: "Leave requests: notice periods you set, half-days on a single day, and paid or unpaid decided at the moment of approval rather than later at payroll.",
+      },
+      {
+        tag: "Added",
+        text: "A brief on every appeal — what is being claimed and what the records hold about it, counted from rows the owner can open. It never states a verdict, recommends an outcome or scores anybody.",
+      },
+      {
+        tag: "Added",
+        text: "Appeals are read in Kenyan English and the Swahili staff actually type, so an appeal written the way people speak is not filed as unreadable.",
+      },
+      {
+        tag: "Added",
+        text: "Five penalty presets to start from — standard, charged by the minute, record only, fuel station and restaurant — each fully editable once applied.",
+      },
+      {
+        tag: "Added",
+        text: "Failed clock-ins reported by the phone itself: camera blocked, no signal, location refused. They queue on the device when there is no connection and go out when there is.",
+      },
+      {
+        tag: "Added",
+        text: "A tap to acknowledge a penalty notice, with the time recorded against it.",
+      },
+      {
+        tag: "Added",
+        text: "Pattern findings across a trailing fortnight, and a monthly review on the 1st that puts anyone with a clean month in front of the owner while there is still time to act on it.",
+      },
+      {
+        tag: "Improved",
+        text: "The dashboard now opens on what is waiting for a decision, then on the morning's arrivals plotted against the grace deadline — a distribution rather than four numbers.",
+      },
+      {
+        tag: "Fixed",
+        text: "An employee on approved leave who came in and scanned anyway was recorded late and penalised for it. Leave is now asked about in one place and answered identically by the scan path, the absence sweep, the presence schedule and payroll.",
+      },
+      {
+        tag: "Fixed",
+        text: "Payroll prorated approved paid leave out of the salary it was supposed to protect.",
+      },
+      {
+        tag: "Fixed",
+        text: "A penalty whose appeal window had already elapsed still offered a review that could not be used. The state is now read from the deadline itself rather than from whether a background sweep happened to have run.",
+      },
+      {
+        tag: "Fixed",
+        text: "Answering a presence check clocked the employee out.",
+      },
+      {
+        tag: "Fixed",
+        text: "A QR code belonging to one site could be used to clock in at another.",
+      },
+      {
+        tag: "Fixed",
+        text: "A presence check could not be confirmed at all where the phone could not get a location fix — which fell hardest on the cheapest handsets and on anybody working indoors.",
+      },
+      {
+        tag: "Fixed",
+        text: "Outcome PDFs stopped opening about a week after the case closed.",
+      },
+      {
+        tag: "Fixed",
+        text: "Penalty notices that never reached a phone could be seen but not acted on. They can now be resent to a corrected number or marked unreachable.",
+      },
+    ],
+  },
   {
     version: "1.6",
     date: "July 2026",

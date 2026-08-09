@@ -58,7 +58,11 @@ const MULTI_FAQ = [
   },
   {
     q: "What about staff who move between sites?",
-    a: "A staff member belongs to one site at a time, and you move them on their record when the rota changes. Their attendance history, penalties and payslips follow the person, not the location, so a transfer never splits someone's record in two.",
+    a: "A staff member is normally assigned to one site at a time, and you move them on their record when the rota changes. Their attendance history, penalties and payslips follow the person, not the location, so a transfer never splits someone's record in two. Somebody genuinely mobile — a relief driver, a supervisor covering three branches — can be left unassigned, and then any of your sites' codes will clock them in. What no arrangement allows is one of your codes working for another business, or an assigned staff member clocking in at a site they were not put on.",
+  },
+  {
+    q: "How do I know somebody stayed at the site after clocking in?",
+    a: "This is the question multiple sites make unanswerable, so there is a feature for it. Presence checks ask a staff member, at unannounced points inside the shift, to walk to the code and scan it again. The times are drawn for each person each day, so there is no hour to be back by, and an unanswered check flags that day's clock-in for you rather than deducting anything on its own. It is off until you switch it on, and one check a shift is usually enough to change behaviour.",
   },
   {
     q: "Can my supervisor at each site see the dashboard?",
@@ -257,6 +261,10 @@ export default function MultiSitePage() {
                   {
                     term: "Then",
                     value: "Copy the policy to your other sites and add them. The second site takes minutes, not weeks.",
+                  },
+                  {
+                    term: "Last",
+                    value: "Only once the record is trusted, consider one presence check a shift — and tell people it is coming. A control that arrives unexplained reads as suspicion; the same control explained in advance reads as the job.",
                   },
                 ]}
               />
