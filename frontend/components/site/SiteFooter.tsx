@@ -25,6 +25,8 @@ const COLUMNS: { heading: string; links: { href: string; label: string }[] }[] =
       { href: "/docs", label: "Getting started" },
       { href: "/docs/onboarding", label: "Onboarding staff" },
       { href: "/docs/penalty-rules", label: "Penalty rules" },
+      { href: "/docs/presence-checks", label: "Presence checks" },
+      { href: "/docs/leave", label: "Leave and time off" },
       { href: "/docs/payslips", label: "Payslips" },
       { href: "/docs/sms", label: "SMS setup" },
     ],

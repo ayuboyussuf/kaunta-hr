@@ -178,8 +178,8 @@ export default function CompliancePage() {
                   },
                   {
                     n: "03",
-                    t: "The notice",
-                    b: "That the staff member was told, when, and by which message.",
+                    t: "The notice, and that it landed",
+                    b: "That the staff member was told, when, by which message, and when they acknowledged it. A notice that never reached a phone is recorded as having failed rather than quietly counting as delivered.",
                   },
                   {
                     n: "04",
@@ -188,11 +188,16 @@ export default function CompliancePage() {
                   },
                   {
                     n: "05",
+                    t: "What was checked before the decision",
+                    b: "The counts Aproksi HR took from the record about the claim — and, just as importantly, what it stated could not be checked. It never offered a view on whether the claim was true.",
+                  },
+                  {
+                    n: "06",
                     t: "The decision",
                     b: "Upheld or waived, any note written with it, the name and role of the person who decided, and when.",
                   },
                   {
-                    n: "06",
+                    n: "07",
                     t: "The locked document",
                     b: "A PDF containing all of the above, with its hash recorded against the case at the moment it closed.",
                   },

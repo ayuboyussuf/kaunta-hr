@@ -11,7 +11,7 @@ import { SealedRecord } from "@/components/site/Engravings";
 export const metadata: Metadata = {
   title: "Security & data",
   description:
-    "Where Aproksi HR data is held, how access is separated between the owner and staff, how payslip links are signed, and what document integrity means in practice.",
+    "Where Aproksi HR data is held, how access is separated between the owner and staff, how payslip links are signed, what is redacted before anything reaches a log, and what document integrity means in practice.",
 };
 
 const SECURITY_FAQ = [
@@ -25,7 +25,15 @@ const SECURITY_FAQ = [
   },
   {
     q: "Are staff tracked between clock-ins?",
-    a: "No. Position is read once, at the moment a scan is attempted, to decide whether that scan is inside the fence. There is no background location collection, and nothing runs when a staff member is not actively clocking in.",
+    a: "No. Position is read once, at the moment a scan is attempted, to decide whether that scan is inside the fence. There is no background location collection, and nothing runs when a staff member is not actively clocking in. Presence checks do not change this: a check is a prompt asking somebody to go and scan the code, and the position is read at that scan and at no other point. Nothing reports where a staff member is unless they are scanning.",
+  },
+  {
+    q: "Is anything sent to an AI service?",
+    a: "No. There is no language model anywhere in Aproksi HR, and no request leaves the system to one. The brief that accompanies an appeal is assembled by template out of counts taken from your own records — a sentence that can only be built from figures that already exist cannot contain a figure that does not. That is also why it never states a verdict: there is nothing in the path capable of forming one.",
+  },
+  {
+    q: "What ends up in your logs?",
+    a: "Not your staff. Everything written to a log or an error report passes through redaction first: phone numbers, amounts, national ID numbers, email addresses and images are replaced by their shape, and employee names are matched against the organisation's own roster and replaced with an opaque reference. The structure survives so a problem stays diagnosable; the values do not. Redaction is deliberately over-eager — an employee named Grace will also cause the phrase 'grace period' to be redacted, which costs a debugging session some context rather than writing somebody's name to disk permanently.",
   },
   {
     q: "What happens if a payslip link is forwarded?",
@@ -87,6 +95,11 @@ export default function SecurityPage() {
                 {
                   term: "Backups",
                   value: "Automated, point-in-time recovery on the managed database tier.",
+                },
+                {
+                  term: "Logs",
+                  value:
+                    "Redacted before they are written, not after. Phone numbers, amounts, ID numbers, emails and images are reduced to their shape, and employee names are matched against the organisation's roster and replaced with an opaque reference. The same redaction runs over error reports before they leave the service.",
                 },
                 {
                   term: "Hosting region",
@@ -214,7 +227,8 @@ export default function SecurityPage() {
                   { term: "Collected", value: "Name, phone number, assigned site, and pay details you enter." },
                   { term: "Collected", value: "Scan time, site, distance from the site pin, and a selfie taken at the moment of the scan." },
                   { term: "Collected", value: "Penalties applied, appeals raised, decisions made, and payslips produced." },
-                  { term: "Not collected", value: "Location at any time other than the moment of a scan." },
+                  { term: "Collected", value: "Failed scan attempts the phone reports itself — camera blocked, no signal, location refused — recorded as the employee's own claim, on their side of the argument." },
+                  { term: "Not collected", value: "Location at any time other than the moment of a scan, including during a presence check, which is a prompt to go and scan." },
                   { term: "Not collected", value: "Contacts, photos, messages or anything else on the staff member's phone." },
                   { term: "Not collected", value: "Anything at all while the staff member is off shift." },
                 ]}

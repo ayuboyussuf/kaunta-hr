@@ -12,7 +12,7 @@ import { PageHero, CTASection, NextLinks } from "@/components/site/Blocks";
 export const metadata: Metadata = {
   title: "How it works",
   description:
-    "One shift at a fuel station in Ruiru, from the QR scan at the gate through the geofence check, the automatic penalty, the staff appeal, the owner's decision and the payslip at the end of the month.",
+    "One shift at a fuel station in Ruiru, from the QR scan at the gate through the geofence check, the automatic penalty, a mid-shift presence check, the staff appeal and the brief that arrives with it, the owner's decision and the payslip at the end of the month.",
 };
 
 type Beat = {
@@ -67,7 +67,9 @@ const BEATS: Beat[] = [
         The Ruiru site opened fine. The Juja site did not. A shift was rostered
         for 07:00 and there is still no scan against it at 07:41. It appears on
         the owner&rsquo;s dashboard as an exception — not buried in a log, but as one
-        of three things asking for attention this morning.
+        of three things asking for attention this morning. Two other Juja names
+        have no scan either, and neither is on the list: both are on leave the
+        owner approved last week, so nothing was ever raised against them.
       </>
     ),
   },
@@ -106,19 +108,46 @@ const BEATS: Beat[] = [
     ),
   },
   {
+    time: "11:24",
+    actor: "System",
+    title: "Grace is asked to prove she is still on the forecourt",
+    body: (
+      <>
+        This business runs one presence check a shift. The time was drawn this
+        morning for Grace alone — nobody else at Ruiru is asked at 11:24, and
+        tomorrow she will not be either. Her phone buzzes; she walks to the
+        pillar and scans the same code she clocked in with. That is the whole
+        procedure, and it does not clock her out.
+      </>
+    ),
+    detail: [
+      { term: "Drawn", value: "Per person, per day — no pattern to memorise" },
+      { term: "Window", value: "10 minutes to answer" },
+      { term: "Answered", value: "11:26, inside the fence" },
+      { term: "Not asked", value: "The two staff on approved leave" },
+    ],
+  },
+  {
     time: "13:30",
     actor: "Owner",
     title: "The owner decides, and the case locks",
     body: (
       <>
-        The appeal is sitting in the same exception queue as the missed shift
-        was. The owner reads the reason, checks the scan and the selfie behind
-        it, and waives the deduction. The moment that decision is made the case
-        closes into a locked PDF: what was claimed, what was decided, by whom,
-        and when. Its hash is recorded against the case.
+        The appeal is sitting in the same queue as the missed shift was, and it
+        did not arrive alone. Aproksi HR read what Peter was claiming and went
+        and counted: three of the five staff rostered at Juja that morning also
+        arrived late, against a four-week average of well under one, and two
+        failed scans were reported from the site in the same half hour. It says
+        plainly that it cannot know whether the road was closed, and it does not
+        offer an opinion on whether to waive. The owner reads that, checks the
+        scan and the selfie behind it, and waives the deduction. The moment that
+        decision is made the case closes into a locked PDF: what was claimed,
+        what was found, what was decided, by whom, and when. Its hash is recorded
+        against the case.
       </>
     ),
     detail: [
+      { term: "Brief", value: "Counts from the record — never a recommendation" },
       { term: "Decision", value: "Waived" },
       { term: "Decided by", value: "Owner account, attributed by name" },
       { term: "Output", value: "Locked PDF, hash recorded at close" },
@@ -204,13 +233,13 @@ export default function HowItWorksPage() {
               tone="dark"
               eyebrow="The point"
               title="The owner touched this twice."
-              lede="Once to look at three exceptions in the morning, once to settle an appeal after lunch. Everything else — the scans, the fence checks, the arithmetic, the notices, the documents — happened without anyone being asked to remember it."
+              lede="Once to look at three exceptions in the morning, once to settle an appeal after lunch. Everything else — the scans, the fence checks, the mid-shift check, the two approved leave days that quietly caused nothing to happen, the arithmetic, the notices, the documents — happened without anyone being asked to remember it."
             />
           </>
           <>
             <div className="mx-auto mt-8 grid sm:mt-12 max-w-3xl gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3">
               {[
-                ["11", "scans recorded"],
+                ["19", "scans recorded"],
                 ["2", "decisions made by a person"],
                 ["0", "notebooks consulted"],
               ].map(([n, l]) => (
