@@ -10,8 +10,13 @@
  * which way, and here is what would settle it that we do not have.
  */
 
-/** The three things people actually appeal with, plus the honest fourth. */
-export type Claim = "system_not_working" | "sick" | "road_closed" | "unclear";
+/** The four things people actually appeal with, plus the honest fifth. */
+export type Claim =
+  | "system_not_working"
+  | "sick"
+  | "road_closed"
+  | "on_leave"
+  | "unclear";
 
 /**
  * Which way a finding points — relative to the EMPLOYEE'S claim, not to any

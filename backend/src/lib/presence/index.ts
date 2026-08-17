@@ -6,6 +6,54 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+/**
+ * How far back to look for the clock-in that opened the current shift.
+ *
+ * This used to be "since midnight in Nairobi", and that quietly excluded the
+ * people a presence check is most worth sending to. A guard who clocks in at
+ * 20:00 is still on shift at 02:00 — but their clock-in is on yesterday's date,
+ * so the day-bounded lookup found no entry, read them as "not clocked in", and
+ * skipped them. The cron already handles overnight shifts when it checks the
+ * shift WINDOW (it pushes the end past midnight); only the clocked-in lookup
+ * was still thinking in calendar days. Night staff were therefore unreachable
+ * for the entire after-midnight half of every shift.
+ *
+ * 26 hours covers the longest plausible shift plus a margin, and it is safe to
+ * be generous: every caller also checks that `now` falls inside the shift
+ * window, so a stale clock-in from a shift that has ended is rejected there.
+ */
+const OPEN_SHIFT_LOOKBACK_MS = 26 * 3600 * 1000;
+
+/**
+ * Is this employee on shift right now — that is, was their most recent clock
+ * scan an 'in'?
+ *
+ * Shared by the schedule and the owner's "check on them now", because these two
+ * disagreeing about who is at work is a bug with no upside.
+ *
+ * Only `in` and `out` are considered. A `check` entry is the most recent row
+ * immediately after somebody answers a check, and reading that as "their last
+ * state" would mean no further check could reach them for the rest of the shift.
+ */
+export async function openShiftEntry(
+  db: SupabaseClient,
+  employeeId: string,
+  now: Date = new Date()
+): Promise<{ id: string; scanned_at: string } | null> {
+  const { data } = await db
+    .from("attendance_entries")
+    .select("id, direction, scanned_at")
+    .eq("employee_id", employeeId)
+    .in("direction", ["in", "out"])
+    .gte("scanned_at", new Date(now.getTime() - OPEN_SHIFT_LOOKBACK_MS).toISOString())
+    .order("scanned_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data || data.direction !== "in") return null;
+  return { id: data.id as string, scanned_at: data.scanned_at as string };
+}
+
 export interface ConfirmContext {
   /** True inside the radius, false outside, null when there was nothing to judge by. */
   verdict: boolean | null;
