@@ -25,6 +25,7 @@ import { penaltyFacts, leaveEvidence, type PenaltyFacts } from "./facts";
 import { assessSystemNotWorking } from "./systemDown";
 import { assessSick } from "./sickNote";
 import { assessRoadClosed } from "./roadClosed";
+import { assessOnLeave } from "./onLeave";
 import { summarise } from "./summary";
 import { sendText } from "../../messaging";
 import { env } from "../../env";
@@ -127,11 +128,23 @@ async function assess(
       break;
     }
 
+    case "on_leave":
+      brief = await assessOnLeave(db, facts, appeal.id, routed.confidence, trace);
+      break;
+
     case "unclear":
     default:
       brief = await baseline(db, facts, routed.claim, routed.confidence, trace);
       break;
   }
+
+  // Whatever they wrote, a penalty sitting on a day the owner signed off is a
+  // fact the owner needs — and it is the one thing here that is cheap, certain,
+  // and previously only checked when the routing happened to fall through to
+  // `unclear`. Someone appealing an approved-leave absence with "I told you I
+  // was away, the app is useless" routes to system_not_working and, until now,
+  // never got the approval mentioned at all.
+  brief = await withLeaveCover(db, facts, brief, trace);
 
   trace.step("persist", { findings: brief.findings.length });
   await persist(db, appeal, orgId, brief);
@@ -170,6 +183,51 @@ async function answerFor(
     documentPath: (data.document_path as string | null) ?? null,
     answer: (data.answer as string | null) ?? null,
   };
+}
+
+/* ── The check that runs whatever the claim was ───────────────────────── */
+
+/**
+ * Add the approved-leave finding to a brief that does not already have one.
+ *
+ * `assessOnLeave` reports this in far more detail, so it is skipped there. For
+ * every other claim this is a one-line lookup that changes the whole complexion
+ * of a case, and leaving it to the routing was wrong: what somebody chose to
+ * write in an appeal has no bearing on whether the day was signed off.
+ *
+ * The summary is rebuilt rather than appended to, because a summary that says
+ * "the record holds nothing either way" above a finding that says "you approved
+ * this day" is worse than either sentence on its own.
+ */
+async function withLeaveCover(
+  db: SupabaseClient,
+  facts: PenaltyFacts,
+  brief: AssistBrief,
+  trace: Trace
+): Promise<AssistBrief> {
+  if (brief.claim === "on_leave") return brief;
+  if (brief.findings.some((f) => f.kind === "leave_cover")) return brief;
+
+  trace.step("tool:leave_evidence");
+  const leave = await leaveEvidence(db, facts.employeeId, facts.onDate);
+  if (!leave.covered) return brief;
+
+  const findings: AssistBrief["findings"] = [
+    ...brief.findings,
+    {
+      kind: "leave_cover",
+      stance: "supports",
+      headline: `${facts.onDate} was covered by leave you had already approved`,
+      detail:
+        `Approved as ${leave.paid ? "paid" : "unpaid"}${leave.halfDay ? ` (${leave.halfDay} only)` : ""}. ` +
+        "Approved leave is meant to prevent a penalty being raised at all, so this one either predates the " +
+        "approval or was raised in error — worth settling before anything else in this appeal.",
+      evidence: { approved: "yes", paid: leave.paid ? "yes" : "no" },
+      source: "leave_requests",
+    },
+  ];
+
+  return { ...brief, findings, summary: summarise(brief.claim, facts, findings) };
 }
 
 /* ── The floor: what we can always say ────────────────────────────────── */

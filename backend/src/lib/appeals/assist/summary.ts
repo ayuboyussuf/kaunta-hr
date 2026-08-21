@@ -35,6 +35,7 @@ const CLAIM_PHRASE: Record<Claim, string> = {
   system_not_working: "that Aproksi would not let them clock in",
   sick: "that they were unwell",
   road_closed: "that the road was blocked",
+  on_leave: "that the day was covered by leave you had approved",
   unclear: "something the record could not be matched to",
 };
 

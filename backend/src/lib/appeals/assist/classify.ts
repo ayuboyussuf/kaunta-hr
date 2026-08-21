@@ -103,6 +103,45 @@ const RULES: Rule[] = [
       /\b(heavy|bad|terrible)\b[^.!?]{0,15}\b(traffic|jam|foleni)\b/i,
     ],
   },
+  {
+    // The claim Aproksi can answer better than any of the others, and the one
+    // it used to be deaf to. "I'm on approved leave" matched nothing at all and
+    // fell through to `unclear`, which produced a brief saying the reason could
+    // not be matched to anything checkable — while the owner's own approval sat
+    // in the next table. Of the four claims this is the only one the record can
+    // settle outright, so failing to route it was the worst possible miss.
+    claim: "on_leave",
+    signals: [
+      // "leave" is a noun here and a very common verb everywhere else. Without
+      // the lookbehind, "I was sick, I had to leave the hospital" outranked the
+      // sick check — the verb sense is the one people actually type most.
+      /(?<!\bto\s)\bleave\b/i,
+      /\bday ?off\b/i,
+      /\boff duty\b/i,
+      /\bannual\b/i,
+      /\bcompassionate\b/i,
+      /\bmaternity\b/i,
+      /\bpaternity\b/i,
+      /\bapproved\b/i,
+      /\bpermission\b/i,
+      /\bruhusa\b/i, // permission
+      /\blikizo\b/i, // leave / holiday
+      /\bulinipa\b/i, // you gave me
+      /\bniliomba\b/i, // I requested
+    ],
+    // Only the noun senses are decisive. An earlier draft used
+    // /\b(on|had|...)\b.{0,20}\bleave\b/, which "had to leave" satisfies — a
+    // reminder that a loose decisive pattern is worse than none, because it
+    // outranks every other claim's honest evidence.
+    decisive: [
+      /\bon\s+(?:\w+\s+){0,2}leave\b/i, // on leave, on approved leave, on annual leave
+      /\b(?:approved|granted|paid|unpaid|annual|compassionate|maternity|paternity|study)\s+leave\b/i,
+      /\b(?:my|our|his|her|their)\s+leave\b/i,
+      /(?<!\bto\s)\bleave\b[^.!?]{0,20}\b(?:approv|grant|sign(?:ed)? off|ulinipa)/i,
+      /\b(?:ruhusa|likizo)\b/i,
+      /\bday ?off\b/i,
+    ],
+  },
 ];
 
 export interface Classification {

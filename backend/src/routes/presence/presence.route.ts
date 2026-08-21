@@ -16,7 +16,7 @@ import { getServiceClient } from "../../lib/supabase";
 import { env } from "../../lib/env";
 import { pushToEmployee } from "../../lib/push";
 import { enqueue } from "../../lib/queue";
-import { nairobiDayStartISO } from "../../lib/time";
+import { openShiftEntry } from "../../lib/presence";
 
 const router = Router();
 
@@ -98,21 +98,13 @@ router.post("/check/:employeeId", requireOwner, async (req, res) => {
   }
 
   const now = new Date();
-  const dayStart = nairobiDayStartISO(now);
 
-  // They must be on shift right now — last entry today is a clock-IN.
-  const { data: last } = await db
-    .from("attendance_entries")
-    .select("id, direction")
-    .eq("employee_id", emp.id)
-    // Clock scans only — see the note in the cron. `session_entry_id` must also
-    // point at the clock-IN this check belongs to, not at a previous answer.
-    .in("direction", ["in", "out"])
-    .gte("scanned_at", dayStart)
-    .order("scanned_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!last || last.direction !== "in") {
+  // They must be on shift right now. Not bounded to today: a night shift's
+  // clock-in carries yesterday's date, and the day-bounded version of this
+  // refused every owner check sent to night staff after midnight with
+  // "not clocked in" — while they were standing at the post. See openShiftEntry.
+  const last = await openShiftEntry(db, emp.id as string, now);
+  if (!last) {
     return res.status(400).json({
       error: `${emp.name} is not clocked in right now, so there is nothing to confirm.`,
     });

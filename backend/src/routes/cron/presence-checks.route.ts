@@ -24,6 +24,7 @@ import { pushToEmployee } from "../../lib/push";
 import { enqueue } from "../../lib/queue";
 import { approvedLeaveOn } from "../../lib/leave/cover";
 import { checkTimes, dueNow, shuffleForTick, MAX_FIRES_PER_TICK } from "../../lib/presence/schedule";
+import { openShiftEntry } from "../../lib/presence";
 
 const router = Router();
 const TZ = "Africa/Nairobi";
@@ -49,10 +50,19 @@ interface ShiftRow {
 /**
  * The job itself. Called directly by the in-process scheduler and, via the
  * route below, by any external scheduler. No HTTP in the direct path.
+ *
+ * The db and the clock are injectable for one reason: this is the feature whose
+ * correctness is hardest to see from outside. "orgs_enabled: 1, fired: 0" is
+ * either a working system with nobody on shift or a broken one, and reading the
+ * production log cannot tell you which. With both injected, a test can put a
+ * night-shift employee at 02:00 and assert a check goes out — which is how the
+ * day-bounded clocked-in lookup was found.
  */
-export async function runPresenceChecks() {
-  const db = getServiceClient();
-  const now = new Date();
+export async function runPresenceChecks(
+  opts: { db?: ReturnType<typeof getServiceClient>; now?: Date } = {}
+) {
+  const db = opts.db ?? getServiceClient();
+  const now = opts.now ?? new Date();
   const nowIso = now.toISOString();
 
   // ── 1) Expire overdue pending checks → missed, and flag the open session. ────
@@ -178,20 +188,12 @@ export async function runPresenceChecks() {
         continue;
       }
 
-      // Currently clocked in? (last entry today is an 'in')
-      const { data: last } = await db
-        .from("attendance_entries")
-        .select("id, direction, scanned_at")
-        .eq("employee_id", emp.id)
-        // Clock scans only. A 'check' entry is the most recent row right after
-        // somebody answers, and reading it as "their last state" would mean no
-        // further check could ever reach them for the rest of the shift.
-        .in("direction", ["in", "out"])
-        .gte("scanned_at", dayStart)
-        .order("scanned_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!last || last.direction !== "in") {
+      // Currently clocked in? Deliberately NOT bounded to today — a night
+      // shift's clock-in is on yesterday's date, and bounding this to the
+      // Nairobi day made every night worker unreachable after midnight. See
+      // openShiftEntry.
+      const last = await openShiftEntry(db, emp.id as string, now);
+      if (!last) {
         skipped.not_clocked_in++;
         continue;
       }
@@ -280,6 +282,14 @@ export async function runPresenceChecks() {
           due_at: nowIso,
           respond_by: respondBy,
           status: "pending",
+          // Both of these have database defaults, and both are read back by the
+          // quota query above (`source = 'schedule'`, `created_at >= dayStart`).
+          // Depending on a default for a value you then filter on is a bad
+          // trade for two words: it cannot be exercised by a test, and
+          // `created_at` silently switches clocks — `now()` is the database's,
+          // while every other time in this job is `now`.
+          source: "schedule",
+          created_at: nowIso,
         })
         .select("id")
         .single();

@@ -10,6 +10,7 @@ import { z } from "zod";
 import { requireOwner, requireEmployee } from "../../lib/auth";
 import { getServiceClient } from "../../lib/supabase";
 import { sendText } from "../../lib/messaging";
+import { voidPenaltiesCoveredByLeave } from "../../lib/leave/reconcile";
 
 const router = Router();
 
@@ -177,10 +178,30 @@ router.post("/:id/approve", requireOwner, async (req, res) => {
     .eq("id", req.params.id)
     .eq("org_id", req.owner!.orgId)
     .eq("status", "pending")
-    .select("id, start_date, end_date, half_day, paid, employees(name, phone)")
+    .select("id, employee_id, start_date, end_date, half_day, paid, employees(name, phone)")
     .maybeSingle();
   if (error) return res.status(500).json({ error: error.message });
   if (!data) return res.status(404).json({ error: "no pending request with that id" });
+
+  // Reach backwards over the days just approved. The absence sweep runs at
+  // 21:30, so leave filed the morning after an absence is approved onto a day
+  // that already carries a penalty — and until this ran, nothing ever went back
+  // to look. The message below promised those days were clear; now they are.
+  let voided: Awaited<ReturnType<typeof voidPenaltiesCoveredByLeave>> = [];
+  try {
+    voided = await voidPenaltiesCoveredByLeave(db, {
+      employeeId: (data as unknown as { employee_id?: string }).employee_id ?? "",
+      startDate: data.start_date as string,
+      endDate: data.end_date as string,
+      halfDay: (data.half_day as "morning" | "afternoon" | null) ?? null,
+      approvedByUserId: req.owner!.userId,
+    });
+  } catch (err) {
+    // The approval itself has already been written and stands. A failure here
+    // leaves a penalty needing a manual waive, which is recoverable; failing
+    // the whole request would leave the leave undecided, which is worse.
+    console.error("[leave] penalty reconciliation failed:", (err as Error).message);
+  }
 
   const emp = data.employees as unknown as { name: string; phone: string } | null;
   if (emp?.phone) {
@@ -189,17 +210,25 @@ router.post("/:id/approve", requireOwner, async (req, res) => {
       : data.start_date === data.end_date
         ? `${data.start_date}`
         : `${data.start_date} to ${data.end_date}`;
+    // The cancelled charge is the part they were actually worried about, so it
+    // is said in shillings rather than left to be noticed on a payslip.
+    const cancelled =
+      voided.length > 0
+        ? ` ${voided.length} penalt${voided.length === 1 ? "y" : "ies"} raised for those days (KES ${voided
+            .reduce((t, v) => t + v.amount, 0)
+            .toLocaleString("en-KE")}) has been cancelled.`
+        : "";
     try {
       await sendText(
         emp.phone,
-        `Aproksi HR: your leave for ${span} is approved (${data.paid ? "paid" : "unpaid"}). You will not be marked absent on those days.`
+        `Aproksi HR: your leave for ${span} is approved (${data.paid ? "paid" : "unpaid"}). You will not be marked absent on those days.${cancelled}`
       );
     } catch (err) {
       console.error("[leave] approval notice failed:", (err as Error).message);
     }
   }
 
-  res.json({ request: data });
+  res.json({ request: data, penalties_cancelled: voided });
 });
 
 router.post("/:id/decline", requireOwner, async (req, res) => {

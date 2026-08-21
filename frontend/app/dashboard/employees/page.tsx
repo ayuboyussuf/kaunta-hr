@@ -82,6 +82,7 @@ interface Overview {
   employee_id: string;
   last_in: string | null;
   days_since_seen: number | null;
+  on_leave_today?: boolean;
   checks_confirmed_7d: number;
   checks_missed_7d: number;
 }
@@ -100,18 +101,32 @@ interface HistoryCheck {
   respond_by: string;
   status: "pending" | "confirmed" | "missed";
 }
+interface HistoryLeave {
+  date: string;
+  paid: boolean;
+  half_day: "morning" | "afternoon" | null;
+}
 interface History {
   entries: HistoryEntry[];
   checks: HistoryCheck[];
+  leave: HistoryLeave[];
   scheduled_days: number[];
   employment_start: string | null;
 }
 const TZ = "Africa/Nairobi";
 const ymdTz = (iso: string) => DateTime.fromISO(iso).setZone(TZ).toISODate()!;
 
-/** Last-seen badge from days-since-clock-in. */
+/**
+ * Last-seen badge from days-since-clock-in.
+ *
+ * Approved leave is checked before the count is given a word. "Absent 5d"
+ * against somebody the owner personally signed off for the week is a true
+ * number carrying a false accusation — the same bug as the red calendar
+ * squares, which knew how long it had been and not why.
+ */
 function seenBadge(o: Overview | undefined): { label: string; cls: string } {
   const d = o?.days_since_seen ?? null;
+  if (o?.on_leave_today) return { label: "On leave", cls: "bg-aproksi-ultra/10 text-aproksi-ultra" };
   if (d === null) return { label: "Never", cls: "bg-aproksi-mist text-aproksi-slate/70" };
   if (d === 0) return { label: "Today", cls: "bg-aproksi-sage/15 text-aproksi-sage" };
   if (d === 1) return { label: "Yesterday", cls: "bg-aproksi-mist text-aproksi-slate" };
@@ -171,7 +186,7 @@ export default function EmployeesPage() {
       const h = await api<History>(`/api/employees/${id}/history`, { token: token ?? undefined });
       setHistory(h);
     } catch {
-      setHistory({ entries: [], checks: [], scheduled_days: [], employment_start: null });
+      setHistory({ entries: [], checks: [], leave: [], scheduled_days: [], employment_start: null });
     } finally {
       setHistoryLoading(false);
     }
@@ -552,6 +567,7 @@ export default function EmployeesPage() {
                                 <AttendanceCalendar
                                   entries={history?.entries ?? []}
                                   checks={history?.checks ?? []}
+                                  leave={history?.leave ?? []}
                                   scheduledDays={history?.scheduled_days ?? []}
                                   employmentStart={history?.employment_start ?? null}
                                   onSelectDay={(ymd) => setSelDay(ymd)}

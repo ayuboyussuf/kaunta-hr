@@ -7,6 +7,8 @@
 import { Router } from "express";
 import { requireEmployee } from "../../lib/auth";
 import { getServiceClient } from "../../lib/supabase";
+import { approvedLeaveDays } from "../../lib/leave/cover";
+import { nairobiDate } from "../../lib/time";
 
 const router = Router();
 
@@ -39,7 +41,16 @@ router.get("/attendance", requireEmployee, async (req, res) => {
     .limit(200);
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ attendance: data ?? [] });
+
+  // Approved leave for the same window the calendar renders. The employee's own
+  // history painted every signed-off day as an absence, which is the version of
+  // this bug that does the most damage: the person who asked for the day off,
+  // got it, and then sees a red square accusing them of not turning up.
+  const from = new Date(Date.now() - 186 * 86400000).toISOString().slice(0, 10);
+  const to = nairobiDate(new Date());
+  const leave = await approvedLeaveDays(db, req.employee!.employeeId, from, to);
+
+  res.json({ attendance: data ?? [], leave: [...leave.values()] });
 });
 
 // ── GET /payslips ─────────────────────────────────────────────────────────────

@@ -141,6 +141,13 @@ async function raise(
     rule: PenaltyRule;
     amount: number;
     evidence: string;
+    /**
+     * The Nairobi day this penalty is about. Required, not optional: an
+     * absence has no scan to derive it from later, and the one thing every
+     * consumer needs to know — was this day covered by approved leave? — is
+     * unanswerable without it. It used to live only in the evidence prose.
+     */
+    onDate: string;
   }
 ): Promise<Applied | null> {
   const appealEnd = new Date(
@@ -157,6 +164,7 @@ async function raise(
       reason: params.rule.reason,
       evidence: params.evidence,
       amount: params.amount,
+      on_date: params.onDate,
       status: "open",
       appeal_window_end: appealEnd,
       // created_by stays null: nobody pressed a button, the engine applied it
@@ -280,6 +288,7 @@ export async function evaluateScan(
     rule,
     amount,
     evidence,
+    onDate: params.onDate,
   });
 
   if (applied) {
@@ -319,6 +328,7 @@ export async function evaluateAbsence(
     rule,
     amount,
     evidence: `No scan recorded against the shift rostered for ${params.onDate}. Applied automatically by rule engine ${ENGINE_VERSION}.`,
+    onDate: params.onDate,
   });
 
   if (applied) {

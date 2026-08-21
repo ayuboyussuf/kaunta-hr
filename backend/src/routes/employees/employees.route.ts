@@ -15,6 +15,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { requireOwner } from "../../lib/auth";
 import { getServiceClient } from "../../lib/supabase";
+import { approvedLeaveDays, approvedLeaveForAll } from "../../lib/leave/cover";
 import { sendText } from "../../lib/whatsapp/meta";
 import { env } from "../../lib/env";
 import { renderToBuffer, drawHeader, drawFooter, BRAND } from "../../lib/pdf/render";
@@ -151,6 +152,11 @@ router.get("/attendance-overview", requireOwner, async (req, res) => {
     checkAgg.set(c.employee_id, a);
   }
 
+  // "Absent 5d" against somebody the owner signed off for the week is the badge
+  // version of the same bug as the red calendar: a true number with a false
+  // word on it. One query answers it for the whole roster.
+  const onLeaveToday = await approvedLeaveForAll(db, ids, nairobiDate(new Date()));
+
   const overview = (emps ?? []).map((e) => {
     const last = lastIn.get(e.id) ?? null;
     const daysSince = last ? Math.floor(nowDt.diff(DateTime.fromISO(last), "days").days) : null;
@@ -160,6 +166,7 @@ router.get("/attendance-overview", requireOwner, async (req, res) => {
       name: e.name,
       last_in: last,
       days_since_seen: daysSince,
+      on_leave_today: onLeaveToday.has(e.id),
       checks_confirmed_7d: agg.confirmed,
       checks_missed_7d: agg.missed,
     };
@@ -187,6 +194,8 @@ router.get("/:id/history", requireOwner, async (req, res) => {
 
   // ~6 months back for the calendar to page through, bounded for memory/size.
   const since = DateTime.utc().minus({ days: 186 }).toISO()!;
+  const sinceYmd = since.slice(0, 10);
+  const todayYmd = DateTime.now().setZone("Africa/Nairobi").toISODate()!;
   const [{ data: entries }, { data: checks }] = await Promise.all([
     db
       .from("attendance_entries")
@@ -204,9 +213,17 @@ router.get("/:id/history", requireOwner, async (req, res) => {
       .limit(300),
   ]);
 
+  // Approved leave, as days. Without this the calendar computes "rostered, no
+  // scan" and paints the day red — so a fortnight the owner personally signed
+  // off came back to them as two weeks of absence, which is the complaint that
+  // sent me looking. The engine had stopped charging for these days; nothing
+  // had stopped the screen from accusing anybody.
+  const leave = await approvedLeaveDays(db, idParse.data, sinceYmd, todayYmd);
+
   res.json({
     entries: entries ?? [],
     checks: checks ?? [],
+    leave: [...leave.values()],
     scheduled_days: shift?.days_of_week ?? [],
     employment_start: (emp as any).start_date ?? ((emp as any).created_at ? String((emp as any).created_at).slice(0, 10) : null),
   });
@@ -265,6 +282,20 @@ router.get("/:id/attendance-report.pdf", requireOwner, async (req, res) => {
   const present = new Set(rows.filter((e) => e.direction === "in").map((e) => nairobiDate(e.scanned_at))).size;
   const late = rows.filter((e) => e.status === "late").length;
   const flagged = rows.filter((e) => e.status === "flagged").length;
+
+  // This is the document an owner hands to somebody, so "Days present: 12" with
+  // no further explanation invites the reader to supply their own — and the
+  // explanation they will reach for is that the other days were skipped. Leave
+  // the owner approved belongs on the page next to the count it explains.
+  const leaveDays = await approvedLeaveDays(
+    db,
+    idParse.data,
+    `${month}-01`,
+    nairobiDate(new Date(new Date(endISO).getTime() - 1))
+  );
+  const leaveList = [...leaveDays.values()];
+  const paidLeave = leaveList.filter((l) => l.paid).length;
+  const unpaidLeave = leaveList.length - paidLeave;
   const empName = (emp as any).name as string;
   const monthLabel = new Date(`${month}-01T12:00:00Z`).toLocaleDateString("en-KE", { month: "long", year: "numeric" });
 
@@ -279,6 +310,17 @@ router.get("/:id/attendance-report.pdf", requireOwner, async (req, res) => {
       drawHeader(doc, "Attendance report", `${empName} · ${monthLabel}`);
       doc.fillColor(BRAND.muted).fontSize(10).font("Helvetica")
         .text(`Days present: ${present}    Late: ${late}    Flagged: ${flagged}    Scans: ${rows.length}`);
+      if (leaveList.length > 0) {
+        doc.text(
+          `Approved leave: ${leaveList.length} day(s)` +
+            (paidLeave > 0 && unpaidLeave > 0
+              ? ` (${paidLeave} paid, ${unpaidLeave} unpaid)`
+              : paidLeave > 0
+                ? " (paid)"
+                : " (unpaid)") +
+            ` — ${leaveList.map((l) => l.date + (l.half_day ? ` ${l.half_day}` : "")).join(", ")}`
+        );
+      }
       doc.moveDown(0.8);
 
       let lastDay = "";

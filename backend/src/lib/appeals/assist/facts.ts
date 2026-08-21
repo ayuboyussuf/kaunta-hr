@@ -53,7 +53,7 @@ export async function penaltyFacts(
   const { data: row } = await db
     .from("violations")
     .select(
-      "id, employee_id, workplace_id, reason, amount, raised_by, created_at, attendance_id, " +
+      "id, employee_id, workplace_id, reason, amount, raised_by, created_at, attendance_id, on_date, " +
         "employees(name), workplaces(name)"
     )
     .eq("id", violationId)
@@ -105,8 +105,31 @@ export async function penaltyFacts(
     expectedStart: roster?.expected_start ?? null,
     graceMinutes: shift?.grace_minutes ?? null,
     lateByMin: roster?.late_by_min ?? null,
-    onDate: scannedAt ? nairobiDate(new Date(scannedAt)) : null,
+    onDate: onDateOf(v, scannedAt),
   };
+}
+
+/**
+ * The day the penalty is about.
+ *
+ * This used to be `scannedAt ? nairobiDate(scannedAt) : null`, and the null
+ * branch was the whole bug: an absence penalty has no scan, so it resolved to
+ * null, and every check keyed on the date — above all "was this day covered by
+ * approved leave?" — returned "nothing found" without having looked. An
+ * employee appealing an absence with "I was on approved leave" was told the
+ * record held nothing either way while the approval sat one table over.
+ *
+ * The column is now the first answer. The scan stays as the fallback for rows
+ * written before it existed, and `created_at` as the last resort — a penalty
+ * with no date at all is the one case where guessing beats giving up, because
+ * the alternative is silently failing to check.
+ */
+function onDateOf(v: Record<string, unknown>, scannedAt: string | null): string | null {
+  const stored = v.on_date as string | null | undefined;
+  if (stored) return String(stored).slice(0, 10);
+  if (scannedAt) return nairobiDate(new Date(scannedAt));
+  const created = v.created_at as string | undefined;
+  return created ? nairobiDate(new Date(created)) : null;
 }
 
 /* ── The window the morning happened in ───────────────────────────────── */
@@ -231,6 +254,56 @@ export async function claimHistory(
     pending: rows.filter((a) => a.decision === "pending").length,
     sameClaimBefore: rows.filter((a) => claimOf(a) === claim).length,
   };
+}
+
+/* ── Leave near the day, whatever its status ──────────────────────────── */
+
+export interface NearbyLeave {
+  id: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+}
+
+/**
+ * Leave requests within a few days of the penalty, in ANY state.
+ *
+ * The point is the innocent explanations. Somebody who typed the wrong date, or
+ * whose request was never answered, produces exactly the same "no approved
+ * leave" as somebody inventing it — and the owner should not have to guess
+ * which they are looking at. A pending request for the following morning says
+ * something; so does nothing at all.
+ *
+ * Reported, never weighed. It carries the status verbatim, because "pending"
+ * and "declined" are opposite facts and collapsing them would be the brief
+ * taking a view.
+ */
+export async function neighbouringLeave(
+  db: SupabaseClient,
+  employeeId: string,
+  onDate: string,
+  windowDays = 4
+): Promise<NearbyLeave[]> {
+  const shift = (days: number) => {
+    const d = new Date(`${onDate}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const { data } = await db
+    .from("leave_requests")
+    .select("id, start_date, end_date, status")
+    .eq("employee_id", employeeId)
+    .lte("start_date", shift(windowDays))
+    .gte("end_date", shift(-windowDays))
+    .order("start_date", { ascending: true })
+    .limit(5);
+
+  // Anything actually covering the day is reported by the leave check itself;
+  // repeating it here would say the same thing twice in one brief.
+  return (data ?? []).filter(
+    (r) => !(r.status === "approved" && r.start_date <= onDate && r.end_date >= onDate)
+  ) as NearbyLeave[];
 }
 
 /* ── Was the day covered anyway? ──────────────────────────────────────── */
