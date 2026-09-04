@@ -17,7 +17,7 @@
  * the rules have moved on.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { sendText } from "../messaging";
+import { sendPenaltyNotice } from "../violations/notice";
 import { approvedLeaveOn } from "../leave/cover";
 
 /** Bump when the matching logic changes in a way that alters outcomes. */
@@ -187,51 +187,26 @@ async function raise(
   };
 }
 
-/** Tell the employee, so the first they hear of it is not the payslip. */
+/**
+ * Tell the employee, so the first they hear of it is not the payslip.
+ *
+ * The wording, the delivery record and the failure handling all live in
+ * lib/violations/notice, shared with the owner's manual path — which used to
+ * send nothing at all.
+ */
 async function notify(
   db: SupabaseClient,
   employeeId: string,
   applied: Applied,
   detail: string
 ): Promise<void> {
-  const { data: emp } = await db
-    .from("employees")
-    .select("phone, name")
-    .eq("id", employeeId)
-    .maybeSingle();
-
-  if (!emp?.phone) {
-    await db
-      .from("violations")
-      .update({ notify_error: "No phone number on file for this employee." })
-      .eq("id", applied.violationId);
-    return;
-  }
-
-  const amount = `KES ${Number(applied.amount).toLocaleString("en-KE", {
-    maximumFractionDigits: 0,
-  })}`;
-  try {
-    await sendText(
-      emp.phone as string,
-      `Aproksi HR: ${applied.reason} - ${amount}. ${detail} If you disagree, open your record to appeal.`
-    );
-    await db
-      .from("violations")
-      .update({ notified_at: new Date().toISOString(), notify_error: null })
-      .eq("id", applied.violationId);
-  } catch (err) {
-    // A failed SMS must never undo the record — but it must not vanish either.
-    // Whether the employee was actually told decides whether a deduction is
-    // defensible, so the failure is written to the row the owner will read
-    // rather than to a console nobody does.
-    const message = (err as Error).message;
-    console.error("[rules] notice failed:", message);
-    await db
-      .from("violations")
-      .update({ notify_error: message.slice(0, 300) })
-      .eq("id", applied.violationId);
-  }
+  await sendPenaltyNotice(db, {
+    violationId: applied.violationId,
+    employeeId,
+    reason: applied.reason,
+    amount: applied.amount,
+    detail,
+  });
 }
 
 /**

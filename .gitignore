@@ -13,3 +13,7 @@ out/
 *.log
 .vercel
 next-env.d.ts
+# TypeScript incremental build cache. Rewritten by every tsc and next build,
+# so tracking it put a meaningless diff in commits that had nothing to do with
+# the frontend.
+*.tsbuildinfo

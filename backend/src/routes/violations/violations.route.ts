@@ -16,6 +16,8 @@ import { requireOwner, requireEmployee, resolveOwner, verifyEmployeeSession } fr
 import { canAppeal, msLeft, stageOf, STAGE_LABEL, STAGE_LABEL_OWNER } from "../../lib/violations/stage";
 import { signViolationDocument } from "../../lib/violations/finalize";
 import { sendText } from "../../lib/messaging";
+import { sendPenaltyNotice } from "../../lib/violations/notice";
+import { nairobiDate } from "../../lib/time";
 
 const router = Router();
 
@@ -78,15 +80,20 @@ router.post("/", requireOwner, async (req, res) => {
     appealWindowHours = Number(rule.appeal_window_hours ?? 24);
   }
 
-  // Optional attendance entry must belong to this employee.
+  // Optional attendance entry must belong to this employee. When one is given
+  // it also dates the penalty: an owner logging "left the pump unattended"
+  // against this morning's clock-in means this morning, not whenever they got
+  // round to recording it.
+  let onDate = nairobiDate(new Date());
   if (body.attendance_id) {
     const { data: att } = await db
       .from("attendance_entries")
-      .select("id")
+      .select("id, scanned_at")
       .eq("id", body.attendance_id)
       .eq("employee_id", emp.id)
       .maybeSingle();
     if (!att) return res.status(404).json({ error: "attendance entry not found" });
+    if (att.scanned_at) onDate = nairobiDate(att.scanned_at as string);
   }
 
   const appealWindowEnd = new Date(Date.now() + appealWindowHours * 3600 * 1000).toISOString();
@@ -102,6 +109,10 @@ router.post("/", requireOwner, async (req, res) => {
       reason,
       evidence,
       amount,
+      // Without this a manually raised penalty has no date, so the leave check
+      // cannot ask whether the day was signed off and reports cannot place it
+      // in a month. The engine has set it since 017; this path never did.
+      on_date: onDate,
       status: "open",
       appeal_window_end: appealWindowEnd,
       created_by: req.owner!.userId,
@@ -110,7 +121,17 @@ router.post("/", requireOwner, async (req, res) => {
     .single();
   if (error) return res.status(500).json({ error: error.message });
 
-  res.status(201).json({ violation: inserted });
+  // Tell them. This path used to insert and return, so a penalty an owner
+  // raised by hand reached the employee only as a line on a payslip — with an
+  // appeal window that had been running, and expiring, in silence.
+  const notice = await sendPenaltyNotice(db, {
+    violationId: inserted.id as string,
+    employeeId: inserted.employee_id as string,
+    reason: inserted.reason as string,
+    amount: Number(inserted.amount),
+  });
+
+  res.status(201).json({ violation: inserted, notice });
 });
 
 // ── List violations (owner) ───────────────────────────────────────────────────

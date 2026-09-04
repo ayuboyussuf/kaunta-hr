@@ -6,7 +6,8 @@
 import { getServiceClient } from "../supabase";
 import { violationOutcomePdf } from "../pdf/templates";
 import { uploadPdf } from "../pdf/render";
-import { sendDocument } from "../whatsapp/meta";
+import { sendText } from "../messaging";
+import { env } from "../env";
 
 export type FinalOutcome = "upheld" | "waived";
 
@@ -88,7 +89,22 @@ export async function finalizeViolation(
   // not in a console nobody reads.
   if (emp?.phone) {
     try {
-      await sendDocument(emp.phone, signedUrl, `violation-${violationId.slice(0, 8)}.pdf`, outcomeText);
+      // A short link to the document, NOT the document's signed URL.
+      //
+      // The old message pasted the Supabase URL in whole: 440 characters,
+      // three SMS segments, and the project reference plus a bearer token
+      // sitting in plain text on an unlocked phone. The link WAS the
+      // credential — anybody it was forwarded to could open somebody else's
+      // penalty document, and it died silently a week later when the
+      // signature expired.
+      //
+      // /d/<id> carries nothing. It asks for a fresh signed URL using the
+      // reader's own session, so it is worthless to a stranger and still
+      // works in a year.
+      await sendText(
+        emp.phone,
+        `Aproksi HR: ${outcomeText.toLowerCase()} for ${v.reason}. Read the decision: ${env.appUrl.replace(/^https?:\/\//, "")}/d/${violationId}`
+      );
       await db
         .from("violations")
         .update({ notified_at: new Date().toISOString(), notify_error: null })

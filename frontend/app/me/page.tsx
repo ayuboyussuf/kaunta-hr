@@ -8,6 +8,7 @@ import { registerPush } from "@/lib/push";
 import { flushScanFailures } from "@/lib/scanAttempts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AppealQuestion } from "@/components/AppealQuestion";
 import { ATTENDANCE_STATUS, formatDate, formatTime } from "@/lib/utils";
 
 const SEEN_KEY = "aproksi_hr_announcements_seen_at";
@@ -171,6 +172,13 @@ export default function EmployeeHome() {
           )}
         </Link>
       </div>
+
+      {/* Aproksi has asked them a question about an appeal they already filed.
+          It lived only on /me/violations, which meant an employee who opened
+          the app normally never saw it — and the assist sat waiting for an
+          answer to a question nobody had shown them. It renders nothing when
+          there is nothing outstanding. */}
+      <AppealQuestion />
 
       {/* Penalties needing something from them. The headline says WHICH thing,
           because "Review" told them nothing and got ignored — which is exactly

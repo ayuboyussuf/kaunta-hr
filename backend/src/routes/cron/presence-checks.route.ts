@@ -25,6 +25,7 @@ import { enqueue } from "../../lib/queue";
 import { approvedLeaveOn } from "../../lib/leave/cover";
 import { checkTimes, dueNow, shuffleForTick, MAX_FIRES_PER_TICK } from "../../lib/presence/schedule";
 import { openShiftEntry } from "../../lib/presence";
+import { notifyCheck, lastCheckAt, tooSoon } from "../../lib/presence/notify";
 
 const router = Router();
 const TZ = "Africa/Nairobi";
@@ -159,6 +160,8 @@ export async function runPresenceChecks(
     already_pending: 0,
     quota_met: 0,
     none_due_yet: 0,
+    // Due, but another check landed on this person too recently.
+    too_soon_after_last: 0,
     // Due, but held back so a backlog does not go out as one visible batch.
     deferred_to_next_tick: 0,
   };
@@ -170,7 +173,7 @@ export async function runPresenceChecks(
 
     const { data: employees } = await db
       .from("employees")
-      .select("id, name, phone, shift:shifts(start_time, end_time)")
+      .select("id, name, phone, workplace_id, shift:shifts(start_time, end_time), workplace:workplaces(name)")
       .eq("org_id", org.id)
       .eq("status", "active");
 
@@ -242,6 +245,16 @@ export async function runPresenceChecks(
         skipped.already_pending++;
         continue;
       }
+
+      // Not just "none open" — none RECENT, whoever created it. The 45-minute
+      // spacing in checkTimes only applies to drawn times, and an owner-asked
+      // check does not count toward the drawn quota, so the schedule could fire
+      // two minutes after one and the employee got two identical texts. This is
+      // the floor both paths share.
+      if (tooSoon(await lastCheckAt(db, emp.id as string), now)) {
+        skipped.too_soon_after_last++;
+        continue;
+      }
       if (firedCount >= target) {
         skipped.quota_met++;
         continue;
@@ -299,35 +312,22 @@ export async function runPresenceChecks(
       }
       fired++;
 
-      // Both channels. Push arrives instantly on a phone that has the app
-      // open or installed; the SMS reaches the one in a pocket.
-      const payload = {
-        title: "Confirm you're at work",
-        body: `Open Aproksi HR and scan within ${windowMin} minutes to confirm your presence.`,
-        url: "/me/clock-in",
-      };
-      const delivered = await pushToEmployee(emp.id, payload).catch(() => 0);
-      if (delivered > 0) deliveredByPush++;
+      const site = (Array.isArray((emp as any).workplace)
+        ? (emp as any).workplace[0]
+        : (emp as any).workplace) as { name?: string } | null;
 
-      // The SMS goes either way. A browser notification on a locked phone is
-      // not evidence anybody saw it, and this is the one message whose silence
-      // flags a clock-in and can end in a deduction. Deduped per check, so
-      // re-running the sweep never sends it twice.
-      if (smsFallback && emp.phone) {
-        try {
-          await enqueue(
-            "sms",
-            {
-              to: emp.phone,
-              body: `Aproksi HR: please open the app and scan within ${windowMin} minutes to confirm you're at work.`,
-            },
-            `sms:presence:${check.id}`
-          );
-          deliveredBySms++;
-        } catch (err) {
-          console.warn(`[cron] presence SMS enqueue failed for ${emp.id}:`, (err as Error).message);
-        }
-      }
+      // One notifier, shared with the owner's "check on them now", so the two
+      // paths cannot drift into saying different things about the same event.
+      const sent = await notifyCheck({
+        employeeId: emp.id as string,
+        checkId: check.id as string,
+        siteName: site?.name ?? null,
+        respondBy,
+        smsFallback,
+        phone: (emp.phone as string | null) ?? null,
+      });
+      if (sent.pushed > 0) deliveredByPush++;
+      if (sent.smsQueued) deliveredBySms++;
     }
   }
 
