@@ -79,21 +79,3 @@ COMMENT ON COLUMN violations.voided_reason IS
   'Set when the penalty was cancelled by something other than a decision on an '
   'appeal. Currently only leave_approved. NULL for every ordinary penalty.';
 
--- ─────────────────────────────────────────────────────────────────────────────
--- The appeal assist can now route "I was on approved leave".
---
--- Without this the feature fails in production and passes every test: the fake
--- database used by the suite does not enforce CHECK constraints, so an
--- `on_leave` brief assembles perfectly, then dies on the INSERT with a
--- constraint violation — and the failure lands in a catch that logs and returns
--- null, which looks exactly like "no brief was produced" rather than "the
--- schema refused it".
--- ─────────────────────────────────────────────────────────────────────────────
-
-ALTER TABLE appeal_assists
-  DROP CONSTRAINT IF EXISTS appeal_assists_claim_check;
-
-ALTER TABLE appeal_assists
-  ADD CONSTRAINT appeal_assists_claim_check
-  CHECK (claim IN ('system_not_working', 'sick', 'road_closed', 'on_leave', 'unclear'));
-
