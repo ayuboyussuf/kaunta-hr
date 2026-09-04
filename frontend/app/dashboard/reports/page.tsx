@@ -15,7 +15,7 @@
  * table makes them do the grouping in their head.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
@@ -79,7 +79,7 @@ const kes = (n: number) => `KES ${n.toLocaleString("en-KE", { maximumFractionDig
 const fmtDay = (ymd: string) =>
   new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 
-export default function ReportsPage() {
+function ReportsView() {
   // The short link in the daily digest lands here with a range already chosen,
   // so following it from a text message opens the day it was about rather than
   // a default week the reader then has to correct.
@@ -371,5 +371,27 @@ function Table({ head, rows }: { head: string[]; rows: (string | number)[][] }) 
         </tbody>
       </table>
     </div>
+  );
+}
+
+/**
+ * useSearchParams opts a route out of static rendering, and Next refuses to
+ * prerender the page without a boundary to fall back to. The fallback is the
+ * page frame with an empty state rather than a spinner, so following the link
+ * from a text message lands on something that already looks like the report
+ * that is arriving.
+ */
+export default function ReportsPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+          <h1 className="font-display text-3xl text-aproksi-ink mb-1">Reports</h1>
+          <p className="text-sm text-aproksi-slate/60">Loading…</p>
+        </main>
+      }
+    >
+      <ReportsView />
+    </Suspense>
   );
 }
