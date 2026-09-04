@@ -26,6 +26,7 @@ import { assessSystemNotWorking } from "./systemDown";
 import { assessSick } from "./sickNote";
 import { assessRoadClosed } from "./roadClosed";
 import { assessOnLeave } from "./onLeave";
+import { incidentEvidence, incidentFinding } from "./incident";
 import { summarise } from "./summary";
 import { sendText } from "../../messaging";
 import { env } from "../../env";
@@ -145,6 +146,7 @@ async function assess(
   // was away, the app is useless" routes to system_not_working and, until now,
   // never got the approval mentioned at all.
   brief = await withLeaveCover(db, facts, brief, trace);
+  brief = await withIncident(db, facts, appeal.id, brief, trace);
 
   trace.step("persist", { findings: brief.findings.length });
   await persist(db, appeal, orgId, brief);
@@ -228,6 +230,40 @@ async function withLeaveCover(
   ];
 
   return { ...brief, findings, summary: summarise(brief.claim, facts, findings) };
+}
+
+/**
+ * Add what else happened at that site on that day.
+ *
+ * Runs for every claim, like the leave check, because whether three colleagues
+ * said the same thing has nothing to do with which words this particular person
+ * chose. It adds nothing when nobody else objected — announcing "nobody else
+ * complained" on every solo appeal would quietly build a case against whoever
+ * speaks up first, which is the opposite of what this is for.
+ */
+async function withIncident(
+  db: SupabaseClient,
+  facts: PenaltyFacts,
+  appealId: string,
+  brief: AssistBrief,
+  trace: Trace
+): Promise<AssistBrief> {
+  trace.step("tool:same_incident");
+  try {
+    const evidence = await incidentEvidence(db, facts, appealId);
+    if (!evidence) return brief;
+
+    const finding = incidentFinding(evidence, brief.claim);
+    if (!finding) return brief;
+
+    const findings = [...brief.findings, finding];
+    return { ...brief, findings, summary: summarise(brief.claim, facts, findings) };
+  } catch (err) {
+    // A brief without this is the brief we had last week. It is not worth
+    // failing an appeal assessment over.
+    console.error("[assist] incident lookup failed:", (err as Error).message);
+    return brief;
+  }
 }
 
 /* ── The floor: what we can always say ────────────────────────────────── */

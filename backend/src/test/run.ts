@@ -13,6 +13,7 @@ import "../lib/appeals/assist/assist.test";
 import "../lib/observability/log.test";
 import "../lib/appeals/assist/claims.test";
 import "../lib/appeals/assist/onLeave.test";
+import "../lib/appeals/assist/incident.test";
 import "../lib/violations/stage.test";
 import "../lib/presence/schedule.test";
 import "../lib/attendance/scanRules.test";
