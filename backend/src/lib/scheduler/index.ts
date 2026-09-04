@@ -44,6 +44,7 @@ import { getConnection, redisEnabled } from "../queue";
 import { runCloseAppeals } from "../../routes/cron/close-appeals.route";
 import { runPresenceChecks } from "../../routes/cron/presence-checks.route";
 import { runAbsenceSweep } from "../../routes/cron/absence-sweep.route";
+import { runDailyDigest } from "../../routes/cron/daily-digest.route";
 import { runPayrollSweep } from "../../routes/cron/payroll.route";
 import { runMonthlyReview } from "../../routes/cron/monthly-review.route";
 
@@ -79,6 +80,11 @@ const JOBS: Job[] = [
 
   // After the last shift of the day, price the days nobody scanned against.
   { name: "absence-sweep", schedule: "30 21 * * *", run: runAbsenceSweep, ttlSec: 600 },
+
+  // Morning, and deliberately after the sweep: by 06:30 yesterday is fully
+  // resolved — absences raised or held, closures asked about, checks expired —
+  // so the digest reports a finished day rather than one still being written.
+  { name: "daily-digest", schedule: "30 6 * * *", run: runDailyDigest, ttlSec: 600 },
 
   // Overnight, so a payroll draft is waiting rather than being computed while
   // somebody stares at a spinner.

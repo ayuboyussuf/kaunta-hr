@@ -16,6 +16,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -79,8 +80,15 @@ const fmtDay = (ymd: string) =>
   new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 
 export default function ReportsPage() {
-  const [from, setFrom] = useState(daysAgo(7));
-  const [to, setTo] = useState(daysAgo(1));
+  // The short link in the daily digest lands here with a range already chosen,
+  // so following it from a text message opens the day it was about rather than
+  // a default week the reader then has to correct.
+  const search = useSearchParams();
+  const linkedFrom = search.get("from");
+  const linkedTo = search.get("to");
+
+  const [from, setFrom] = useState(linkedFrom ?? daysAgo(7));
+  const [to, setTo] = useState(linkedTo ?? daysAgo(1));
   const [report, setReport] = useState<Report | null>(null);
   const [periods, setPeriods] = useState<{ months: Period[]; years: Period[] } | null>(null);
   const [activePeriod, setActivePeriod] = useState<string | null>(null);
@@ -139,7 +147,7 @@ export default function ReportsPage() {
         /* the range still works without the period list */
       }
     })();
-    void loadRange(daysAgo(7), daysAgo(1));
+    void loadRange(linkedFrom ?? daysAgo(7), linkedTo ?? daysAgo(1));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

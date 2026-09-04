@@ -21,3 +21,4 @@ import "../routes/cron/presenceChecks.test";
 import "../lib/sms/gsm7.test";
 import "../lib/attendance/closure.test";
 import "../lib/reports/reports.test";
+import "../lib/digest/daily.test";
