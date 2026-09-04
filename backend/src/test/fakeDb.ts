@@ -12,7 +12,7 @@
  * broken filter into a passing test.
  */
 type Row = Record<string, unknown>;
-type Op = "eq" | "lte" | "gte" | "gt" | "lt" | "in" | "neq";
+type Op = "eq" | "lte" | "gte" | "gt" | "lt" | "in" | "neq" | "is" | "notis";
 
 interface Filter {
   op: Op;
@@ -37,6 +37,14 @@ function matches(row: Row, f: Filter): boolean {
       return (v as never) > (f.val as never);
     case "in":
       return Array.isArray(f.val) && (f.val as unknown[]).includes(v);
+    // PostgREST spells null comparison `.is(col, null)` and its negation
+    // `.not(col, "is", null)`. Both matter here: the absence sweep selects
+    // employees who HAVE a shift, and the closure resolver selects the
+    // unassigned ones.
+    case "is":
+      return f.val === null ? v === null || v === undefined : v === f.val;
+    case "notis":
+      return f.val === null ? v !== null && v !== undefined : v !== f.val;
     default:
       throw new Error(`fakeDb: unsupported operator ${(f as Filter).op}`);
   }
@@ -93,6 +101,16 @@ class Builder implements PromiseLike<{ data: Row[] | null; error: null }> {
   }
   in(col: string, val: unknown[]) {
     this.filters.push({ op: "in", col, val });
+    return this;
+  }
+  is(col: string, val: unknown) {
+    this.filters.push({ op: "is", col, val });
+    return this;
+  }
+  /** Only the `.not(col, "is", null)` form the codebase actually uses. */
+  not(col: string, op: string, val: unknown) {
+    if (op !== "is") throw new Error(`fakeDb: .not(${op}) is not modelled`);
+    this.filters.push({ op: "notis", col, val });
     return this;
   }
   order(col: string, opts?: { ascending?: boolean }) {

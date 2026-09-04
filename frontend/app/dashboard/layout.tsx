@@ -11,21 +11,67 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { AproksiWordmark } from "@/components/AproksiLogo";
-import { LogOut, Bell } from "lucide-react";
+import { LogOut, Bell, Settings } from "lucide-react";
 
-// Messages live behind the bell icon (top right), not in the nav.
-const NAV = [
-  { href: "/dashboard", label: "Overview", exact: true },
-  { href: "/dashboard/employees", label: "Team" },
-  { href: "/dashboard/shifts", label: "Shifts" },
-  { href: "/dashboard/workplaces", label: "Workplaces" },
-  { href: "/dashboard/qr", label: "QR codes" },
-  { href: "/dashboard/leave", label: "Leave" },
-  { href: "/dashboard/violations", label: "Penalties" },
-  { href: "/dashboard/rules", label: "Rules" },
+/**
+ * The nav, grouped by what the owner is doing rather than by what table the
+ * data sits in.
+ *
+ * There were eleven items here, and the list read like a schema dump: Team,
+ * Shifts, Workplaces, QR codes, Leave, Penalties, Rules, Payroll,
+ * Announcements, Settings. Half of them are things you touch twice in the life
+ * of a site — a QR code is not a job, it is something you print when you open a
+ * branch — and they sat at the same weight as the queue of decisions waiting on
+ * you this morning.
+ *
+ * Six groups, each with its own tab strip. Nothing moved: every old URL still
+ * resolves, because breaking an owner's bookmarks to tidy a menu is not a trade
+ * worth making. What changed is how much you have to read to find anything.
+ *
+ * Settings lives in the account menu with sign-out; Messages stays behind the
+ * bell. Neither is a section of the product.
+ */
+interface NavItem {
+  href: string;
+  label: string;
+  exact?: boolean;
+}
+interface NavGroup extends NavItem {
+  /** Rendered as a tab strip under the navbar. Absent for single-page groups. */
+  tabs?: NavItem[];
+}
+
+const NAV: NavGroup[] = [
+  { href: "/dashboard", label: "Today", exact: true },
+  { href: "/dashboard/reports", label: "Reports" },
+  {
+    href: "/dashboard/employees",
+    label: "People",
+    tabs: [
+      { href: "/dashboard/employees", label: "Team" },
+      { href: "/dashboard/leave", label: "Leave" },
+      { href: "/dashboard/announcements", label: "Announcements" },
+    ],
+  },
+  {
+    href: "/dashboard/violations",
+    label: "Decisions",
+    tabs: [
+      { href: "/dashboard/violations", label: "Penalties" },
+      { href: "/dashboard/closures", label: "Days nobody clocked in" },
+    ],
+  },
+  {
+    href: "/dashboard/workplaces",
+    label: "Setup",
+    tabs: [
+      { href: "/dashboard/workplaces", label: "Workplaces" },
+      { href: "/dashboard/qr", label: "QR codes" },
+      { href: "/dashboard/shifts", label: "Shifts" },
+      { href: "/dashboard/rules", label: "Rules" },
+    ],
+  },
   { href: "/dashboard/payroll", label: "Payroll" },
-  { href: "/dashboard/announcements", label: "Announcements" },
-  { href: "/dashboard/settings", label: "Settings" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -68,6 +114,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname?.startsWith(href + "/");
 
+  // A group is current when the page you are on is any of its tabs — so
+  // /dashboard/qr lights up "Setup" even though Setup's own link points at
+  // Workplaces. Without this, four of the eleven old destinations would have
+  // left the navbar showing nothing selected at all.
+  const groupIsActive = (group: NavGroup) =>
+    isActive(group.href, group.exact) || (group.tabs ?? []).some((t) => isActive(t.href));
+
+  const currentGroup = NAV.find(groupIsActive);
+  const tabs = currentGroup?.tabs ?? [];
+
   return (
     <div className="min-h-screen bg-aproksi-stone">
       <nav className="sticky top-0 z-30 border-b border-aproksi-mist bg-white/95 backdrop-blur">
@@ -93,6 +149,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </span>
                 )}
               </Link>
+              {/* Settings is configuration, not a section of the product. It
+                  sits with sign-out, where you look for account things. */}
+              <Link
+                href="/dashboard/settings"
+                aria-label="Settings"
+                className={`grid h-9 w-9 place-items-center rounded-full border transition-colors ${
+                  isActive("/dashboard/settings")
+                    ? "border-aproksi-ultra/40 text-aproksi-ultra bg-aproksi-ultra/5"
+                    : "border-aproksi-mist text-aproksi-slate/70 hover:text-aproksi-ink hover:border-aproksi-slate/30"
+                }`}
+              >
+                <Settings className="h-[18px] w-[18px]" />
+              </Link>
               <button
                 onClick={signOut}
                 className="inline-flex items-center gap-1.5 text-sm text-aproksi-slate/70 hover:text-aproksi-ink"
@@ -104,7 +173,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <div className="flex gap-1 overflow-x-auto -mb-px">
             {NAV.map((item) => {
-              const active = isActive(item.href, item.exact);
+              const active = groupIsActive(item);
               return (
                 <Link
                   key={item.href}
@@ -122,6 +191,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </nav>
+
+      {/* The second row only exists where there is somewhere else to go. A tab
+          strip with one tab is chrome pretending to be navigation. */}
+      {tabs.length > 1 && (
+        <div className="border-b border-aproksi-mist bg-white">
+          <div className="max-w-6xl mx-auto flex gap-1 overflow-x-auto px-4 sm:px-6">
+            {tabs.map((t) => {
+              const active = isActive(t.href);
+              return (
+                <Link
+                  key={t.href}
+                  href={t.href}
+                  className={`whitespace-nowrap px-3 py-2 text-[0.8125rem] transition-colors ${
+                    active
+                      ? "text-aproksi-ultra font-medium"
+                      : "text-aproksi-slate/60 hover:text-aproksi-ink"
+                  }`}
+                >
+                  {t.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {children}
     </div>
   );

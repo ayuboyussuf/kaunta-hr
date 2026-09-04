@@ -71,6 +71,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     { data: leaveToday },
     { count: pendingLeave },
     { count: undelivered },
+    { count: pendingClosures },
     { data: shifts },
   ] = await Promise.all([
       supabase.from("workplaces").select("id, name").eq("org_id", org.id).order("created_at"),
@@ -120,6 +121,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         .is("notified_at", null)
         .eq("notice_tracked", true)
         .gte("created_at", daysAgoISO(30)),
+      // Days where nobody clocked in anywhere at a site. The penalties for
+      // these are HELD, not raised, so this count is the only thing standing
+      // between a held day and it quietly expiring unanswered.
+      supabase
+        .from("closure_reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("org_id", org.id)
+        .eq("status", "pending"),
       // Shift starts, for the arrivals rail.
       supabase.from("shifts").select("workplace_id, start_time, grace_minutes").order("start_time"),
     ]);
@@ -204,6 +213,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   // What actually wants the owner's attention, most costly first. Renders
   // nothing when there is nothing — see components/dashboard/AttentionQueue.
   const attention: AttentionItem[] = [
+    {
+      // First, deliberately. Everything else in this queue is a decision about
+      // one person; this one is a whole site's worth of penalties waiting on an
+      // answer, and it expires on its own if nobody gives one.
+      count: pendingClosures ?? 0,
+      label: "Days nobody clocked in",
+      detail: "No penalties applied yet. Say what happened and Aproksi will act on it.",
+      href: "/dashboard/closures",
+      tone: "urgent",
+    },
     {
       count: pendingAppeals ?? 0,
       label: "Appeals to decide",
