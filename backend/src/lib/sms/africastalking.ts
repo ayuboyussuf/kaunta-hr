@@ -6,6 +6,7 @@
  * automatically. Live: your real username + a funded account.
  */
 import { env } from "../env";
+import { toGsm7, smsCost } from "./gsm7";
 
 function baseUrl(): string {
   return env.at.username() === "sandbox"
@@ -53,19 +54,33 @@ export async function sendSms(to: string, message: string): Promise<SmsResult> {
 }
 
 /** One send attempt. */
-async function sendOnce(to: string, message: string): Promise<SmsResult> {
+async function sendOnce(to: string, rawMessage: string): Promise<SmsResult> {
   const username = env.at.username();
   const senderId = env.at.senderId();
   const url = baseUrl();
+
+  // Last line of defence. Every caller should be writing GSM-7 already, but one
+  // em dash in one template silently doubles the cost of every message that
+  // template ever sends, and nothing downstream would report it.
+  const message = toGsm7(rawMessage);
+  const cost = smsCost(message);
 
   const params = new URLSearchParams({ username, to, message });
   if (senderId) params.set("from", senderId);
 
   // Log the outgoing request (never the API key or message body — the body may
-  // contain an OTP). This shows *that* we called AT and with what config.
+  // contain an OTP). Segments, not characters: characters are the number that
+  // does not matter, and printing them is how a doubled bill stayed invisible.
   console.log(
-    `[sms] → POST ${url} to=${to} from=${senderId || "(none)"} username=${username} msgLen=${message.length}`
+    `[sms] → POST ${url} to=${to} from=${senderId || "(none)"} username=${username} ` +
+      `enc=${cost.encoding} units=${cost.units} segments=${cost.segments}`
   );
+  if (cost.encoding === "UCS-2") {
+    console.warn(
+      `[sms] body is UCS-2 (70 chars/segment, not 160) because of ${JSON.stringify(cost.offender)} ` +
+        `— ${cost.segments} segment(s). Rewrite the template in plain ASCII.`
+    );
+  }
 
   let res: Response;
   let raw: string;

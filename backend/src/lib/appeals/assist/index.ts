@@ -379,7 +379,7 @@ async function askEmployee(
 
     await sendText(
       emp.phone as string,
-      `Aproksi HR: about your appeal — ${brief.ask.question} Answer at ${env.appUrl}/me/violations. If you can't, choose "not available" there and it still goes to your employer.`
+      `Aproksi HR: about your appeal - ${brief.ask.question} Answer at ${env.appUrl}/me/violations. If you can't, choose "not available" there and it still goes to your employer.`
     );
   } catch (err) {
     console.error("[assist] could not ask the employee:", (err as Error).message);

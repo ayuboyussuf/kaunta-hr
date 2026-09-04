@@ -226,7 +226,7 @@ router.get("/messaging/health", async (req, res) => {
   const to = typeof req.query.to === "string" ? req.query.to : "";
   if (to) {
     try {
-      await sendText(to, "Aproksi HR: test message. Messaging is working — no action needed.");
+      await sendText(to, "Aproksi HR: test message. Messaging is working - no action needed.");
       testSend = { ok: true, detail: "accepted by the provider" };
     } catch (err) {
       testSend = { ok: false, detail: (err as Error).message.slice(0, 300) };

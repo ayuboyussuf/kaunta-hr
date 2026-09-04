@@ -18,3 +18,4 @@ import "../lib/presence/schedule.test";
 import "../lib/attendance/scanRules.test";
 import "../lib/leave/reconcile.test";
 import "../routes/cron/presenceChecks.test";
+import "../lib/sms/gsm7.test";
