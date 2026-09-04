@@ -17,6 +17,7 @@ import { env } from "../../lib/env";
 import { pushToEmployee } from "../../lib/push";
 import { enqueue } from "../../lib/queue";
 import { openShiftEntry } from "../../lib/presence";
+import { notifyCheck, lastCheckAt, tooSoon, CHECK_COOLDOWN_MS } from "../../lib/presence/notify";
 
 const router = Router();
 
@@ -88,7 +89,7 @@ router.post("/check/:employeeId", requireOwner, async (req, res) => {
   const db = getServiceClient();
   const { data: emp } = await db
     .from("employees")
-    .select("id, name, phone, org_id, status")
+    .select("id, name, phone, org_id, status, workplace_id, workplaces(name)")
     .eq("id", id.data)
     .eq("org_id", req.owner!.orgId)
     .maybeSingle();
@@ -124,6 +125,19 @@ router.post("/check/:employeeId", requireOwner, async (req, res) => {
     return res.status(409).json({ error: "A check is already open for this person." });
   }
 
+  // And not right on top of the last one, whoever asked for it. Without this
+  // an owner check could land two minutes after a scheduled one and the
+  // employee got the same text twice.
+  const previousCheck = await lastCheckAt(db, emp.id as string);
+  if (tooSoon(previousCheck, now)) {
+    const mins = Math.ceil(
+      (CHECK_COOLDOWN_MS - (now.getTime() - previousCheck!.getTime())) / 60000
+    );
+    return res.status(409).json({
+      error: `${emp.name} was checked very recently. You can ask again in ${mins} minute(s).`,
+    });
+  }
+
   const { data: org } = await db
     .from("orgs")
     .select("presence_check_window_min, presence_sms_fallback")
@@ -147,36 +161,25 @@ router.post("/check/:employeeId", requireOwner, async (req, res) => {
     .single();
   if (error || !check) return res.status(500).json({ error: error?.message ?? "could not create" });
 
-  // Same delivery as a scheduled check: push and SMS, plus the in-app banner.
-  let pushed = 0;
-  try {
-    pushed = await pushToEmployee(emp.id, {
-      title: "Confirm you're at work",
-      body: `Open Aproksi HR and scan within ${windowMin} minutes to confirm your presence.`,
-      url: "/me/clock-in",
-    });
-  } catch {
-    /* push is best-effort; the SMS below is the one that has to land */
-  }
-  if (smsFallback && emp.phone) {
-    try {
-      await enqueue(
-        "sms",
-        {
-          to: emp.phone as string,
-          body: `Aproksi HR: please open the app and scan within ${windowMin} minutes to confirm you're at work.`,
-        },
-        `sms:presence:${check.id}`
-      );
-    } catch (err) {
-      console.warn(`[presence] owner-check SMS failed for ${emp.id}:`, (err as Error).message);
-    }
-  }
+  // The same notifier the schedule uses, so an owner-asked check and a drawn
+  // one cannot describe the same event differently.
+  const site = (Array.isArray((emp as any).workplaces)
+    ? (emp as any).workplaces[0]
+    : (emp as any).workplaces) as { name?: string } | null;
+
+  const sent = await notifyCheck({
+    employeeId: emp.id as string,
+    checkId: check.id as string,
+    siteName: site?.name ?? null,
+    respondBy: check.respond_by as string,
+    smsFallback,
+    phone: (emp.phone as string | null) ?? null,
+  });
 
   res.status(201).json({
     check: { id: check.id, respond_by: check.respond_by },
     employee: { id: emp.id, name: emp.name },
-    delivered_by_push: pushed,
+    delivered_by_push: sent.pushed,
     window_min: windowMin,
   });
 });

@@ -20,6 +20,7 @@ import "../lib/attendance/scanRules.test";
 import "../lib/leave/reconcile.test";
 import "../routes/cron/presenceChecks.test";
 import "../lib/sms/gsm7.test";
+import "../lib/presence/notify.test";
 import "../lib/attendance/closure.test";
 import "../lib/reports/reports.test";
 import "../lib/digest/daily.test";
