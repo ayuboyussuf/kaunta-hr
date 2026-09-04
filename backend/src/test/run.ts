@@ -20,3 +20,4 @@ import "../lib/leave/reconcile.test";
 import "../routes/cron/presenceChecks.test";
 import "../lib/sms/gsm7.test";
 import "../lib/attendance/closure.test";
+import "../lib/reports/reports.test";

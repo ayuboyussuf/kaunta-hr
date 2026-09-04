@@ -43,6 +43,7 @@ interface NavGroup extends NavItem {
 
 const NAV: NavGroup[] = [
   { href: "/dashboard", label: "Today", exact: true },
+  { href: "/dashboard/reports", label: "Reports" },
   {
     href: "/dashboard/employees",
     label: "People",
